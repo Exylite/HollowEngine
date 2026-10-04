@@ -10,7 +10,8 @@
   ],
   "client": [
     "HudMixin",
-    "client.CameraMixin"
+    "client.CameraMixin",
+    "client.ItemInHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

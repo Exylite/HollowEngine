@@ -36,7 +36,6 @@
     "client.GameRendererMixin",
     "client.GlBackendMixin",
     "client.GuiMixin",
-    "client.ItemInHandRendererMixin",
     "client.LayerDefinitionsMixin",
     "client.MinecraftMixin",
     "client.MultiplayerGameModeMixin",

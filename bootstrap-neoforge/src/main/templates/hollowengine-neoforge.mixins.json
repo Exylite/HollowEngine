@@ -3,11 +3,9 @@
   "minVersion": "0.8",
   "package": "ru.hollowhorizon.hollowengine.neoforge.mixins",
   "compatibilityLevel": "JAVA_25",
-  "mixins": [
-  ],
+  "mixins": [],
   "client": [
-    "client.CameraMixin",
-    "client.LevelRendererStagesMixin"
+    "client.CameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,4 +1,4 @@
-package ru.hollowhorizon.hollowengine.bootstrap.mixins.client;
+package ru.hollowhorizon.hollowengine.fabric.mixins.client;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
