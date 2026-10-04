@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.timeline.cutscene
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.setDayTime
 import ru.hollowhorizon.hollowengine.common.utils.compat.dayTime
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel

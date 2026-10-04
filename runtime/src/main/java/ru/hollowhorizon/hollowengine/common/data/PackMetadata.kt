@@ -29,7 +29,7 @@ object PackMetadata {
     }
 
     /** Answers a metadata section request the way a `pack.mcmeta` with [description] would. */
-    fun <T> section(type: MetadataSectionType<T>, description: String): T? {
+    fun <T : Any> section(type: MetadataSectionType<T>, description: String): T? {
         if (type.name != "pack") return null
         val pack = json(description).getAsJsonObject("pack")
         return type.codec().parse(JsonOps.INSTANCE, pack).result().orElse(null)

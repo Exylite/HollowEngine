@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
 import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 
@@ -125,6 +126,11 @@ operator fun Color.component4() = a
 val CUSTOM_IMGUI_LIGHT_0: Vector3f = Vector3f(-0.3f, 1f, 1f).normalize()
 val CUSTOM_IMGUI_LIGHT_1: Vector3f = Vector3f(0.3f, -1f, -1f).normalize()
 
+/**
+ * Draws an item in a [width] x [height] box at ([x], [y]), through vanilla's own GUI after the engine's
+ * frame, so it comes over the UI it sits in. Of [stack] only where it moves the box to, and how much it
+ * scales it, is used: vanilla places items in two dimensions.
+ */
 fun ItemStack.render(
     x: Float,
     y: Float,
@@ -134,45 +140,26 @@ fun ItemStack.render(
     rotation: Float = 0f,
     stack: PoseStack = PoseStack(),
 ) {
-    val xOffset = x + width / 2
-    val yOffset = y + height / 2
-    stack.translate(xOffset, yOffset, 0f)
-
-    stack.mulPose(Matrix4f().scaling(1f, -1f, 1f))
-
-    val newScale = min(width, height) * 0.95f * scale
-    stack.scale(newScale, newScale, newScale)
-    stack.mulPose(Quaternionf().rotateZ(rotation * Mth.DEG_TO_RAD))
-
-
-    val src = Minecraft.getInstance().renderBuffers().bufferSource()
-    val model = Minecraft.getInstance().itemRenderer.getModel(this, Minecraft.getInstance().level, null, 0)
-
-    val flat = !model.usesBlockLight()
-    val depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
-    val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
-
-    if (flat) {
-        Lighting.setupForFlatItems()
-    } else {
-        Lighting.setupFor3DItems()
-    }
-    RenderSystem.enableDepthTest()
-    GL11.glDepthMask(true)
-    try {
-        Minecraft.getInstance().itemRenderer.render(
-            this,
-            ItemDisplayContext.GUI,
-            false,
-            stack, src, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, model
-        )
-    } finally {
-        src.endBatch()
-        Lighting.setupFor3DItems()
-        if (!depthEnabled) RenderSystem.disableDepthTest()
-        GL11.glDepthMask(depthMask)
+    if (isEmpty) return
+    val pose = Matrix4f(stack.last().pose())
+    val center = pose.transformPosition(Vector3f(x + width / 2, y + height / 2, 0f))
+    val size = min(width, height) * 0.95f * scale * pose.getScale(Vector3f()).x
+    val units = GuiDeferred.vanillaUnitsPerUiUnit
+    val item = this
+    GuiDeferred.deferVanilla { graphics ->
+        val matrix = graphics.pose()
+        matrix.pushMatrix()
+        matrix.translate(center.x * units, center.y * units)
+        matrix.rotate(rotation * Mth.DEG_TO_RAD)
+        val factor = size * units / VANILLA_SLOT_SIZE
+        matrix.scale(factor, factor)
+        matrix.translate(-VANILLA_SLOT_SIZE / 2, -VANILLA_SLOT_SIZE / 2)
+        graphics.item(item, 0, 0)
+        matrix.popMatrix()
     }
 }
+
+private const val VANILLA_SLOT_SIZE = 16f
 
 fun fill(stack: PoseStack, renderType: RenderType, minX: Int, minY: Int, maxX: Int, maxY: Int, z: Int, color: Int) {
     var minX = minX

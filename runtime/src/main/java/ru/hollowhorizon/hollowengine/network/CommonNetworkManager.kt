@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.network
 
+import net.minecraft.network.protocol.game.ClientGamePacketListener
 import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
@@ -133,7 +134,7 @@ object CommonNetworkManager : NetworkManager {
     fun sendTrackingEntity(entity: Entity, packet: HollowPacket) {
         val chunkCache = entity.level().chunkSource
         if (chunkCache is ServerChunkCache) {
-            chunkCache.sendToTrackingPlayersAndSelf(entity, packet.toVanilla(true))
+            chunkCache.sendToTrackingPlayersAndSelf(entity, packet.toVanilla(true) as Packet<ClientGamePacketListener>)
         } else {
             throw IllegalStateException("Cannot send clientbound payloads on the client")
         }
@@ -142,7 +143,7 @@ object CommonNetworkManager : NetworkManager {
     fun sendAddonTrackingEntity(entity: Entity, packet: HollowAddonPacket) {
         val chunkCache = entity.level().chunkSource
         if (chunkCache is ServerChunkCache) {
-            chunkCache.sendToTrackingPlayersAndSelf(entity, HollowAddonPacketRegistry.encodeForClient(packet).toVanilla(true))
+            chunkCache.sendToTrackingPlayersAndSelf(entity, HollowAddonPacketRegistry.encodeForClient(packet).toVanilla(true) as Packet<ClientGamePacketListener>)
         } else {
             throw IllegalStateException("Cannot send clientbound payloads on the client")
         }

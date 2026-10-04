@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import net.minecraft.client.gui.components.debug.DebugScreenEntries
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
 import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
@@ -14,7 +15,7 @@ import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
 @ClientOnly
 object DebugSkeletonRenderer {
     val isEnabled: Boolean
-        get() = Minecraft.getInstance().entityRenderDispatcher.shouldRenderHitBoxes()
+        get() = Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)
 
     fun render(attachment: ModelAttachment, poseStack: PoseStack, buffers: MultiBufferSource) =
         draw(attachment, DebugLines.batch(buffers, poseStack))

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.commands
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermission
 import com.mojang.brigadier.arguments.StringArgumentType
 import net.minecraft.commands.CommandSourceStack
 import ru.hollowhorizon.hollowengine.common.addons.HollowAddonManager

@@ -147,7 +147,7 @@ object LegacyRenderBuffers {
  * Whatever is written here is taken as already in the space the entity was submitted in, since the
  * engine multiplies it with the pose stack itself.
  */
-class RecordingBufferSource(private val collector: SubmitNodeCollector) : MultiBufferSource.BufferSource {
+class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSource.BufferSource {
     private val recorders = LinkedHashMap<RenderType, Recorder>()
 
     override fun getBuffer(type: RenderType): VertexConsumer = recorders.getOrPut(type) { Recorder(type) }

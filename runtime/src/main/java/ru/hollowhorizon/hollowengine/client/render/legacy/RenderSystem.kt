@@ -98,6 +98,12 @@ object RenderSystem {
         shaderColor[0] = r; shaderColor[1] = g; shaderColor[2] = b; shaderColor[3] = a
     }
 
+    /** Back to the lights the level is drawn with, which is what the engine's shaders expect when nothing sets others. */
+    @JvmStatic fun resetShaderLights() {
+        light0.set(Vector3f(0.2f, 1.0f, -0.7f).normalize())
+        light1.set(Vector3f(-0.2f, 1.0f, 0.7f).normalize())
+    }
+
     @JvmStatic fun setShaderLights(first: Vector3f, second: Vector3f) {
         light0.set(first)
         light1.set(second)

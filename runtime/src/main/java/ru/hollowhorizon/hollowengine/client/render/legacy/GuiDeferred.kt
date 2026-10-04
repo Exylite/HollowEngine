@@ -1,6 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.render.legacy
 
 import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -14,9 +15,51 @@ import ru.hollowhorizon.hollowengine.HollowEngine
  */
 object GuiDeferred {
     private val tasks = ArrayList<Runnable>()
+    private val vanillaTasks = ArrayList<(GuiGraphicsExtractor) -> Unit>()
+
+    /**
+     * How many of vanilla's GUI units one unit of the engine's UI is: the engine's surface may run at a
+     * scale of its own, vanilla's items and entities are placed in the scale the window has.
+     */
+    @JvmField
+    var vanillaUnitsPerUiUnit = 1f
 
     fun defer(task: Runnable) {
         tasks += task
+    }
+
+    /**
+     * Things only vanilla can draw (items, entities, tooltips) that the engine's UI places inside its own
+     * frame. They go through vanilla's GUI once more after the engine's frame, so they come over it.
+     */
+    fun deferVanilla(task: (GuiGraphicsExtractor) -> Unit) {
+        vanillaTasks += task
+    }
+
+    /** Runs what the engine deferred, then what it deferred to vanilla. */
+    fun flushAll(minecraft: Minecraft) {
+        flush()
+        flushVanilla(minecraft)
+    }
+
+    private fun flushVanilla(minecraft: Minecraft) {
+        if (vanillaTasks.isEmpty()) return
+        val pending = ArrayList(vanillaTasks)
+        vanillaTasks.clear()
+        val renderer = minecraft.gameRenderer
+        val window = minecraft.window
+        val mouseX = minecraft.mouseHandler.getScaledXPos(window).toInt()
+        val mouseY = minecraft.mouseHandler.getScaledYPos(window).toInt()
+        val graphics = GuiGraphicsExtractor(minecraft, renderer.gameRenderState().guiRenderState, mouseX, mouseY)
+        for (task in pending) {
+            try {
+                task(graphics)
+            } catch (e: Throwable) {
+                HollowEngine.LOGGER.error("A deferred vanilla GUI draw failed", e)
+            }
+        }
+        // the first pass emptied the GUI state, so this draws only what was just extracted
+        renderer.guiRenderer.render()
     }
 
     /** Draws everything that was deferred with the projection the 1.21 GUI had. */

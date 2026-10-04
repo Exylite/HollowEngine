@@ -523,7 +523,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onGuiFrameRendered(minecraft: Minecraft) {
-        GuiDeferred.flush()
+        GuiDeferred.flushAll(minecraft)
     }
 
     override fun onBeforeBlitScreen(minecraft: Minecraft) {

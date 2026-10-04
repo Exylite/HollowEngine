@@ -76,7 +76,7 @@ private class LayeredPackResources(private val layers: List<PackResources>) : Pa
 
     override fun getNamespaces(type: PackType): Set<String> = layers.flatMapTo(HashSet()) { it.getNamespaces(type) }
 
-    override fun <T> getMetadataSection(type: MetadataSectionType<T>): T? =
+    override fun <T : Any> getMetadataSection(type: MetadataSectionType<T>): T? =
         layers.first().getMetadataSection(type)
 
     override fun location(): PackLocationInfo = layers.first().location()

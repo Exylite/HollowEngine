@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
+import org.joml.Vector3f
+import net.minecraft.client.renderer.entity.state.EntityRenderState
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
 import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
@@ -9,7 +12,6 @@ import com.mojang.blaze3d.vertex.PoseStack
 import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import com.mojang.math.Axis
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.client.renderer.texture.SimpleTexture
@@ -2119,23 +2121,15 @@ class MinecraftUiRenderer {
         if (width <= 0f || height <= 0f) return
 
         val rect = UiRect(origin.x, origin.y, width, height)
-        val depth = nextItemDepth(rect)
-        stack.render(rect.x, rect.y, rect.width, rect.height, stack = PoseStack().apply { translate(0f, 0f, depth) })
-        drawItemDecorations(stack, rect, depth)
+        GuiDeferred.vanillaUnitsPerUiUnit = vanillaUnitsPerUiUnit()
+        stack.render(rect.x, rect.y, rect.width, rect.height)
+        drawItemDecorations(stack, rect)
     }
 
-    /**
-     * Reserves this item's depth slice and advances the cursor past it.
-     *
-     * A slice has to be at least as deep as the model is, and a GUI item model is as deep as it is wide.
-     * The budget is the projection's near plane; past it items would be clipped away entirely, so the
-     * offset stops growing instead and only very crowded screens can see items share a slice again.
-     */
-    private fun nextItemDepth(rect: UiRect): Float {
-        val depth = itemDepthOffset
-        val slice = max(rect.width, rect.height).coerceAtLeast(1f)
-        itemDepthOffset = min(itemDepthOffset + slice, MaxItemDepth)
-        return depth
+    /** How many of vanilla's GUI units a unit of the surface being drawn is. */
+    private fun vanillaUnitsPerUiUnit(): Float {
+        val guiScale = Minecraft.getInstance().window.guiScale.toFloat()
+        return (renderTarget?.scale ?: guiScale) / guiScale
     }
 
     /**
@@ -2144,21 +2138,16 @@ class MinecraftUiRenderer {
      *
      * Vanilla assumes a 16x16 slot, hence the scale from that onto the item's actual rect.
      */
-    private fun drawItemDecorations(stack: ItemStack, rect: UiRect, depth: Float) {
+    private fun drawItemDecorations(stack: ItemStack, rect: UiRect) {
         if (rect.width <= 0f || rect.height <= 0f) return
-        val minecraft = Minecraft.getInstance()
-        val graphics = GuiGraphics(minecraft, minecraft.renderBuffers().bufferSource())
-        val pose = graphics.pose()
-        pose.pushPose()
-        try {
-            pose.translate(rect.x, rect.y, depth)
-            pose.scale(rect.width / VanillaSlotSize, rect.height / VanillaSlotSize, 1f)
-            graphics.renderItemDecorations(minecraft.font, stack, 0, 0)
-            graphics.flush()
-        } finally {
-            pose.popPose()
-            RenderSystem.enableBlend()
-            configureUiBlend()
+        val units = GuiDeferred.vanillaUnitsPerUiUnit
+        GuiDeferred.deferVanilla { graphics ->
+            val pose = graphics.pose()
+            pose.pushMatrix()
+            pose.translate(rect.x * units, rect.y * units)
+            pose.scale(rect.width * units / VanillaSlotSize, rect.height * units / VanillaSlotSize)
+            graphics.itemDecorations(Minecraft.getInstance().font, stack, 0, 0)
+            pose.popMatrix()
         }
     }
 
@@ -2171,17 +2160,13 @@ class MinecraftUiRenderer {
             return
         }
 
-        val rect = UiRect(0f, 0f, command.rect.width, command.rect.height)
-        clearDepthOf(transformedLocalRect(rect, transform))
-        POSE_STACK.pushPose()
-        POSE_STACK.mulPose(transform.toMatrix4f())
-        val drawn = try {
-            renderEntity(entity, rect, command.entity.view)
-        } finally {
-            POSE_STACK.popPose()
-            clearDepthOf(transformedLocalRect(rect, transform))
-        }
-        if (!drawn) drawEntityPlaceholder(command)
+        val origin = transform.transform(0f, 0f)
+        transform.axisScales(itemAxisScales)
+        val rect = UiRect(
+            origin.x, origin.y, command.rect.width * itemAxisScales[0], command.rect.height * itemAxisScales[1],
+        )
+        if (rect.width <= 0f || rect.height <= 0f) return
+        if (!renderEntity(entity, rect, command.entity.view)) drawEntityPlaceholder(command)
     }
 
     private fun drawEntityPlaceholder(command: DrawEntityCommand) {
@@ -2220,7 +2205,7 @@ class MinecraftUiRenderer {
         } catch (e: Throwable) {
             HollowEngine.LOGGER.error("Error in Modifier.drawGl block", e)
         } finally {
-            Lighting.setupFor3DItems()
+            RenderSystem.resetShaderLights()
             POSE_STACK.popPose()
             clearDepthOf(transformedLocalRect(rect, transform))
             if (depthEnabled) RenderSystem.enableDepthTest() else RenderSystem.disableDepthTest()
@@ -2230,48 +2215,45 @@ class MinecraftUiRenderer {
         }
     }
 
-    /** Returns false when nothing can draw this entity, so the caller shows the placeholder. */
+    /**
+     * Returns false when nothing can draw this entity, so the caller shows the placeholder. Vanilla draws
+     * an entity in a GUI from a render state, as a picture of its own; the state is taken now, the
+     * picture comes with vanilla's second pass over the engine's frame.
+     */
     private fun renderEntity(entity: Entity, rect: UiRect, view: UiEntityView): Boolean {
-        val depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
-        val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
-        POSE_STACK.pushPose()
-        try {
-            val xOffset = rect.x + rect.width / 2f + view.offsetX
-            val yOffset = rect.y + rect.height + view.offsetY
-            POSE_STACK.translate(xOffset.toDouble(), yOffset.toDouble(), 0.0)
-            val fit = min(rect.width / entity.bbWidth, rect.height / entity.bbHeight) * 0.92f
-            val scale = fit * view.zoom.coerceAtLeast(0.01f)
-            POSE_STACK.scale(scale, scale, -scale)
-            POSE_STACK.mulPose(Axis.ZP.rotationDegrees(-180f))
-            if (view.pitch != 0f) POSE_STACK.mulPose(Axis.XP.rotationDegrees(view.pitch))
-
-            Lighting.setupForEntityInInventory()
-
-            val mc = Minecraft.getInstance()
-            val dispatcher = mc.entityRenderDispatcher
-            val buffers = mc.renderBuffers().bufferSource()
-            dispatcher.setRenderShadow(false)
-            RenderSystem.enableDepthTest()
-            GL11.glDepthMask(true)
-            try {
-                facingTheViewer(entity, view.yaw) {
-                    RenderSystem.runAsFancy {
-                        dispatcher.render(entity, 0.0, 0.0, 0.0, 0f, 1f, POSE_STACK, buffers, LightCoordsUtil.FULL_BRIGHT)
-                    }
-                }
-                buffers.endBatch()
-                return true
-            } finally {
-                dispatcher.setRenderShadow(true)
-            }
-        } finally {
-            Lighting.setupFor3DItems()
-            POSE_STACK.popPose()
-            if (!depthEnabled) RenderSystem.disableDepthTest()
-            GL11.glDepthMask(depthMask)
+        val dispatcher = Minecraft.getInstance().entityRenderDispatcher
+        var captured: EntityRenderState? = null
+        facingTheViewer(entity, view.yaw) {
+            captured = runCatching { dispatcher.getRenderer(entity).createRenderState(entity, 1f) }.getOrNull()
         }
+        val state = captured ?: return false
+        state.shadowPieces.clear()
+        state.outlineColor = 0
+        state.lightCoords = LightCoordsUtil.FULL_BRIGHT
+        state.nameTag = null
+        state.scoreText = null
+
+        val units = vanillaUnitsPerUiUnit()
+        val fit = min(rect.width / entity.bbWidth, rect.height / entity.bbHeight) * 0.92f
+        val size = fit * view.zoom.coerceAtLeast(0.01f)
+        // the picture is centered on the entity's middle, the portrait wants its feet on the rect's bottom
+        val centerX = rect.x + rect.width / 2f + view.offsetX
+        val centerY = rect.y + rect.height - size * entity.bbHeight / 2f + view.offsetY
+        val halfWidth = rect.width / 2f
+        val halfHeight = rect.height / 2f
+        val pitch = Quaternionf().rotateX(Math.toRadians(view.pitch.toDouble()).toFloat())
+        val rotation = Quaternionf().rotateZ(Math.PI.toFloat()).mul(pitch)
+        val translation = Vector3f(0f, state.boundingBoxHeight / 2f, 0f)
+        GuiDeferred.deferVanilla { graphics ->
+            graphics.entity(
+                state, size * units, translation, rotation, pitch,
+                ((centerX - halfWidth) * units).toInt(), ((centerY - halfHeight) * units).toInt(),
+                ((centerX + halfWidth) * units).toInt(), ((centerY + halfHeight) * units).toInt(),
+            )
+        }
+        return true
     }
-    
+
     private inline fun facingTheViewer(entity: Entity, yaw: Float, block: () -> Unit) {
         val yRot = entity.yRot
         val yRotO = entity.yRotO

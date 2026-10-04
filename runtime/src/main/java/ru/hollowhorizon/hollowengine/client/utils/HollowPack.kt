@@ -115,12 +115,14 @@ object HollowPack : PackResources {
         prefix: String,
         output: PackResources.ResourceOutput,
     ) {
-        resourceMap.filter { it.key.namespace == namespace && it.key.path.startsWith(prefix) }.forEach(output::accept)
+        resourceMap.forEach { (location, resource) ->
+            if (resource != null && location.namespace == namespace && location.path.startsWith(prefix)) output.accept(location, resource)
+        }
     }
 
     override fun getNamespaces(pType: PackType) = resourceMap.keys.map { it.namespace }.toSet()
 
-    override fun <T> getMetadataSection(type: MetadataSectionType<T>): T? =
+    override fun <T : Any> getMetadataSection(type: MetadataSectionType<T>): T? =
         PackMetadata.section(type, "Generated resources for HollowCore")
 
     override fun location(): PackLocationInfo {

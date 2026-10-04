@@ -59,8 +59,8 @@ abstract class HollowComposeUiScreen(
      *
      * The engine's own screen-render events are posted from a mixin on `Screen.extractRenderState`, which
      * this class overrides without calling through, so they never fire here. Content that needs vanilla
-     * drawing (item tooltips, for one) hooks in from this method instead. Vanilla draws all of it before
-     * the engine's own frame, see [GuiDeferred].
+     * drawing (item tooltips, for one) hooks in from this method instead. It is drawn by vanilla's GUI
+     * once more after the engine's own frame, see [GuiDeferred.deferVanilla].
      */
     protected open fun renderAfterUi(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) = Unit
 
@@ -108,7 +108,11 @@ abstract class HollowComposeUiScreen(
             ?: buildFrame(frameWidth, frameHeight, pointerX, pointerY, System.nanoTime())
         // vanilla draws its GUI after the whole frame is extracted: the engine draws with GL calls, so it waits for that
         GuiDeferred.defer { renderScaled(frame, scale) }
-        renderAfterUi(graphics, mouseX, mouseY)
+        // vanilla's own content that belongs over the engine's frame (item tooltips, for one) gets its own pass
+        GuiDeferred.deferVanilla { over ->
+            renderAfterUi(over, mouseX, mouseY)
+            over.extractDeferredElements(mouseX, mouseY, partialTick)
+        }
         UiCursorManager.claim(mc.window.window, this, surface.runtime.cursor, UiCursorManager.ScreenPriority)
         if (pipelineFrames()) {
             pipeline.schedule(frameWidth, frameHeight) {

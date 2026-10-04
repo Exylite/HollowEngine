@@ -1,5 +1,9 @@
 package ru.hollowhorizon.hollowengine.common.utils.compat
 
+import net.minecraft.world.clock.WorldClock
+import net.minecraft.world.clock.ClockNetworkState
+import net.minecraft.core.Holder
+import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.server.permissions.LevelBasedPermissionSet
 import net.minecraft.server.permissions.PermissionLevel
@@ -80,6 +84,13 @@ var ServerLevel.dayTime: Long
         val clock = registryAccess().get(WorldClocks.OVERWORLD).orElse(null) ?: return
         clockManager().setTotalTicks(clock, value)
     }
+
+/** The client's copy of the overworld clock; the server's next update takes it back, as `setDayTime` did. */
+fun ClientLevel.setDayTime(time: Long) {
+    val clock = registryAccess().get(WorldClocks.OVERWORLD).orElse(null) ?: return
+    val updates = mapOf<Holder<WorldClock>, ClockNetworkState>(clock to ClockNetworkState(time, 0f, 1f))
+    clockManager().handleUpdates(gameTime, updates)
+}
 
 /** Pixels in the engine's own packing: alpha, blue, green, red from the top, which is what 1.21 called RGBA. */
 fun NativeImage.getPixelRGBA(x: Int, y: Int): Int = ARGB.toABGR(getPixel(x, y))
