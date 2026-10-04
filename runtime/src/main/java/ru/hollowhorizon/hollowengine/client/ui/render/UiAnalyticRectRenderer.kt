@@ -110,6 +110,8 @@ internal class UiAnalyticRectRenderer : UiSdfRenderer(
         for (page in 0 until batch.glyphPageCount) {
             GL13.glActiveTexture(GL13.GL_TEXTURE0 + GlyphAtlasUnit + page)
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, batch.glyphPageTexture(page))
+            // vanilla and shader mods leave sampler objects on texture units; one would override the atlas's own filtering
+            GL33.glBindSampler(GlyphAtlasUnit + page, 0)
         }
         GL20.glUniform1fv(glyphDistanceRangeLocation, batch.glyphPageDistanceRanges())
         GL20.glUniform2fv(glyphAtlasSizeLocation, batch.glyphPageSizes())

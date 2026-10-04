@@ -56,8 +56,14 @@ Hooks that draw into the level (VFX, particles, gizmos, debug renderers) get the
 - The camera rotation is the model view matrix of the legacy `RenderSystem`, and `event.poseStack` starts out empty, as in 1.21. Putting the rotation in both places turns everything twice, which only shows once the camera is not at the effect.
 - The level is drawn with a **reversed depth in the zero-to-one range** (near and far swapped, depth cleared to 0, `GEQUAL`). `RenderSystem.reverseDepth` is on inside the hook, so `RenderSystem.nearerDepthFunc` and `RenderSystem.farDepth` give the right function and value; use them instead of `LEQUAL` and `1f`. Shaders that read depth convert it with `hollowengine_view_depth` from `hollowengine_vfx.glsl`, which knows both conventions.
 - Vanilla binds a framebuffer only while one of its render passes runs, and a pass can leave its scissor on. The hook binds the engine's wrapper of the main target and switches scissor off while the event runs, then puts both back.
-- Vanilla leaves sampler objects bound on the texture units, and their filters override those of the engine's own textures (a non-mipmapped texture behind a mipmapping sampler samples as zeros). `RenderSystem.bindTexture`, `GlStateManager._bindTexture` and `LegacyGl.bindTexture` unbind the sampler of the unit they bind to; raw `glBindTexture` calls do not.
+- Vanilla leaves sampler objects bound on the texture units, and their filters override those of the engine's own textures (a non-mipmapped texture behind a mipmapping sampler samples as zeros). `RenderSystem.bindTexture`, `GlStateManager._bindTexture` and `LegacyGl.bindTexture` unbind the sampler of the unit they bind to; raw `glBindTexture` calls do not, so the UI's glyph atlases (`UiAnalyticRectRenderer`) unbind it themselves.
 - `Uniform.setSafe` writes only as many components as the uniform has, like the 1.21 `Uniform`, so engine shaders can keep passing four values.
+
+### The UI on a 3.3 context
+
+Vanilla asks for a 3.3 core context, and some drivers (an AMD card on Windows, for one) give exactly that. There is no compute shader there, so the UI's tiled path renderer does its coarse pass on the CPU (the log says `CPU coarse pass`; `GPU compute` is what a 4.3+ context logs). To see that path on Mesa, start the client with `MESA_GL_VERSION_OVERRIDE=3.3 MESA_GLSL_VERSION_OVERRIDE=330`; `4.0` and `400` give a context that still has no compute but is new enough for shader packs that need GLSL 400.
+
+`GuiDeferred.flush` runs the engine's UI inside `LegacyGl.scope`, switches off the states other mods leave on that vanilla never looks at (stencil test, sRGB framebuffer, colour logic op) and puts them back. `UiGlDiagnostics` logs GL errors raised during the UI frame, and the ones that were already pending before it, with the state the frame ran in (the first few only). `-Dhollowengine.ui.debug` also logs the state of the first frame.
 
 `-Dhollowengine.vfx.debug` makes the VFX renderers log what a frame holds, the GL state it is drawn in, GL errors they leave behind and how many fragments each draw let through; it is the quickest way to tell "not drawn" from "drawn but invisible".
 
@@ -91,11 +97,14 @@ Since the game now ships with its own names there is nothing to remap:
 - Mixin scripts: a `.mixin.kts` compiles on a Fabric dedicated server from the packaged jar, its injections apply, and a `LivingEntity.jumpFromGround` hook shows its overlay message on a client (the documented examples with `replaceCall`, `beforeCall`, `inject` at a call and `modifyReturnValue` compile and bind too).
 - NeoForge dev client joins a NeoForge dedicated server that runs the packaged jar, and the `magic_shield` VFX renders in the world there as well (with Sodium and Iris in the dev environment).
 - The IDE's VFX preview (a `.vfx` file opened from the project tree) renders `magic_shield` with its grid and gizmos.
+- F3+B hitboxes on the packaged Fabric client: entity boxes, eye line and view vector draw, with an NPC and an engine model in view. Vanilla's line format needs a width on every vertex, so `RecordingBufferSource` records it.
+- The UI on a 3.3 core context (Mesa override, so the CPU coarse pass) with Sodium 0.9.0 and Iris 1.11.1 installed, at 1920x1080: the demo UI, the IDE overlay with its game view, and a script HUD draw. With Complementary Reimagined r5.9.3 on a 4.0 context (it needs GLSL 400) the HUD, hitboxes and the demo UI draw as well.
 - VFX in the packaged Fabric client: post effects (`soul`, `explosion` dimming), world surfaces (the `magic_shield` bubble with its ground contact glow, ribbons, particles, smoke and sparks of `explosion`), sky nodes (`sky_strike`), seen from first and third person.
 
 ## Known gaps
 
 - Not exercised yet: physics in-game (ragdolls on a client), real audio output of the video addon, the packaged jar on a NeoForge client, NPC models and scripts on a NeoForge client.
+- A report from an AMD RX 480 on Windows (3.3 core context, Sodium, Iris, Axiom with ImGui, JourneyMap) says the UI sometimes does not draw or stops responding after the two `Initialized UI ...` log lines. That setup was approximated on Linux (see above) without reproducing it; what could be hardened was (sampler objects on the glyph atlas units, stray GL switches, GL error logging). If it still happens, `latest.log` with `-Dhollowengine.ui.debug` shows the GL state and errors of the UI frame.
 - The vanilla model preview in the IDE is a stub.
 - The Iris integration is stubbed (Iris 1.11 changed its API); shader packs are not coordinated with the engine's rendering.
 - Vanilla items and tooltips inside engine UI are drawn in a second GUI pass, so their z-order against engine GL UI is approximate.

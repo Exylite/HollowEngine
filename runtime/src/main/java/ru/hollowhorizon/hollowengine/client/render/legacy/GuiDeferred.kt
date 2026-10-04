@@ -4,7 +4,9 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
 import ru.hollowhorizon.hollowengine.HollowEngine
+import ru.hollowhorizon.hollowengine.client.ui.render.UiGlDiagnostics
 
 /**
  * Vanilla only collects the GUI while screens and HUD layers are extracted and draws it afterwards,
@@ -71,6 +73,10 @@ object GuiDeferred {
         val minecraft = Minecraft.getInstance()
         val window = minecraft.window
         LegacyGl.scope {
+            UiGlDiagnostics.beginFrame()
+            // switches other mods leave on and vanilla never looks at: the UI would be clipped or recoloured by them
+            val stray = BooleanArray(StrayStates.size) { GL11.glIsEnabled(StrayStates[it]) }
+            for (i in StrayStates.indices) if (stray[i]) GL11.glDisable(StrayStates[i])
             val target = MainTarget.get()
             target.bindWrite(true)
             RenderSystem.reverseDepth = false
@@ -106,7 +112,11 @@ object GuiDeferred {
                 RenderSystem.applyModelViewMatrix()
                 RenderSystem.enableCull()
                 RenderSystem.defaultBlendFunc()
+                for (i in StrayStates.indices) if (stray[i]) GL11.glEnable(StrayStates[i])
+                UiGlDiagnostics.endFrame()
             }
         }
     }
+
+    private val StrayStates = intArrayOf(GL11.GL_STENCIL_TEST, GL30.GL_FRAMEBUFFER_SRGB, GL11.GL_COLOR_LOGIC_OP)
 }
