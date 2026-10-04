@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
@@ -62,7 +64,7 @@ internal object VfxMaterialStates {
     /** Binds what every shader of a surface may sample besides its texture: light and the scene. */
     fun bindCommonSamplers(shader: ShaderInstance, texture: Int) {
         shader.setSampler("Sampler0", texture)
-        shader.setSampler("Sampler2", HollowModelManager.lightTexture.id)
+        shader.setSampler("Sampler2", LegacyGl.lightmapTextureId())
         VfxSceneTextures.bind(shader)
     }
 
@@ -172,7 +174,7 @@ object VfxSceneTextures {
         val width = source.width
         val height = source.height
         val target = copy?.takeIf { it.width == width && it.height == height }
-            ?: TextureTarget(width, height, true, Minecraft.ON_OSX).also {
+            ?: TextureTarget(width, height, true).also {
                 copy?.destroyBuffers()
                 copy = it
             }

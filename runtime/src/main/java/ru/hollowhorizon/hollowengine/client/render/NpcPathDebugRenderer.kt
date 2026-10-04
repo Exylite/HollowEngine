@@ -2,9 +2,10 @@ package ru.hollowhorizon.hollowengine.client.render
 
 import net.minecraft.util.Util
 import net.minecraft.client.Minecraft
-import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
-import net.minecraft.client.renderer.debug.DebugRenderer
-import net.minecraft.client.renderer.debug.PathfindingRenderer
+import net.minecraft.util.ARGB
+import net.minecraft.util.Mth
+import ru.hollowhorizon.hollowengine.client.render.legacy.ImmediateBufferSource
+import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.pathfinder.Node
 import net.minecraft.world.level.pathfinder.Path
@@ -52,38 +53,38 @@ object NpcPathDebugRenderer {
         paths.values.removeIf { now - it.updatedAt > PATH_TIMEOUT_MS }
         if (paths.isEmpty()) return
 
-        val camera = event.camera.position
-        val bufferSource = Minecraft.getInstance().renderBuffers().bufferSource()
+        val camera = event.camera.position()
+        val buffers = DebugLines.batch(ImmediateBufferSource, event.poseStack)
         for ((_, debugPath) in paths) {
-            PathfindingRenderer.renderPath(
-                event.poseStack,
-                bufferSource,
-                debugPath.path,
-                NODE_RADIUS,
-                false,
-                true,
-                camera.x,
-                camera.y,
-                camera.z,
-            )
-            renderSteeringTarget(event, bufferSource, debugPath.steeringTarget)
+            val nodes = debugPath.path.let { path -> (0 until path.nodeCount).map { path.getNode(it) } }
+            nodes.zipWithNext().forEachIndexed { index, (from, to) ->
+                val hue = (index + 1).toFloat() / nodes.size * 0.33f
+                buffers.line(from.center(camera), to.center(camera), ARGB.opaque(Mth.hsvToRgb(hue, 0.9f, 0.9f)))
+            }
+            renderSteeringTarget(buffers, camera, debugPath.steeringTarget)
         }
-        bufferSource.endBatch()
+        ImmediateBufferSource.endBatch()
     }
 
-    private fun renderSteeringTarget(
-        event: RenderLevelStageEvent,
-        bufferSource: MultiBufferSource,
-        target: NpcPathDebugPoint,
-    ) {
-        val camera = event.camera.position
+    private fun Node.center(camera: Vec3) =
+        Vec3f((x + 0.5 - camera.x).toFloat(), (y + 0.5 - camera.y).toFloat(), (z + 0.5 - camera.z).toFloat())
+
+    /** The steering target as a wireframe box, in the colour vanilla's filled one had. */
+    private fun renderSteeringTarget(buffers: DebugLines.Batch, camera: Vec3, target: NpcPathDebugPoint) {
         val bounds = AABB.ofSize(
             Vec3(target.x, target.y + MARKER_HEIGHT * 0.5, target.z),
             MARKER_SIZE,
             MARKER_HEIGHT,
             MARKER_SIZE,
         ).move(-camera.x, -camera.y, -camera.z)
-        DebugRenderer.renderFilledBox(event.poseStack, bufferSource, bounds, 0.0f, 1.0f, 1.0f, 0.8f)
+        val center = bounds.center
+        buffers.box(
+            Vec3f(center.x.toFloat(), center.y.toFloat(), center.z.toFloat()),
+            Vec3f((bounds.xsize / 2).toFloat(), 0f, 0f),
+            Vec3f(0f, (bounds.ysize / 2).toFloat(), 0f),
+            Vec3f(0f, 0f, (bounds.zsize / 2).toFloat()),
+            ARGB.colorFromFloat(0.8f, 0.0f, 1.0f, 1.0f),
+        )
     }
 
     private data class DebugPath(

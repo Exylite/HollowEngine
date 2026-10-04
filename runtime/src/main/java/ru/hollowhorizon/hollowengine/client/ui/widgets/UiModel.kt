@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.widgets
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import androidx.compose.runtime.*
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack

@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
@@ -84,12 +86,10 @@ class ListRenderPipeline : RenderPipeline {
 
         RenderSystem.activeTexture(GL33.GL_TEXTURE2)
         val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
+        RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE1)
         val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-        RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-        Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+        RenderSystem.bindTexture(LegacyGl.overlayTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE0)
 
         val texture = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
@@ -125,12 +125,10 @@ class ListRenderPipeline : RenderPipeline {
 
         RenderSystem.activeTexture(GL33.GL_TEXTURE2)
         val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
+        RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE1)
         val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-        RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-        Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+        RenderSystem.bindTexture(LegacyGl.overlayTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE0)
 
         val texture = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding

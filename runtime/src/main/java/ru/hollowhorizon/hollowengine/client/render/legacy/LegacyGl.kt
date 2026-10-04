@@ -75,7 +75,19 @@ object LegacyGl {
     /** The overlay (hurt flash) texture. */
     fun overlayTextureId(): Int = textureId(Minecraft.getInstance().gameRenderer.overlayTexture().textureView)
 
-    fun textureId(location: Identifier): Int = textureId(Minecraft.getInstance().textureManager.getTexture(location))
+    private val rawTextures = HashMap<Identifier, Int>()
+
+    /** Lets the engine's own GL textures be asked for by location like the game's: they are not the game's to own. */
+    fun registerRawTexture(location: Identifier, glId: Int) {
+        rawTextures[location] = glId
+    }
+
+    fun releaseRawTexture(location: Identifier) {
+        rawTextures.remove(location)
+    }
+
+    fun textureId(location: Identifier): Int =
+        rawTextures[location] ?: textureId(Minecraft.getInstance().textureManager.getTexture(location))
 
     private const val GL20_CURRENT_PROGRAM = 0x8B8D
 

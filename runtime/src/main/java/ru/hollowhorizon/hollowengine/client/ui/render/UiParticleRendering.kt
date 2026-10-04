@@ -44,7 +44,7 @@ internal fun appendParticleQuads(
     val engine = Minecraft.getInstance().particleEngine
     val sprites = arrayOfNulls<List<TextureAtlasSprite>>(system.emitters.size)
     system.emitters.forEachIndexed { index, emitter ->
-        sprites[index] = engine.spriteSets[emitter.location]?.sprites
+        sprites[index] = engine.resourceManager.spriteSets[emitter.location]?.sprites
     }
     val interpolation = system.interpolation
     var quads: MutableList<UiTexturedQuad>? = null

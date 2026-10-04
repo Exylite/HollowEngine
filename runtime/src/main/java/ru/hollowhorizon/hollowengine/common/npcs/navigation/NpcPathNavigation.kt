@@ -115,7 +115,7 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
         val iterator = openedDoors.iterator()
         while (iterator.hasNext()) {
             val entry = iterator.next()
-            val distance = mob.position().distanceToSqr(entry.key.center)
+            val distance = mob.position().distanceToSqr(Vec3.atCenterOf(entry.key))
             if (distance <= DOOR_NEAR_DISTANCE_SQ) {
                 entry.setValue(true)
             } else if (entry.value) {

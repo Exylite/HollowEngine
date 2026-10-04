@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.renderer.SubmitNodeCollector
 import net.minecraft.client.renderer.rendertype.RenderTypes
 import net.minecraft.resources.Identifier
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 import net.minecraft.client.renderer.rendertype.RenderType as VanillaRenderType
 /**
  * What the engine says when it wants something drawn the way vanilla draws entities: a texture, and
@@ -58,6 +59,13 @@ class RenderType private constructor(
         RenderSystem.enableCull()
     }
 
+    /** What [ImmediateBufferSource] assembles this type's geometry as. */
+    internal val immediateMode: VertexFormat.Mode
+        get() = if (isLines) VertexFormat.Mode.DEBUG_LINES else VertexFormat.Mode.TRIANGLES
+
+    internal val immediateFormat: VertexFormat
+        get() = if (isLines) DefaultVertexFormat.POSITION_COLOR else DefaultVertexFormat.NEW_ENTITY
+
     override fun toString() = name
 
     companion object {
@@ -87,6 +95,48 @@ interface MultiBufferSource {
         fun endBatch()
         fun endBatch(type: RenderType)
     }
+}
+
+/**
+ * Draws what the engine writes the moment it is asked to, with the plain programs the engine ships:
+ * for the places that already run inside a frame the engine is drawing by hand, such as the UI and
+ * the world stages. Only line types are drawn here; entity geometry belongs to the model pipeline.
+ */
+object ImmediateBufferSource : MultiBufferSource.BufferSource {
+    private val builders = LinkedHashMap<RenderType, BufferBuilder>()
+
+    override fun getBuffer(type: RenderType): VertexConsumer =
+        builders.getOrPut(type) { BufferBuilder(type.immediateMode, type.immediateFormat) }
+
+    override fun endBatch() {
+        val pending = ArrayList(builders.entries)
+        builders.clear()
+        for ((type, builder) in pending) draw(type, builder)
+    }
+
+    override fun endBatch(type: RenderType) {
+        builders.remove(type)?.let { draw(type, it) }
+    }
+
+    private fun draw(type: RenderType, builder: BufferBuilder) {
+        val mesh = builder.build() ?: return
+        val shader = if (type.isLines) ModShaders.POSITION_COLOR else null
+        if (shader == null) {
+            mesh.close()
+            return
+        }
+        LegacyGl.scope {
+            type.setupRenderState()
+            RenderSystem.setShader(shader)
+            BufferUploader.drawWithShader(mesh)
+            type.clearRenderState()
+        }
+    }
+}
+
+/** What `Minecraft.renderBuffers()` used to be: the one place to ask for a consumer and have it drawn at once. */
+object LegacyRenderBuffers {
+    fun bufferSource(): MultiBufferSource.BufferSource = ImmediateBufferSource
 }
 
 /**

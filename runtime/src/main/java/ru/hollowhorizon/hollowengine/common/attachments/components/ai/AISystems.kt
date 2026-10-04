@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.components.ai
 
+import net.minecraft.server.level.ServerLevel
 import net.minecraft.resources.Identifier
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
@@ -95,7 +96,7 @@ object AIComponentSystems {
         (mob as? PathfinderMob)?.navigation?.stop()
         if (cooldown <= 0) {
             mob.swing(InteractionHand.MAIN_HAND)
-            mob.doHurtTarget(target)
+            (mob.level() as? ServerLevel)?.let { mob.doHurtTarget(it, target) }
             AIRuntimeState.attackCooldowns[entity.uuid] = attack.cooldownTicks.coerceAtLeast(1)
         }
     }

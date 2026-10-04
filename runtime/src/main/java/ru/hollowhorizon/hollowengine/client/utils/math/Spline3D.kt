@@ -230,7 +230,7 @@ class Spline3D(points: List<Vector3d>, rotations: List<Vector3f>) {
     }
 
     fun draw(stack: PoseStack) {
-        RenderSystem.setShader ModShaders.POSITION_TEX
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
 
         val bufferbuilder = tessellator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR)

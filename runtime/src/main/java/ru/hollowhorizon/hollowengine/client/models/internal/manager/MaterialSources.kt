@@ -5,7 +5,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.DefaultPlayerSkin
 import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.resources.Identifier
-import net.minecraft.world.level.block.entity.SkullBlockEntity
+import net.minecraft.world.entity.player.PlayerModelType
 import ru.hollowhorizon.hollowengine.common.attachments.components.PlayerArms
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
 import ru.hollowhorizon.hollowengine.common.models.MaterialSource
@@ -43,9 +43,9 @@ object MaterialSources {
         is MaterialSource.Player -> skinOf(source.player, onLoaded).let { skin ->
             ResolvedMaterial(
                 texture = when (source.part) {
-                    PlayerSkinPart.SKIN -> skin.texture()
-                    PlayerSkinPart.CAPE -> skin.capeTexture()
-                    PlayerSkinPart.ELYTRA -> skin.elytraTexture()
+                    PlayerSkinPart.SKIN -> skin.body().texturePath()
+                    PlayerSkinPart.CAPE -> skin.cape()?.texturePath()
+                    PlayerSkinPart.ELYTRA -> skin.elytra()?.texturePath()
                 },
             )
         }
@@ -55,8 +55,8 @@ object MaterialSources {
     fun armsOf(source: MaterialSource): PlayerArms? = when (source) {
         is MaterialSource.Texture -> null
         is MaterialSource.Player -> when (skinOf(source.player) {}.model()) {
-            PlayerSkin.Model.SLIM -> PlayerArms.SLIM
-            PlayerSkin.Model.WIDE -> PlayerArms.WIDE
+            PlayerModelType.SLIM -> PlayerArms.SLIM
+            PlayerModelType.WIDE -> PlayerArms.WIDE
         }
     }
 
@@ -78,11 +78,13 @@ object MaterialSources {
     }
 
     private fun lookUp(player: String, uuid: UUID?): CompletableFuture<PlayerSkin?> {
-        val profile = uuid?.let { SkullBlockEntity.fetchGameProfile(it) } ?: SkullBlockEntity.fetchGameProfile(player)
-
-        return profile.thenCompose { found ->
-            found.map(Minecraft.getInstance().skinManager::getOrLoad)
-                .orElseGet { CompletableFuture.completedFuture(null) }
+        // the resolver asks Mojang's servers and answers from its own cache, so it runs off the render thread
+        return CompletableFuture.supplyAsync {
+            val resolver = Minecraft.getInstance().services().profileResolver()
+            (uuid?.let(resolver::fetchById) ?: resolver.fetchByName(player)).orElse(null)
+        }.thenCompose { found ->
+            if (found == null) CompletableFuture.completedFuture<PlayerSkin?>(null)
+            else Minecraft.getInstance().skinManager.get(found).thenApply { it.orElse(null) }
         }.exceptionally { null }
     }
 

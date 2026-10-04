@@ -2,7 +2,8 @@ package ru.hollowhorizon.hollowengine.client.ui.ide.asset
 
 import net.minecraft.client.Minecraft
 import net.minecraft.resources.Identifier
-import net.minecraft.world.inventory.InventoryMenu
+import net.minecraft.client.renderer.texture.TextureAtlas
+import net.minecraft.data.AtlasIds
 import ru.hollowhorizon.hollowengine.client.ui.UiLength
 import ru.hollowhorizon.hollowengine.client.ui.style.UiImageUv
 
@@ -20,14 +21,14 @@ internal fun atlasSpriteId(location: Identifier): Identifier? {
 internal fun atlasTexturePreview(location: Identifier): AtlasTexturePreview? {
     val name = atlasSpriteId(location) ?: return null
     val atlas = runCatching {
-        Minecraft.getInstance().modelManager.getAtlas(InventoryMenu.BLOCK_ATLAS)
+        Minecraft.getInstance().atlasManager.getAtlasOrThrow(AtlasIds.BLOCKS)
     }.getOrNull() ?: return null
-    val sprite = atlas.getSprite(name)?.takeIf { it.contents().name() == name } ?: return null
+    val sprite = atlas.getSprite(name).takeIf { it.contents().name() == name } ?: return null
     val width = sprite.u1 - sprite.u0
     val height = sprite.v1 - sprite.v0
     if (width <= 0f || height <= 0f) return null
     return AtlasTexturePreview(
-        atlas = InventoryMenu.BLOCK_ATLAS,
+        atlas = TextureAtlas.LOCATION_BLOCKS,
         uv = UiImageUv(
             UiLength.Percent(sprite.u0),
             UiLength.Percent(sprite.v0),

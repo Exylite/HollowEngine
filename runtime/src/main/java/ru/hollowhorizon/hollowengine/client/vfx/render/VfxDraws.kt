@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft

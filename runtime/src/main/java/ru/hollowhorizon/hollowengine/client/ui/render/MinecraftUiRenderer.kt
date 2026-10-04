@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import com.mojang.blaze3d.platform.Lighting
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
@@ -695,7 +697,7 @@ class MinecraftUiRenderer {
 
     private fun createSvgRasterTexture(key: SvgRasterKey): SvgRasterTexture {
         val image = UiSvgRasterizer.rasterize(key.location, key.revision, key.width, key.height)
-        val texture = DynamicTexture(image)
+        val texture = DynamicTexture({ "hollowengine:ui" }, image)
         val location = svgDynamicTextureLocation(key)
         Minecraft.getInstance().textureManager.register(location, texture)
         return SvgRasterTexture(location, texture)

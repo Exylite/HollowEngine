@@ -146,9 +146,9 @@ class UiDialoguePresentation(
     }
 
     private fun handle(session: DialogueSession, player: ServerPlayer, payload: CompoundTag) {
-        when (payload.getString(DialogueUiKeys.Action)) {
+        when (payload.getStringOr(DialogueUiKeys.Action, "")) {
             DialogueUiKeys.AdvanceAction -> if (phase == DialoguePhase.LINE) session.advance(player)
-            DialogueUiKeys.ChooseAction -> session.choose(player, payload.getInt(DialogueUiKeys.Index))
+            DialogueUiKeys.ChooseAction -> session.choose(player, payload.getIntOr(DialogueUiKeys.Index, 0))
         }
     }
 

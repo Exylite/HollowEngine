@@ -2,6 +2,10 @@
 package ru.hollowhorizon.hollowengine.common.registry
 
 import net.minecraft.core.Registry
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.Item
+import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.resources.Identifier
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Items
@@ -43,6 +47,14 @@ open class HollowRegistry(val modId: String = MODID) {
 
     /** A plain [id] lands in [modId]; a full `namespace:path` is used as written. */
     fun location(id: String): Identifier = if (':' in id) id.rl else "$modId:$id".rl
+
+    /** Item properties already carrying the id the item is registered under: the game refuses an item without one. */
+    fun itemProperties(id: Identifier): Item.Properties =
+        Item.Properties().setId(ResourceKey.create(Registries.ITEM, id))
+
+    /** The same for blocks. */
+    fun blockProperties(id: Identifier): BlockBehaviour.Properties =
+        BlockBehaviour.Properties.of().setId(ResourceKey.create(Registries.BLOCK, id))
 
     fun creativeTab(name: String, block: CreativeModeTab.Builder.() -> Unit = {}) = register(name) {
         HollowCreativeTab.builder()

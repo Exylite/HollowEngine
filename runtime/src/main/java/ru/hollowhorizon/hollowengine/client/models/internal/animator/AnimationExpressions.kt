@@ -58,7 +58,7 @@ val AnimationDeclarations: Declarations<AnimatorEvaluationContext> = Declaration
         entityFloat("velocity_x") { it.deltaMovement.x.toFloat() }
         entityFloat("velocity_y") { it.deltaMovement.y.toFloat() }
         entityFloat("velocity_z") { it.deltaMovement.z.toFloat() }
-        entityFloat("fall_distance") { it.fallDistance }
+        entityFloat("fall_distance") { it.fallDistance.toFloat() }
         entityBool("is_in_water") { it.isInWater }
         entityBool("is_under_water") { it.isUnderWater }
         entityBool("is_in_lava") { it.isInLava }

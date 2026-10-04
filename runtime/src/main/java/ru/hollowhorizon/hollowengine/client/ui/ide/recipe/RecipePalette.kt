@@ -60,7 +60,7 @@ internal object RecipeItemIndex {
     }
 
     private fun build(): List<PaletteEntry> = BuiltInRegistries.ITEM.keySet().sorted().mapNotNull { id ->
-        val stack = ItemStack(BuiltInRegistries.ITEM.get(id)).takeUnless(ItemStack::isEmpty) ?: return@mapNotNull null
+        val stack = ItemStack(BuiltInRegistries.ITEM.getValue(id)).takeUnless(ItemStack::isEmpty) ?: return@mapNotNull null
         val name = stack.hoverName.string
         // One lowercase string per item, so a search is one pass of `contains` with nothing allocated.
         PaletteEntry(RecipePick(stack), id.toString(), name, "$id\n${name.lowercase()}")
@@ -78,9 +78,9 @@ internal object RecipeItemIndex {
 
     /** Tags only need their first item for an icon; the rest of a big tag is never walked. */
     private fun tags(text: String): List<PaletteEntry> =
-        BuiltInRegistries.ITEM.getTagNames().map { it.location().toString() }.filter { text in it }.sorted().toList()
+        BuiltInRegistries.ITEM.getTags().map { it.key().location().toString() }.filter { text in it }.sorted().toList()
             .mapNotNull { id ->
-                val first = BuiltInRegistries.ITEM.getTag(
+                val first = BuiltInRegistries.ITEM.get(
                     TagKey.create(
                         Registries.ITEM, Identifier.tryParse(id) ?: return@mapNotNull null
                     )
@@ -221,7 +221,7 @@ private fun PaletteCell(session: RecipeEditorSession, entry: PaletteEntry) {
 /** The player's stacks as they are, components and all, for items the registry alone cannot give. */
 private fun inventoryEntries(): List<PaletteEntry> {
     val inventory = Minecraft.getInstance().player?.inventory ?: return emptyList()
-    return (inventory.items + inventory.armor + inventory.offhand).withIndex().filterNot { it.value.isEmpty }
+    return (0 until inventory.containerSize).map(inventory::getItem).withIndex().filterNot { it.value.isEmpty }
         .map { (slot, stack) -> PaletteEntry(RecipePick(stack.copy()), "inventory-$slot", stack.hoverName.string) }
 }
 

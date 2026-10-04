@@ -87,7 +87,7 @@ internal fun hollowIdeWorldMenuItems(): List<UiDropdownItem> {
     WorldControlClient.error?.let { return listOf(UiDropdownItem(it.lang, enabled = false)) }
     val state = WorldControlClient.state ?: return listOf(UiDropdownItem(WorldLang.LOADING.lang, enabled = false))
 
-    fun rule(rule: WorldRule, label: String = rule.key.descriptionId.lang, separatorBefore: Boolean = false) =
+    fun rule(rule: WorldRule, label: String = rule.descriptionId.lang, separatorBefore: Boolean = false) =
         UiDropdownItem(
             label = label,
             checked = state.rules[rule] == true,

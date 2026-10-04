@@ -2,6 +2,7 @@ package ru.hollowhorizon.hollowengine.client
 
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.KeyMapping
+import net.minecraft.resources.Identifier
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
 import ru.hollowhorizon.hollowengine.client.particles.BedrockParticles
@@ -58,7 +59,7 @@ object HollowCoreClient {
         event.registerEntity(ModEntities.NPC_ENTITY, ::EmptyEntityRenderer)
     }
 
-    val KEY_V = KeyMapping("key.v", GLFW.GLFW_KEY_V, "key.v1")
+    val KEY_V = KeyMapping("key.v", GLFW.GLFW_KEY_V, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("hollowengine", "main")))
 
     @SubscribeEvent
     fun onRegisterKeys(event: RegisterKeyBindingsEvent) {

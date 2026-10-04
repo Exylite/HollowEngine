@@ -12,7 +12,7 @@ import ru.hollowhorizon.hollowengine.common.ui.hud.ServerHudLayers
  * ```kotlin
  * val session = player.openUi("mypack:quest_log") {
  *     put(Title, "The Missing Cargo")
- *     onEvent { payload -> if (payload.getString("action") == "accept") acceptQuest() }
+ *     onEvent { payload -> if (payload.getStringOr("action", "") == "accept") acceptQuest() }
  * }
  * ```
  */

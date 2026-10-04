@@ -66,7 +66,7 @@ fun npc(
     return NpcEntity(level).apply {
         inventory.resize(inventorySize)
         setPos(pos.x, pos.y, pos.z)
-        moveTo(pos.x, pos.y, pos.z, rotation.x, rotation.y)
+        snapTo(pos.x, pos.y, pos.z, rotation.x, rotation.y)
 
         set(Model(model))
         set(HitboxComponent(HitboxMode.PULLING))

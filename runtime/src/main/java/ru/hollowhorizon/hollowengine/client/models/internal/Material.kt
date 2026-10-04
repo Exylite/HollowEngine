@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.internal
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance

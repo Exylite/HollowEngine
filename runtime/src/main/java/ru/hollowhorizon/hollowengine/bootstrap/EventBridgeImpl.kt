@@ -45,7 +45,7 @@ object EventBridgeImpl : EventBridge {
         RegisterEntityRenderersEvent.post(RegisterEntityRenderersEvent { a, b -> consumer.accept(a, b) })
     }
 
-    override fun onRegisterBlockEntityRenderers(consumer: BiConsumer<BlockEntityType<out BlockEntity>, BlockEntityRendererProvider<BlockEntity>>) {
+    override fun onRegisterBlockEntityRenderers(consumer: BiConsumer<BlockEntityType<out BlockEntity>, BlockEntityRendererProvider<BlockEntity, *>>) {
         RegisterBlockEntityRenderersEvent.post(RegisterBlockEntityRenderersEvent { a, b -> consumer.accept(a, b) })
     }
 

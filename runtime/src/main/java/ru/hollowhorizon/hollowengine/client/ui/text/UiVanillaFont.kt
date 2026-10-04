@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.getPixelRGBA
 import com.mojang.blaze3d.platform.NativeImage
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull

@@ -133,7 +133,7 @@ object CommonNetworkManager : NetworkManager {
     fun sendTrackingEntity(entity: Entity, packet: HollowPacket) {
         val chunkCache = entity.level().chunkSource
         if (chunkCache is ServerChunkCache) {
-            chunkCache.broadcastAndSend(entity, packet.toVanilla(true))
+            chunkCache.sendToTrackingPlayersAndSelf(entity, packet.toVanilla(true))
         } else {
             throw IllegalStateException("Cannot send clientbound payloads on the client")
         }
@@ -142,7 +142,7 @@ object CommonNetworkManager : NetworkManager {
     fun sendAddonTrackingEntity(entity: Entity, packet: HollowAddonPacket) {
         val chunkCache = entity.level().chunkSource
         if (chunkCache is ServerChunkCache) {
-            chunkCache.broadcastAndSend(entity, HollowAddonPacketRegistry.encodeForClient(packet).toVanilla(true))
+            chunkCache.sendToTrackingPlayersAndSelf(entity, HollowAddonPacketRegistry.encodeForClient(packet).toVanilla(true))
         } else {
             throw IllegalStateException("Cannot send clientbound payloads on the client")
         }

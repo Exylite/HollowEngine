@@ -43,12 +43,12 @@ fun fillAnimationVariables(context: AnimatorEvaluationContext, entity: Entity?, 
 
 internal fun localForwardSpeed(velocity: Vec3, yaw: Float): Float {
     val yawRad = yaw * Mth.DEG_TO_RAD
-    return velocity.x.toFloat() * -Mth.sin(yawRad) + velocity.z.toFloat() * Mth.cos(yawRad)
+    return velocity.x.toFloat() * -Mth.sin(yawRad.toDouble()) + velocity.z.toFloat() * Mth.cos(yawRad.toDouble())
 }
 
 internal fun localSideSpeed(velocity: Vec3, yaw: Float): Float {
     val yawRad = yaw * Mth.DEG_TO_RAD
-    return velocity.x.toFloat() * Mth.cos(yawRad) + velocity.z.toFloat() * Mth.sin(yawRad)
+    return velocity.x.toFloat() * Mth.cos(yawRad.toDouble()) + velocity.z.toFloat() * Mth.sin(yawRad.toDouble())
 }
 
 internal fun signedLocomotionSpeed(horizontalSpeed: Float, localForwardSpeed: Float): Float =

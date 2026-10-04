@@ -172,7 +172,7 @@ internal fun stackOf(id: String): ItemStack? = itemOf(id)?.let(::ItemStack)
 
 internal fun tagItems(id: String): List<ItemStack> {
     val location = Identifier.tryParse(id.removePrefix("#")) ?: return emptyList()
-    return BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, location))
+    return BuiltInRegistries.ITEM.get(TagKey.create(Registries.ITEM, location))
         .map { set -> set.map { ItemStack(it.value()) } }.orElse(emptyList())
 }
 

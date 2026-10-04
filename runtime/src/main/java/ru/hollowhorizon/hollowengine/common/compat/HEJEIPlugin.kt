@@ -17,7 +17,7 @@ class HEJEIPlugin : IModPlugin {
         ModifyRecipeViewerEvent.RegisterItemSubtypes.post(ModifyRecipeViewerEvent.RegisterItemSubtypes(registration))
     }
 
-    override fun <T : Any?> registerFluidSubtypes(
+    override fun <T : Any> registerFluidSubtypes(
         registration: ISubtypeRegistration,
         platformFluidHelper: IPlatformFluidHelper<T>,
     ) {

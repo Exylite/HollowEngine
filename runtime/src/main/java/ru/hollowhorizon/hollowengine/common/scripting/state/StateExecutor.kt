@@ -70,11 +70,11 @@ class StateContext(
     companion object {
 
         fun deserialize(serialized: CompoundTag): StateContext {
-            val children = serialized.getCompound("children")
+            val children = serialized.getCompoundOrEmpty("children")
             return StateContext(
-                serialized.getCompound("self"),
-                children.allKeys.associateWith { deserialize(children.getCompound(it)) }.toMutableMap(),
-                serialized.getString("next_state")
+                serialized.getCompoundOrEmpty("self"),
+                children.allKeys.associateWith { deserialize(children.getCompoundOrEmpty(it)) }.toMutableMap(),
+                serialized.getStringOr("next_state", "")
             )
         }
     }

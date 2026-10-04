@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 import net.minecraft.client.Minecraft
+import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.renderer.texture.AbstractTexture
+import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
@@ -26,7 +28,6 @@ import ru.hollowhorizon.hollowengine.client.models.internal.Model
 import ru.hollowhorizon.hollowengine.client.models.internal.renameMaterials
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.configureStaticRenderPaths
 import ru.hollowhorizon.hollowengine.client.models.obj.ObjModelLoader
-import ru.hollowhorizon.hollowengine.client.textures.GlTexture
 import ru.hollowhorizon.hollowengine.client.utils.stream
 import ru.hollowhorizon.hollowengine.common.coroutines.scopeAsync
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
@@ -42,7 +43,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 object HollowModelManager : SimplePreparableReloadListener<Map<Identifier, PreparedModelUpdate<Model>>>() {
-    lateinit var lightTexture: AbstractTexture
     private val models = ConcurrentHashMap<Identifier, MutableStateFlow<Model>>()
     private val indexedModels = ConcurrentHashMap.newKeySet<Identifier>()
     private val metadata = ConcurrentHashMap<Identifier, ModelMetadata>()
@@ -201,57 +201,19 @@ object HollowModelManager : SimplePreparableReloadListener<Map<Identifier, Prepa
         GL20.glLinkProgram(glProgramMorphing)
     }
 
+    /** A 2x2 texture of one color: what a material's color, normal and specular maps are when a model has none. */
+    private fun solidTexture(label: String, argb: Int): DynamicTexture {
+        val image = NativeImage(2, 2, false)
+        for (x in 0 until 2) for (y in 0 until 2) image.setPixel(x, y, argb)
+        return DynamicTexture({ label }, image)
+    }
+
     fun initialize() {
         val textureManager = Minecraft.getInstance().textureManager
 
-        lightTexture = textureManager.getTexture("dynamic/light_map_1".rl)
-
-        val currentTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D)
-
-        val defaultColorMap = GL11.glGenTextures()
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, defaultColorMap)
-        GL11.glTexImage2D(
-            GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, 2, 2, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, create(
-                byteArrayOf(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1)
-            )
-        )
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0)
-
-        val defaultNormalMap = GL11.glGenTextures()
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, defaultNormalMap)
-        GL11.glTexImage2D(
-            GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, 2, 2, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, create(
-                byteArrayOf(-128, -128, -1, -1, -128, -128, -1, -1, -128, -128, -1, -1, -128, -128, -1, -1)
-            )
-        )
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0)
-
-        val defaultSpecularMap = GL11.glGenTextures()
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, defaultSpecularMap)
-        GL11.glTexImage2D(
-            GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, 2, 2, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, create(
-                byteArrayOf(
-                    0, 0, 0, 0, // Pixel 1: Black color, Max Roughness
-                    0, 0, 0, 0, // Pixel 2
-                    0, 0, 0, 0, // Pixel 3
-                    0, 0, 0, 0  // Pixel 4
-                )
-            )
-        )
-        Minecraft.getInstance().player?.random
-
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_BASE_LEVEL, 0)
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, 0)
-
-
-
-        textureManager.register("${MODID}:default_color_map".rl, GlTexture(defaultColorMap))
-        textureManager.register("${MODID}:default_normal_map".rl, GlTexture(defaultNormalMap))
-        textureManager.register("${MODID}:default_specular_map".rl, GlTexture(defaultSpecularMap))
-
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, currentTexture)
+        textureManager.register("${MODID}:default_color_map".rl, solidTexture("${MODID}:default_color_map", -0x1))
+        textureManager.register("${MODID}:default_normal_map".rl, solidTexture("${MODID}:default_normal_map", 0xFF8080FF.toInt()))
+        textureManager.register("${MODID}:default_specular_map".rl, solidTexture("${MODID}:default_specular_map", 0))
 
         createSkinningProgramGL33()
     }

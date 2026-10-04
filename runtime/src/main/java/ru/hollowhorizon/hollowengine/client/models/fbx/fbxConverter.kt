@@ -502,7 +502,7 @@ fun Material.convert(model: Identifier, color: Vec4f): InternalMaterial {
                 RenderSystem.recordRenderCall {
                     try {
                         val nativeImage = NativeImage.read(media.content)
-                        val dynamicTexture = DynamicTexture(nativeImage)
+                        val dynamicTexture = DynamicTexture({ "hollowengine:fbx" }, nativeImage)
                         Minecraft.getInstance().textureManager.register(textureLocation, dynamicTexture)
                     } catch (e: IOException) {
                         HollowEngine.LOGGER.error("Invalid texture $textureLocation!")

@@ -19,22 +19,22 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
 
     override fun getId(value: T): Int = registry.getId(value)
 
-    override fun getById(id: Int): T? = registry.getHolder(id).getOrNull()?.value()
+    override fun getById(id: Int): T? = registry.get(id).getOrNull()?.value()
 
     override fun getHolder(id: Int): Holder<T>? {
-        val holder = registry.getHolder(id).getOrNull() ?: return null
+        val holder = registry.get(id).getOrNull() ?: return null
         return Holder<T>(holder.key().location(), id).apply {
             this.value = holder.value()
         }
     }
 
     override fun getOrNull(key: Identifier): T? {
-        return registry.get(key)
+        return registry.getValue(key)
     }
 
     override fun getHolder(key: Identifier): Holder<T>? {
         val holder =
-            registry.getHolder(ResourceKey.create(registry.key(), key)).getOrNull()
+            registry.get(ResourceKey.create(registry.key(), key)).getOrNull()
                 ?: return null
         return Holder<T>(key, registry.getId(holder.value())).apply {
             this.value = holder.value()
@@ -46,7 +46,7 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
     }
 
     override fun iterator(): Iterator<Holder<T>> {
-        return registry.holders().map {
+        return registry.listElements().map {
             Holder<T>(it.key().location(), getId(it.value())).apply {
                 this.value = it.value()
             }

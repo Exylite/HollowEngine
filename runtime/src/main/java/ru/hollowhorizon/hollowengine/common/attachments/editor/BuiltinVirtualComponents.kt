@@ -102,7 +102,7 @@ object BuiltinVirtualComponents {
     private fun readAttributes(entity: LivingEntity): EntityAttributes = EntityAttributes(
         health = entity.health,
         attributes = BuiltInRegistries.ATTRIBUTE.entrySet().mapNotNull { (key, _) ->
-                val holder = BuiltInRegistries.ATTRIBUTE.getHolder(key).orElse(null) ?: return@mapNotNull null
+                val holder = BuiltInRegistries.ATTRIBUTE.get(key).orElse(null) ?: return@mapNotNull null
                 if (!entity.attributes.hasAttribute(holder)) return@mapNotNull null
                 key.location().toString() to entity.getAttributeBaseValue(holder)
             }.sortedBy { it.first }.toMap(),
@@ -111,7 +111,7 @@ object BuiltinVirtualComponents {
     private fun writeAttributes(entity: LivingEntity, values: EntityAttributes) {
         values.attributes.forEach { (id, value) ->
             val key = ResourceKey.create(Registries.ATTRIBUTE, runCatching { id.rl }.getOrNull() ?: return@forEach)
-            val holder = BuiltInRegistries.ATTRIBUTE.getHolder(key).orElse(null) ?: return@forEach
+            val holder = BuiltInRegistries.ATTRIBUTE.get(key).orElse(null) ?: return@forEach
             val instance = entity.getAttribute(holder) ?: return@forEach
             instance.baseValue = value
         }

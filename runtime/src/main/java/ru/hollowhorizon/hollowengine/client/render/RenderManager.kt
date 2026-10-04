@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import net.minecraft.util.LightCoordsUtil
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.math.Axis
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LevelRenderer
 import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import net.minecraft.client.renderer.entity.LivingEntityRenderer
@@ -170,7 +170,7 @@ object RenderManager {
                     poseStack,
                     bufferSource,
                     light,
-                    (entity as? LivingEntity)?.let { LivingEntityRenderer.getOverlayCoords(it, 0f) }
+                    (entity as? LivingEntity)?.let { OverlayTexture.pack(OverlayTexture.u(0f), OverlayTexture.v(it.hurtTime > 0 || it.deathTime > 0)) }
                         ?: OverlayTexture.NO_OVERLAY,
                     allowInstancing = allowInstancing,
                     openedBatchedRenderTypes = openedBatchedRenderTypes,
@@ -206,10 +206,10 @@ object RenderManager {
             val above = position.above()
 
             return if (!level.getBlockState(above).isAir) packedLight
-            else LevelRenderer.getLightColor(level, above)
+            else LightCoordsUtil.getLightCoords(level, above)
         }
 
-        return LevelRenderer.getLightColor(level, position)
+        return LightCoordsUtil.getLightCoords(level, position)
     }
 
     private fun shouldAllowInstancingInCurrentPass(): Boolean = true

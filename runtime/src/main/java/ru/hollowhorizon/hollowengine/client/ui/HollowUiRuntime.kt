@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui
 
-import net.minecraft.client.gui.screens.Screen.hasShiftDown
+import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.client.ui.layout.UiLayoutNode
 import ru.hollowhorizon.hollowengine.client.ui.layout.UiLayoutPipeline
@@ -171,7 +171,7 @@ class HollowUiRuntime(
     theme: CompiledHss? = null,
     stylesheet: CompiledHss? = null,
     private val scrollState: UiScrollState = UiScrollState(),
-    private val horizontalScrollModifierDown: () -> Boolean = { hasShiftDown() },
+    private val horizontalScrollModifierDown: () -> Boolean = { Minecraft.getInstance().hasShiftDown() },
     val profiler: UiProfiler = UiProfiler(),
 ) {
     private val transitionState = UiTransitionState()

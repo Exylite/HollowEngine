@@ -1,5 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.upload
+import ru.hollowhorizon.hollowengine.client.render.legacy.prepareImage
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.common.utils.compat.setPixelRGBA
 import com.mojang.blaze3d.platform.NativeImage
 import com.mojang.blaze3d.platform.TextureUtil
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
@@ -18,7 +22,7 @@ internal class GlyphAtlasTexture(val size: Int) : GlyphCellUploader {
 
     init {
         RenderSystem.bindTexture(textureId)
-        TextureUtil.prepareImage(textureId, size, size)
+        LegacyGl.prepareImage(textureId, size, size)
         NativeImage(size, size, false).use {
             it.upload(0, 0, 0, 0, 0, size, size, true, true, false, false)
         }

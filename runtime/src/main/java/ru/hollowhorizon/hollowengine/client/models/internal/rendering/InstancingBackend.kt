@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
@@ -93,15 +95,13 @@ inline fun withInstancingRenderState(body: () -> Unit) {
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE2)
     val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-    RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
-    RenderSystem.setShaderTexture(2, HollowModelManager.lightTexture.id)
+    RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
+    RenderSystem.setShaderTexture(2, LegacyGl.lightmapTextureId())
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE1)
     val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-    Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-    RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-    RenderSystem.setShaderTexture(1, RenderSystem.getShaderTexture(1))
-    Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+    RenderSystem.bindTexture(LegacyGl.overlayTextureId())
+    RenderSystem.setShaderTexture(1, LegacyGl.overlayTextureId())
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE0)
     val texture0 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding

@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.common.events.client.render
 
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.vertex.PoseStack
-import net.minecraft.client.model.object.skull.SkullModelBase
+import net.minecraft.client.model.`object`.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition

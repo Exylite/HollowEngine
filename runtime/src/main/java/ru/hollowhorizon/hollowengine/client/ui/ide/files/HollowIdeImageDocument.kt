@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.asByteArray
+import ru.hollowhorizon.hollowengine.common.utils.compat.getPixelRGBA
+import ru.hollowhorizon.hollowengine.common.utils.compat.setPixelRGBA
 import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.DynamicTexture
@@ -20,17 +23,17 @@ internal class HollowIdeImageDocument(
 ) : HollowIdeFileDocument {
     private val format = ImageFileFormat.fromPath(path)
     private var image = NativeImage.read(bytes)
-    private val texture = DynamicTexture(image)
+    private val texture = DynamicTexture({ "hollowengine:ide_image" }, image)
     private val history = HollowIdeImageHistory()
     private var textureDirty = false
     private var closed = false
 
     val width: Int get() = image.width
     val height: Int get() = image.height
-    val textureLocation: Identifier = Minecraft.getInstance().textureManager.register(
-        "hollowide-image-${NextTextureId.incrementAndGet()}",
-        texture,
-    )
+    val textureLocation: Identifier = Identifier.fromNamespaceAndPath(
+        "hollowengine",
+        "ide_image/${NextTextureId.incrementAndGet()}",
+    ).also { Minecraft.getInstance().textureManager.register(it, texture) }
     val canUndo: Boolean get() = history.canUndo
     val canRedo: Boolean get() = history.canRedo
     val isModified: Boolean get() = history.isModified

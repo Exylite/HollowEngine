@@ -22,8 +22,8 @@ suspend fun stateTag(): CompoundTag = stateContext().tag
 
 suspend fun runOnce(name: String, block: suspend () -> Unit) {
     val tag = stateTag()
-    val list = tag.getList("once_tasks$", 8)
-    val hasEntry = list.map { (it as StringTag).asString }.contains(name)
+    val list = tag.getListOrEmpty("once_tasks$")
+    val hasEntry = list.map { (it as StringTag).value() }.contains(name)
     if (hasEntry) return
 
     block()

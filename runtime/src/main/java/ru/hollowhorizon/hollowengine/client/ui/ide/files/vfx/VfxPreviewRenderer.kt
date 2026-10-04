@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.vfx
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
@@ -47,7 +48,7 @@ internal class VfxPreviewRenderer {
             val offscreen = targetOf(size.first, size.second)
             texture = offscreen.colorTextureId
             offscreen.setClearColor(Background.red, Background.green, Background.blue, 1f)
-            offscreen.clear(Minecraft.ON_OSX)
+            offscreen.clear()
             offscreen.bindWrite(true)
 
             val view = preview.viewMatrix(shake)
@@ -106,7 +107,7 @@ internal class VfxPreviewRenderer {
         val current = target
         if (current != null && current.width == width && current.height == height) return current
         current?.destroyBuffers()
-        return TextureTarget(width, height, true, Minecraft.ON_OSX).also { target = it }
+        return TextureTarget(width, height, true).also { target = it }
     }
 
     private fun drawFloor(lines: DebugLines.Batch) {

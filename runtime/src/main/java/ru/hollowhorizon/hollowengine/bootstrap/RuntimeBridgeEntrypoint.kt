@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.bootstrap
 
+import net.minecraft.server.packs.resources.ResourceManager
+import net.minecraft.server.packs.resources.Resource
 import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
@@ -14,7 +16,7 @@ import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.model.object.skull.SkullModelBase
+import net.minecraft.client.model.`object`.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
@@ -40,7 +42,6 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.NonNullList
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.FileToIdConverter
 import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
@@ -508,7 +509,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         }, Util.backgroundExecutor())
     }
 
-    override fun createSoundConverter(): FileToIdConverter = ExtendedSoundConverter
+    override fun listExtraSounds(resourceManager: ResourceManager): Map<Identifier, Resource> =
+        ExtendedSoundConverter.listExtra(resourceManager)
+
+    override fun extendedSoundFile(id: Identifier): Identifier? = ExtendedSoundConverter.fileOf(id)
 
     override fun getOpenGlVersionOverride(): String = HollowCoreLoader.openGlVersion
 

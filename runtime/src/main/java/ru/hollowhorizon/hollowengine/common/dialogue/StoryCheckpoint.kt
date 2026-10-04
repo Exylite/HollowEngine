@@ -48,18 +48,18 @@ data class StoryCheckpoint(
 
         fun load(tag: CompoundTag): StoryCheckpoint? {
             if (!tag.contains(KEY_ADDRESS) || !tag.contains(KEY_FRAMES)) return null
-            val frames = tag.getList(KEY_FRAMES, Tag.TAG_COMPOUND.toInt())
+            val frames = tag.getListOrEmpty(KEY_FRAMES)
                 .map { CheckpointFrame.load(it as CompoundTag) }
             if (frames.isEmpty()) return null
-            val tracks = tag.getList(KEY_TRACKS, Tag.TAG_COMPOUND.toInt())
+            val tracks = tag.getListOrEmpty(KEY_TRACKS)
                 .map { CheckpointTrack.load(it as CompoundTag) }
             return StoryCheckpoint(
-                address = tag.getString(KEY_ADDRESS),
-                sourceHash = tag.getString(KEY_HASH),
-                locale = tag.getString(KEY_LOCALE).takeIf { it.isNotEmpty() },
+                address = tag.getStringOr(KEY_ADDRESS, ""),
+                sourceHash = tag.getStringOr(KEY_HASH, ""),
+                locale = tag.getStringOr(KEY_LOCALE, "").takeIf { it.isNotEmpty() },
                 frames = frames,
-                variables = loadVariables(tag.getCompound(KEY_VARIABLES)),
-                callState = tag.getCompound(KEY_CALL_STATE),
+                variables = loadVariables(tag.getCompoundOrEmpty(KEY_VARIABLES)),
+                callState = tag.getCompoundOrEmpty(KEY_CALL_STATE),
                 tracks = tracks,
             )
         }
@@ -109,14 +109,14 @@ data class StoryCheckpoint(
         }
 
         private fun loadVariables(tag: CompoundTag): Map<String, StoryValue> =
-            tag.allKeys.mapNotNull { name -> loadValue(tag.getCompound(name))?.let { name to it } }.toMap()
+            tag.allKeys.mapNotNull { name -> loadValue(tag.getCompoundOrEmpty(name))?.let { name to it } }.toMap()
 
-        private fun loadValue(entry: CompoundTag): StoryValue? = when (entry.getString("t")) {
-            TYPE_STRING -> StoryString(entry.getString("v"))
-            TYPE_NUMBER -> StoryNumber(entry.getFloat("v"))
-            TYPE_BOOL -> StoryBool(entry.getBoolean("v"))
+        private fun loadValue(entry: CompoundTag): StoryValue? = when (entry.getStringOr("t", "")) {
+            TYPE_STRING -> StoryString(entry.getStringOr("v", ""))
+            TYPE_NUMBER -> StoryNumber(entry.getFloatOr("v", 0f))
+            TYPE_BOOL -> StoryBool(entry.getBooleanOr("v", false))
             TYPE_LIST -> StoryList(
-                entry.getList("v", Tag.TAG_COMPOUND.toInt()).mapNotNull { loadValue(it as CompoundTag) },
+                entry.getListOrEmpty("v").mapNotNull { loadValue(it as CompoundTag) },
             )
 
             else -> null
@@ -135,11 +135,11 @@ data class CheckpointFrame(val address: String, val anchor: StoryAnchor) {
 
     companion object {
         fun load(tag: CompoundTag) = CheckpointFrame(
-            address = tag.getString("address"),
+            address = tag.getStringOr("address", ""),
             anchor = StoryAnchor(
-                label = tag.getString("label").takeIf { it.isNotEmpty() },
-                offset = tag.getInt("offset"),
-                line = tag.getInt("line"),
+                label = tag.getStringOr("label", "").takeIf { it.isNotEmpty() },
+                offset = tag.getIntOr("offset", 0),
+                line = tag.getIntOr("line", 0),
             ),
         )
     }
@@ -156,11 +156,11 @@ data class CheckpointTrack(val name: String?, val anchor: StoryAnchor) {
 
     companion object {
         fun load(tag: CompoundTag) = CheckpointTrack(
-            name = tag.getString("name").takeIf { it.isNotEmpty() },
+            name = tag.getStringOr("name", "").takeIf { it.isNotEmpty() },
             anchor = StoryAnchor(
-                label = tag.getString("label").takeIf { it.isNotEmpty() },
-                offset = tag.getInt("offset"),
-                line = tag.getInt("line"),
+                label = tag.getStringOr("label", "").takeIf { it.isNotEmpty() },
+                offset = tag.getIntOr("offset", 0),
+                line = tag.getIntOr("line", 0),
             ),
         )
     }

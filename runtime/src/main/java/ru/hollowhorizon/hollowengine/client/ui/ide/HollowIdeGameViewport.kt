@@ -69,11 +69,11 @@ internal object HollowIdeGameViewport {
         val metricsChanged = windowMetrics != requested
         windowMetrics = requested
         if (resized) {
-            target.resize(requested.framebufferWidth(), requested.framebufferHeight(), Minecraft.ON_OSX)
+            target.resize(requested.framebufferWidth(), requested.framebufferHeight())
             minecraft.gameRenderer.resize(requested.framebufferWidth(), requested.framebufferHeight())
         }
         if (metricsChanged || resized) {
-            minecraft.screen?.resize(minecraft, requested.guiScaledWidth(), requested.guiScaledHeight())
+            minecraft.screen?.resize(requested.guiScaledWidth(), requested.guiScaledHeight())
         }
     }
 
@@ -147,10 +147,10 @@ internal object HollowIdeGameViewport {
         val window = minecraft.window
         val target = minecraft.mainRenderTarget
         if (target.width != window.width || target.height != window.height) {
-            target.resize(window.width, window.height, Minecraft.ON_OSX)
+            target.resize(window.width, window.height)
             minecraft.gameRenderer.resize(window.width, window.height)
         }
-        minecraft.screen?.resize(minecraft, window.guiScaledWidth, window.guiScaledHeight)
+        minecraft.screen?.resize(window.guiScaledWidth, window.guiScaledHeight)
     }
 
     fun imageRect(bounds: UiRect): UiRect? {

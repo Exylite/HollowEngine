@@ -118,10 +118,10 @@ object CommonRegistryHelper : RegistryHelper {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> registry(type: Class<T>): ResourceKey<out Registry<T>> {
+    override fun <T> registry(type: Class<T>): ResourceKey<out Registry<T & Any>> {
         var type: Class<*>? = type
         do {
-            REGISTRY_MAP[type!!]?.let { return it as ResourceKey<out Registry<T>> }
+            REGISTRY_MAP[type!!]?.let { return it as ResourceKey<out Registry<T & Any>> }
             type = type.superclass
         } while (type != null)
         error("Registry with type $type not found!")

@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.particles
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
@@ -24,7 +26,7 @@ object ParticleVertexConsumerProvider : VertexConsumerProvider {
 
         val prevCull = GL11.glIsEnabled(GL11.GL_CULL_FACE)
         RenderSystem.setShaderTexture(0, texture.id)
-        RenderSystem.setShaderTexture(2, HollowModelManager.lightTexture.id)
+        RenderSystem.setShaderTexture(2, LegacyGl.lightmapTextureId())
         val old = RenderSystem.getShader()
         RenderSystem.setShader(ModShaders.PARTICLE)
 

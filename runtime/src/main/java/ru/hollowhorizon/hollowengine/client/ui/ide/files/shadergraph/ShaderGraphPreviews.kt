@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.shadergraph
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.client.render.legacy.VertexBuffer
@@ -75,7 +76,7 @@ internal class ShaderGraphPreviews {
                     val pixels = if (node == master) OUTPUT_PIXELS else PIXELS
                     val target = target(node, pixels)
                     target.setClearColor(0f, 0f, 0f, 0f)
-                    target.clear(Minecraft.ON_OSX)
+                    target.clear()
                     target.bindWrite(true)
                     val mesh = frame.graph.preview.mesh.takeIf { node in compiled.spatial } ?: ShaderPreviewMesh.QUAD
                     draw(shader, frame.graph, compiled, mesh, index, pixels)
@@ -90,7 +91,7 @@ internal class ShaderGraphPreviews {
         val existing = targets[node]
         if (existing != null && existing.width == pixels) return existing
         existing?.destroyBuffers()
-        return TextureTarget(pixels, pixels, false, Minecraft.ON_OSX).also { targets[node] = it }
+        return TextureTarget(pixels, pixels, false).also { targets[node] = it }
     }
 
     private fun draw(

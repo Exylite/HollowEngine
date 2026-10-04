@@ -134,9 +134,9 @@ class NbtDataStore(private val roots: MutableMap<String, Tag> = LinkedHashMap())
 
     private fun flatten(paths: MutableMap<String, Float>, path: String, tag: Tag) {
         when (tag) {
-            is NumericTag -> paths[path] = tag.asFloat
+            is NumericTag -> paths[path] = tag.floatValue()
             is CompoundTag -> tag.allKeys.forEach { key -> tag.get(key)?.let { flatten(paths, "$path.$key", it) } }
-            is CollectionTag<*> -> tag.forEachIndexed { index, child -> flatten(paths, "$path.$index", child) }
+            is CollectionTag -> tag.forEachIndexed { index, child -> flatten(paths, "$path.$index", child) }
             else -> Unit
         }
     }

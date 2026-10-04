@@ -1,5 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.flipY
+import ru.hollowhorizon.hollowengine.client.render.legacy.upload
+import ru.hollowhorizon.hollowengine.client.render.legacy.prepareImage
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
 import com.mojang.blaze3d.platform.NativeImage
 import com.mojang.blaze3d.platform.TextureUtil
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
@@ -119,7 +123,7 @@ object UiMsdfFont {
 
             val textureId = GL11.glGenTextures()
             RenderSystem.bindTexture(textureId)
-            TextureUtil.prepareImage(textureId, nativeImage.width, nativeImage.height)
+            LegacyGl.prepareImage(textureId, nativeImage.width, nativeImage.height)
             nativeImage.upload(0, 0, 0, 0, 0, nativeImage.width, nativeImage.height, true, true, false, false)
             nativeImage.close()
 

@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.ai.control.MoveControl
+import net.minecraft.world.entity.ai.control.MoveControl.Operation
 import net.minecraft.world.level.pathfinder.PathType
 import net.minecraft.world.level.pathfinder.PathfindingContext
 
@@ -11,7 +12,7 @@ import ru.hollowhorizon.hollowengine.common.entities.NpcEntity
 import kotlin.math.abs
 import kotlin.math.max
 
-class NpcMoveControl(mob: NpcEntity) : MoveControl(mob) {
+class NpcMoveControl(mob: NpcEntity) : MoveControl<NpcEntity>(mob) {
     companion object {
         private const val MIN_DISTANCE_FOR_TURN_SQ = 0.04
         private const val BODY_TURN_DEAD_ZONE = 3f
@@ -36,8 +37,8 @@ class NpcMoveControl(mob: NpcEntity) : MoveControl(mob) {
                 right *= scale
 
                 val yawRad = mob.yRot * Mth.DEG_TO_RAD
-                val sin = Mth.sin(yawRad)
-                val cos = Mth.cos(yawRad)
+                val sin = Mth.sin(yawRad.toDouble())
+                val cos = Mth.cos(yawRad.toDouble())
 
                 val deltaX = forward * cos - right * sin
                 val deltaZ = right * cos + forward * sin

@@ -44,6 +44,7 @@
     "client.SkullBlockRendererMixin",
     "client.SoundBufferLibraryMixin",
     "client.SoundMixin",
+    "client.SoundPreparationsMixin",
     "client.WindowMixin",
     "kool.KeyboardHandlerMixin",
     "kool.MouseHandlerMixin"

@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import net.minecraft.client.Minecraft
@@ -52,7 +54,8 @@ internal class UiImageShadowCache : AutoCloseable {
     ) {
         val pixels: Long get() = texture.framebuffer.width.toLong() * texture.framebuffer.height * if (workspace == null) 1 else 3
         fun close() {
-            Minecraft.getInstance().textureManager.release(mask.texture)
+            LegacyGl.releaseRawTexture(mask.texture)
+            texture.close()
             workspace?.close()
         }
     }
@@ -123,7 +126,7 @@ internal class UiImageShadowCache : AutoCloseable {
             if (cacheAcrossFrames) workspace?.close()
         }
         if (previous == null) {
-            Minecraft.getInstance().textureManager.register(mask.texture, texture)
+            LegacyGl.registerRawTexture(mask.texture, texture.framebuffer.texture)
             val entry = Entry(mask, texture, workspace.takeUnless { cacheAcrossFrames }, frame)
             entries[key] = entry
             pixels += entry.pixels
@@ -198,13 +201,13 @@ internal class UiImageShadowCache : AutoCloseable {
         pixels = 0
     }
 
-    private class MaskTexture(val framebuffer: UiFramebuffer) : AbstractTexture() {
-        init { id = framebuffer.texture }
-        override fun load(resourceManager: ResourceManager) = Unit
-        override fun close() {
-            if (id == NOT_ASSIGNED) return
+    private class MaskTexture(val framebuffer: UiFramebuffer) {
+        private var closed = false
+
+        fun close() {
+            if (closed) return
+            closed = true
             framebuffer.close()
-            id = NOT_ASSIGNED
         }
     }
 

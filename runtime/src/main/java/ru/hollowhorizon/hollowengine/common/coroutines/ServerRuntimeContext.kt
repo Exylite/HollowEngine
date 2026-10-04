@@ -21,7 +21,7 @@ class ServerRuntimeContext(
     }
 
     fun deserialize(tag: CompoundTag) {
-        nodes.deserialize(tag.getCompound(if (tag.contains("nodes")) "nodes" else "components"))
+        nodes.deserialize(tag.getCompoundOrEmpty(if (tag.contains("nodes")) "nodes" else "components"))
     }
 
     fun dispose() {

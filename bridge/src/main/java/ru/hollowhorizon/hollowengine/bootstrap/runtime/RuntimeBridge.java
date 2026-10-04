@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.bootstrap.runtime;
 
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.Resource;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.audio.SoundBuffer;
 import com.mojang.blaze3d.platform.Window;
@@ -30,7 +32,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -157,7 +158,11 @@ public interface RuntimeBridge extends AutoCloseable {
 
     @Nullable CompletableFuture<AudioStream> onLoadStreamSound(Identifier soundId, ResourceProvider resourceManager, boolean isWrapper);
 
-    @Nullable FileToIdConverter createSoundConverter();
+    /** Sound files the game does not list on its own (.mp3, .wav), keyed by file location the way the game keys its own. */
+    Map<Identifier, Resource> listExtraSounds(ResourceManager resourceManager);
+
+    /** The file behind a sound id that names its own extension; null leaves the game's answer. */
+    @Nullable Identifier extendedSoundFile(Identifier id);
 
     @Nullable String getOpenGlVersionOverride();
 

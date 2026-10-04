@@ -3,21 +3,15 @@ package ru.hollowhorizon.hollowengine.common.multiblock
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.core.registries.Registries
 import net.minecraft.tags.TagKey
-import net.minecraft.client.renderer.block.BlockAndTintGetter
-import net.minecraft.world.level.ColorResolver
+import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
-import net.minecraft.world.level.LightLayer
-import net.minecraft.world.level.biome.Biomes
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
-import net.minecraft.world.level.lighting.LevelLightEngine
 import net.minecraft.world.level.material.FluidState
-import ru.hollowhorizon.hollowengine.common.utils.registryAccess
 
 /**
  * Represents a multiblock structure that can be validated within a Minecraft world.
@@ -62,7 +56,7 @@ import ru.hollowhorizon.hollowengine.common.utils.registryAccess
  *
  * @param block A lambda function used to configure the multiblock.
  */
-class Multiblock(val xSize: Int, val ySize: Int, val zSize: Int, block: Multiblock.() -> Unit) : BlockAndTintGetter {
+class Multiblock(val xSize: Int, val ySize: Int, val zSize: Int, block: Multiblock.() -> Unit) : BlockGetter {
     private val tileEntities = hashMapOf<BlockPos, BlockEntity>()
     val blocks = ArrayList<Matcher>()
 
@@ -147,13 +141,9 @@ class Multiblock(val xSize: Int, val ySize: Int, val zSize: Int, block: Multiblo
         return ySize
     }
 
-    override fun getMinBuildHeight(): Int {
+    override fun getMinY(): Int {
         return 0
     }
-
-    override fun getBrightness(type: LightLayer, pos: BlockPos) = 14
-
-    override fun getRawBrightness(pos: BlockPos, ambientDarkening: Int) = 15 - ambientDarkening
 
     override fun getBlockEntity(pos: BlockPos): BlockEntity? {
         val state = getBlockState(pos)
@@ -175,22 +165,6 @@ class Multiblock(val xSize: Int, val ySize: Int, val zSize: Int, block: Multiblo
     }
 
     override fun getFluidState(pos: BlockPos): FluidState = getBlockState(pos).fluidState
-
-    override fun getShade(direction: Direction, shade: Boolean): Float {
-        return 1f
-    }
-
-    override fun getLightEngine(): LevelLightEngine? {
-        return null
-    }
-
-    override fun getBlockTint(pos: BlockPos, color: ColorResolver): Int {
-        return color.getColor(
-            registryAccess.registry(Registries.BIOME).get().getOrThrow(Biomes.PLAINS),
-            pos.x.toDouble(),
-            pos.z.toDouble()
-        )
-    }
 
     /**
      * Defines a matcher interface for block validation within the multiblock structure.
@@ -237,8 +211,7 @@ class Multiblock(val xSize: Int, val ySize: Int, val zSize: Int, block: Multiblo
         override fun matches(block: BlockState) = block.`is`(tag)
 
         override fun default(): BlockState {
-            return BuiltInRegistries.BLOCK
-                .getTag(tag).get().firstOrNull()?.value()
+            return BuiltInRegistries.BLOCK.get(tag).map { it.firstOrNull()?.value() }.orElse(null)
                 ?.defaultBlockState() ?: Blocks.AIR.defaultBlockState()
         }
     }

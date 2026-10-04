@@ -205,7 +205,7 @@ object AttachmentRegistry {
     }
 
     fun loadEntity(entity: Entity, tag: CompoundTag) {
-        val root = tag.takeIf { it.contains(ROOT_NBT, Tag.TAG_COMPOUND.toInt()) }?.getCompound(ROOT_NBT)
+        val root = tag.getCompound(ROOT_NBT).orElse(null)
         if (root != null) {
             read(
                 entity = entity,
@@ -255,7 +255,7 @@ object AttachmentRegistry {
     private fun readSyncPolicies(saved: CompoundTag?): Map<String, Sync> {
         if (saved == null) return emptyMap()
         return saved.allKeys.mapNotNull { name ->
-            val sync = runCatching { Sync.valueOf(saved.getString(name)) }.getOrNull() ?: return@mapNotNull null
+            val sync = runCatching { Sync.valueOf(saved.getStringOr(name, "")) }.getOrNull() ?: return@mapNotNull null
             if (sync == Sync.NEVER) null else name to sync
         }.toMap()
     }
@@ -438,7 +438,7 @@ object AttachmentRegistry {
     }
 
     private fun CompoundTag.compoundOrNull(key: String): CompoundTag? =
-        takeIf { it.contains(key, Tag.TAG_COMPOUND.toInt()) }?.getCompound(key)
+        getCompound(key).orElse(null)
 }
 
 fun Level.findEntityByUuid(uuid: UUID): Entity? = when (this) {

@@ -74,7 +74,7 @@ class EntityNodeManager(private val entity: Entity) {
     /** Attaches a node from the state [serialize] wrote for it. */
     private fun attachSaved(canonicalPath: String, nodeTag: CompoundTag): Boolean = start(
         canonicalPath,
-        nodeTag.getCompound("extras"),
+        nodeTag.getCompoundOrEmpty("extras"),
         (nodeTag.get("states") as? CompoundTag)?.let { StateContext.deserialize(it) },
     )
 
@@ -144,7 +144,7 @@ class EntityNodeManager(private val entity: Entity) {
     fun deserialize(tag: CompoundTag) {
         tag.allKeys.forEach { path ->
             val canonicalPath = canonicalNodePath(path)
-            val nodeTag = tag.getCompound(path)
+            val nodeTag = tag.getCompoundOrEmpty(path)
             if (nodes.containsKey(canonicalPath)) return@forEach
 
             val available = ScriptRegistry.source(ScriptRegistry.parse(path).namespace) != null

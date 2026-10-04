@@ -23,17 +23,17 @@ val IRecipeManager.hiddenCategories: Set<IRecipeCategory<*>>
         return Sets.difference(allCategories, visibleCategories)
     }
 
-val <T> IRecipeCategory<T>.recipeCategoryId: Identifier
+val <T : Any> IRecipeCategory<T>.recipeCategoryId: Identifier
     get() = this.recipeType.uid
 
-fun <T> IRecipeCategory<T>.hide(manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.hide(manager: IRecipeManager) {
     manager.hideRecipeCategory(this.recipeType)
 }
 
-fun <T> IRecipeCategory<T>.unhide(manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.unhide(manager: IRecipeManager) {
     manager.unhideRecipeCategory(this.recipeType)
 }
 
-fun <T> IRecipeCategory<T>.hideWithin(recipe: T, manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.hideWithin(recipe: T, manager: IRecipeManager) {
     manager.hideRecipes(this.recipeType, listOf(recipe))
 }

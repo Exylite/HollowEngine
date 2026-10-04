@@ -31,5 +31,5 @@ internal object LegacyEntityNbt {
     }
 
     private fun CompoundTag.compoundOrNull(key: String): CompoundTag? =
-        takeIf { it.contains(key, Tag.TAG_COMPOUND.toInt()) }?.getCompound(key)
+        getCompound(key).orElse(null)
 }

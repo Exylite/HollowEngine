@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import net.minecraft.client.Minecraft
 import net.minecraft.resources.Identifier
 

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.displayClientMessage
 import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.common.utils.compat.window
 import androidx.compose.runtime.Composable
@@ -164,11 +165,11 @@ object TransformGizmoEditor {
     private fun captureCamera(event: RenderLevelStageEvent) {
         val minecraft = Minecraft.getInstance()
         if (minecraft.player == null || minecraft.level == null) return
-        val fov = minecraft.gameRenderer.getFov(event.camera, event.partialTick, true).toFloat()
+        val fov = event.camera.fov
         WorldToScreenProjector.capture(
             view = Matrix4f(RenderSystem.getModelViewMatrix()),
             projection = event.projectionMatrix,
-            cameraPosition = event.camera.position,
+            cameraPosition = event.camera.position(),
             fovDegrees = fov,
         )
     }

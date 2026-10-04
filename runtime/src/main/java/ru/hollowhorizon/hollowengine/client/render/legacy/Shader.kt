@@ -96,6 +96,8 @@ class Uniform(val name: String, val type: Int, val count: Int, private val paren
 
     fun setSafe(x: Float, y: Float, z: Float, w: Float) = set(x, y, z, w)
 
+    fun setSafe(x: Int, y: Int, z: Int, w: Int) = set(x, y, z, w)
+
     fun upload() {
         if (!dirty && !ALWAYS_UPLOAD) return
         dirty = false

@@ -56,9 +56,10 @@ data class GltfTexture(
                     return path.rl.stream
                 }
 
-                createdTex = DynamicTexture(NativeImage.read(retrieveFile(uri)))
+                createdTex = DynamicTexture({ "hollowengine:gltf" }, NativeImage.read(retrieveFile(uri)))
             } else {
                 createdTex = DynamicTexture(
+                    { "hollowengine:gltf" },
                     NativeImage.read(
                         ByteArrayInputStream(
                             imageRef.bufferViewRef!!.getData().toArray()

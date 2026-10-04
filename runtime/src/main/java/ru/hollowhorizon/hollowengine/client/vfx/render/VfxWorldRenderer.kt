@@ -59,7 +59,7 @@ object VfxWorldRenderer {
     }
 
     private fun drawEffects(event: RenderLevelStageEvent) {
-        val camera = event.camera.position
+        val camera = event.camera.position()
         val scene = VfxScenes.current()
         val bones = VfxBoneBindings.drain(camera)
         frame.clear()

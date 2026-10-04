@@ -1,18 +1,18 @@
 package ru.hollowhorizon.hollowengine.client.utils
 
 
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.PackLocationInfo
 import net.minecraft.server.packs.PackResources
 import net.minecraft.server.packs.PackSelectionConfig
 import net.minecraft.server.packs.PackType
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer
+import net.minecraft.server.packs.metadata.MetadataSectionType
 import net.minecraft.server.packs.repository.Pack
 import net.minecraft.server.packs.repository.PackSource
 import net.minecraft.server.packs.resources.IoSupplier
 import ru.hollowhorizon.hollowengine.api.AutoModelType
+import ru.hollowhorizon.hollowengine.common.data.PackMetadata
 import ru.hollowhorizon.hollowengine.common.utils.literal
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import java.io.ByteArrayInputStream
@@ -120,21 +120,8 @@ object HollowPack : PackResources {
 
     override fun getNamespaces(pType: PackType) = resourceMap.keys.map { it.namespace }.toSet()
 
-    override fun <T> getMetadataSection(pDeserializer: MetadataSectionSerializer<T>): T? {
-        if (pDeserializer.metadataSectionName == "pack") {
-            //var - java 16 feature
-            val obj = JsonObject()
-            val supportedFormats = JsonArray()
-            for (i in 6..9) {
-                supportedFormats.add(i)
-            } // From 1.16.2-rc1 to 1.19.3
-            obj.addProperty("pack_format", 9)
-            obj.add("supported_formats", supportedFormats)
-            obj.addProperty("description", "Generated resources for HollowCore")
-            return pDeserializer.fromJson(obj)
-        }
-        return null
-    }
+    override fun <T> getMetadataSection(type: MetadataSectionType<T>): T? =
+        PackMetadata.section(type, "Generated resources for HollowCore")
 
     override fun location(): PackLocationInfo {
         return PackLocationInfo(packId(), packId().literal, PackSource.BUILT_IN, Optional.empty())

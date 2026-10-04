@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.client.renderer.LevelRenderer
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.Mth
@@ -47,7 +47,7 @@ fun resolveNodeTransform(
 
     return ResolvedNodeTransform(
         transform = worldTransform,
-        light = LevelRenderer.getLightColor(
+        light = LightCoordsUtil.getLightCoords(
             level,
             BlockPos.containing(
                 worldTransform.translation.x.toDouble(),

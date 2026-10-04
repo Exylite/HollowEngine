@@ -122,16 +122,16 @@ private class NbtMapEncoder(format: NBTFormat, nodeConsumer: (Tag) -> Unit) : NB
         // writing key
         when {
             idx % 2 == 0 -> this.key = when (element) {
-                is CompoundTag, is CollectionTag<*>, is EndTag -> throw compoundTagInvalidKeyKind(
+                is CompoundTag, is CollectionTag, is EndTag -> throw compoundTagInvalidKeyKind(
                     when (element) {
                         is CompoundTag -> ForCompoundNBT.descriptor
-                        is CollectionTag<*> -> ForNbtList.descriptor
+                        is CollectionTag -> ForNbtList.descriptor
                         is EndTag -> ForNbtNull.descriptor
                         else -> error("impossible")
                     }
                 )
 
-                else -> element.asString
+                else -> element.asStringValue()
             }
 
             else -> content.put(this.key, element)

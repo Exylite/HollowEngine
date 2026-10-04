@@ -236,7 +236,7 @@ fun NpcEntity.startDestroyBlock(
         if (requireCorrectTool && !fakePlayer.hasCorrectToolForDrops(initialState)) return@start false
 
         val face = interactionFace(target)
-        fakePlayer.gameMode.handleBlockBreakAction(blockPos, START_DESTROY_BLOCK, face, level().maxBuildHeight, 0)
+        fakePlayer.gameMode.handleBlockBreakAction(blockPos, START_DESTROY_BLOCK, face, level().maxY, 0)
         try {
             var elapsedTicks = 0
             while (level().getBlockState(blockPos) == initialState) {
@@ -250,7 +250,7 @@ fun NpcEntity.startDestroyBlock(
                         blockPos,
                         STOP_DESTROY_BLOCK,
                         face,
-                        level().maxBuildHeight,
+                        level().maxY,
                         0,
                     )
                     break
@@ -264,7 +264,7 @@ fun NpcEntity.startDestroyBlock(
                     blockPos,
                     ABORT_DESTROY_BLOCK,
                     face,
-                    level().maxBuildHeight,
+                    level().maxY,
                     0,
                 )
             }
@@ -276,7 +276,7 @@ fun NpcEntity.startDestroyBlock(
     }
 }
 
-private fun NpcEntity.interactionFace(target: Vec3): Direction = Direction.getNearest(eyePosition.subtract(target))
+private fun NpcEntity.interactionFace(target: Vec3): Direction = Direction.getApproximateNearest(eyePosition.subtract(target))
 
 fun NpcEntity.interactNow(
     target: Entity,
@@ -285,7 +285,7 @@ fun NpcEntity.interactNow(
 ): InteractionResult {
     if (target.level() !== level() || distanceToSqr(target) > reach * reach) return InteractionResult.FAIL
     syncFakePlayer()
-    val result = fakePlayer.interactOn(target, hand)
+    val result = fakePlayer.interactOn(target, hand, target.position())
     setItemInHand(hand, fakePlayer.getItemInHand(hand).copy())
     swing(hand)
     return result
@@ -316,7 +316,7 @@ suspend fun NpcEntity.interact(
 private fun NpcEntity.syncFakePlayer() {
     val level = level() as ServerLevel
     fakePlayer.gameMode.setLevel(level)
-    fakePlayer.moveTo(x, y, z, yRot, xRot)
+    fakePlayer.snapTo(x, y, z, yRot, xRot)
     InteractionHand.entries.forEach { currentHand ->
         fakePlayer.setItemInHand(currentHand, getItemInHand(currentHand).copy())
     }
@@ -331,9 +331,9 @@ fun NpcEntity.dropItem(item: ItemStack) {
     val p = position()
     val entityStack = ItemEntity(level(), p.x, p.y + eyeHeight, p.z, item)
     entityStack.setDefaultPickUpDelay()
-    val f8 = Mth.sin(xRot * Mth.PI / 180f)
-    val f3 = Mth.sin(yHeadRot * Mth.PI / 180f)
-    val f4 = Mth.cos(yHeadRot * Mth.PI / 180f)
+    val f8 = Mth.sin((xRot * Mth.PI / 180f).toDouble())
+    val f3 = Mth.sin((yHeadRot * Mth.PI / 180f).toDouble())
+    val f4 = Mth.cos((yHeadRot * Mth.PI / 180f).toDouble())
     entityStack.setDeltaMovement(-f3 * 0.3, -f8 * 0.3 + 0.1, f4 * 0.3)
     level().addFreshEntity(entityStack)
 }

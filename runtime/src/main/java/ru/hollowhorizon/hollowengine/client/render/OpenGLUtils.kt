@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 
 import com.mojang.blaze3d.platform.Lighting
