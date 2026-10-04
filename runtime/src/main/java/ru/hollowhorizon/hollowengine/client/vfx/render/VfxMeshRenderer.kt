@@ -195,7 +195,7 @@ object VfxMeshRenderer {
         val previousVao = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
         val previousBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
         try {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
             order.forEach { batch ->
                 val shader = if (glow) {
                     VfxMaterialStates.glowShader(batch.key.shader, engine, VfxSurface.MESH) ?: return@forEach
@@ -219,7 +219,9 @@ object VfxMeshRenderer {
                 RenderSystem.glBindVertexArray(vaoFor(shader, batch.primitive, mesh))
                 instanceBuffer?.bind()
                 pointInstances(shader, batch.first.toLong() * STRIDE_BYTES)
-                GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, mesh.indexCount, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+                VfxDebug.counted("mesh") {
+                    GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, mesh.indexCount, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+                }
                 shader.clear()
             }
         } finally {

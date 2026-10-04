@@ -12,7 +12,7 @@ import com.mojang.blaze3d.opengl.GlStateManager as VanillaGl
  * A framebuffer with a colour texture and, if asked for, a depth texture; the 1.21 `RenderTarget`,
  * over plain GL objects that vanilla knows nothing about.
  */
-open class RenderTarget(@JvmField val useDepth: Boolean) {
+open class RenderTarget(@JvmField val useDepth: Boolean, @JvmField val depthFormat: Int = GL14.GL_DEPTH_COMPONENT24) {
     @JvmField var width = 0
     @JvmField var height = 0
     @JvmField var viewWidth = 0
@@ -52,7 +52,7 @@ open class RenderTarget(@JvmField val useDepth: Boolean) {
             VanillaGl._texParameter(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL30.GL_CLAMP_TO_EDGE)
             VanillaGl._texParameter(GL11.GL_TEXTURE_2D, GL14.GL_TEXTURE_COMPARE_MODE, GL11.GL_NONE)
             VanillaGl._texImage2D(
-                GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT24, width, height, 0, GL11.GL_DEPTH_COMPONENT,
+                GL11.GL_TEXTURE_2D, 0, depthFormat, width, height, 0, GL11.GL_DEPTH_COMPONENT,
                 GL11.GL_FLOAT, null as ByteBuffer?
             )
         }
@@ -121,7 +121,8 @@ open class RenderTarget(@JvmField val useDepth: Boolean) {
     }
 }
 
-class TextureTarget(width: Int, height: Int, useDepth: Boolean, onOsx: Boolean = false) : RenderTarget(useDepth) {
+class TextureTarget(width: Int, height: Int, useDepth: Boolean, onOsx: Boolean = false, depthFormat: Int = GL14.GL_DEPTH_COMPONENT24) :
+    RenderTarget(useDepth, depthFormat) {
     init {
         resize(width, height)
         clear()
@@ -173,4 +174,16 @@ object MainTarget {
         view.refresh()
         return view
     }
+}
+
+/**
+ * The internal format of this target's depth texture. A depth blit between targets needs the formats
+ * to be the same, and vanilla's depth is not the 24 bits the engine's own targets have.
+ */
+fun RenderTarget.depthInternalFormat(): Int {
+    if (!useDepth || depthTextureId < 0) return depthFormat
+    VanillaGl._bindTexture(depthTextureId)
+    val format = GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 0, GL11.GL_TEXTURE_INTERNAL_FORMAT)
+    VanillaGl._bindTexture(0)
+    return format
 }

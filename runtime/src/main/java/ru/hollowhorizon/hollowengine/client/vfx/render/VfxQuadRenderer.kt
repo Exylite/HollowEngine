@@ -61,7 +61,7 @@ object VfxQuadRenderer {
         val glowing = packer.batches.filter { it.glows }
         if (glowing.isEmpty()) return
         withInstanceState(upload = 0) {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
             glowing.forEach { batch ->
                 val shader = VfxMaterialStates.glowShader(batch.key.shader, engine, VfxSurface.PLANE)
                     ?: return@forEach
@@ -77,7 +77,7 @@ object VfxQuadRenderer {
     private fun draw(total: Int, view: VfxView) {
         val engine = ModShaders.VFX_PARTICLE ?: return
         withInstanceState(upload = total) {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
 
             packer.batches.forEach { batch ->
                 val shader = batch.key.shader?.let { VfxShaders.surface(it, VfxSurface.PLANE) } ?: engine
@@ -127,7 +127,9 @@ object VfxQuadRenderer {
         RenderSystem.glBindVertexArray(vaoFor(shader))
         instanceBuffer?.bind()
         pointInstances(shader, batch.first.toLong() * STRIDE_BYTES)
-        GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+        VfxDebug.counted("quad") {
+            GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+        }
     }
 
     private fun uploadInstances(total: Int) {

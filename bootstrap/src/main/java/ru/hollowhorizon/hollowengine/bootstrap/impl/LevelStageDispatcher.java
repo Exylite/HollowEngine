@@ -20,8 +20,10 @@ public final class LevelStageDispatcher {
         var camera = minecraft.gameRenderer.mainCamera();
         var cameraState = state.cameraRenderState;
         float partialTick = minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        PoseStack stack = poseStack != null ? poseStack : new PoseStack();
         for (RuntimeBridge.RenderLevelStage stage : stages) {
+            // 26.x keeps the camera rotation out of the pose stack it hands to hooks; the runtime makes it the model view matrix
+            PoseStack stack = new PoseStack();
+            stack.last().pose().set(cameraState.viewRotationMatrix);
             BootstrapRuntimeManager.bridge().onRenderLevelStage(renderer, stack, cameraState.projectionMatrix, (int) state.gameTime, partialTick, camera, cameraState.cullFrustum, stage);
         }
     }

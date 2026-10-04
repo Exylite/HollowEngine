@@ -10,5 +10,6 @@ void main() {
     vec4 far = InvViewProjMat * vec4(Position.xy, 1.0, 1.0);
     vec4 near = InvViewProjMat * vec4(Position.xy, -1.0, 1.0);
     skyDirection = far.xyz / far.w - near.xyz / near.w;
-    gl_Position = vec4(Position.xy, 1.0, 1.0);
+    // Position.z is where the far plane is in the depth buffer: 1 normally, 0 where depth is reversed
+    gl_Position = vec4(Position.xy, Position.z, 1.0);
 }

@@ -91,10 +91,20 @@ class VfxCameraShake(private val spec: VfxCameraShakeSpec, private val node: Vfx
 object VfxSkyRenderer {
     fun render(skies: List<VfxSkyDraw>, view: VfxView) {
         if (skies.isEmpty()) return
-        val toView = Matrix4f(view.projection).mul(view.modelView).invert()
+        // the shader unprojects with -1..1 depth, which a reversed zero-to-one projection has to be turned into first
+        val projection = if (RenderSystem.reverseDepth) {
+            Matrix4f(view.projection).apply {
+                val reversed = Matrix4f(this)
+                m02(reversed.m03() - 2f * reversed.m02())
+                m12(reversed.m13() - 2f * reversed.m12())
+                m22(reversed.m23() - 2f * reversed.m22())
+                m32(reversed.m33() - 2f * reversed.m32())
+            }
+        } else view.projection
+        val toView = Matrix4f(projection).mul(view.modelView).invert()
 
         RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL33.GL_LEQUAL)
+        RenderSystem.depthFunc(RenderSystem.nearerDepthFunc)
         RenderSystem.depthMask(false)
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
@@ -103,10 +113,11 @@ object VfxSkyRenderer {
             skies.forEach { sky ->
                 val shader = VfxShaders.get(sky.shader, DefaultVertexFormat.POSITION) ?: return@forEach
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION)
-                builder.addVertex(-1f, -1f, 1f)
-                builder.addVertex(1f, -1f, 1f)
-                builder.addVertex(1f, 1f, 1f)
-                builder.addVertex(-1f, 1f, 1f)
+                val farZ = RenderSystem.farDepth
+                builder.addVertex(-1f, -1f, farZ)
+                builder.addVertex(1f, -1f, farZ)
+                builder.addVertex(1f, 1f, farZ)
+                builder.addVertex(-1f, 1f, farZ)
                 val mesh = builder.build() ?: return@forEach
 
                 val offset = Vector3f(sky.position).sub(view.eye)

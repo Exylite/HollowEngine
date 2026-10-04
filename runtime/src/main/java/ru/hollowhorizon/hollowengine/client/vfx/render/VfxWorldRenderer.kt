@@ -77,6 +77,7 @@ object VfxWorldRenderer {
         }
         bones.forEach { binding -> binding.instance.collect(frame, binding.placement) }
         frame.shake.copyInto(shake)
+        VfxDebug.report("collected", frame)
         if (frame.isEmpty) return
 
         val view = VfxView.ofCamera(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix())

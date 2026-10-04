@@ -36,10 +36,15 @@ object VfxFrameRenderer {
     fun renderSurfaces(list: VfxDrawList, view: VfxView, target: RenderTarget) {
         if (list.readsScene) VfxSceneTextures.capture(target)
 
+        VfxDebug.report("frame", list)
         VfxSkyRenderer.render(list.skies, view)
+        VfxDebug.check("sky")
         VfxMeshRenderer.render(list.meshes, view)
+        VfxDebug.check("meshes")
         VfxRibbonRenderer.render(list.ribbons, view)
+        VfxDebug.check("ribbons")
         VfxQuadRenderer.render(list.quads, view)
+        VfxDebug.check("quads")
 
         if (list.glows && VfxGlow.begin(target)) {
             VfxMeshRenderer.renderGlow(view)

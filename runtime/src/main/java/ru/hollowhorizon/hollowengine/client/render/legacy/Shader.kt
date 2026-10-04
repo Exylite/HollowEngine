@@ -94,9 +94,26 @@ class Uniform(val name: String, val type: Int, val count: Int, private val paren
         ints!!.position(0); ints.put(0, x); ints.put(1, y); ints.put(2, z); ints.put(3, w); markDirty()
     }
 
-    fun setSafe(x: Float, y: Float, z: Float, w: Float) = set(x, y, z, w)
+    /** Writes as many of the values as the uniform has components, and ignores the rest. */
+    fun setSafe(x: Float, y: Float, z: Float, w: Float) {
+        val buffer = floats ?: return
+        buffer.position(0)
+        if (type >= UT_FLOAT1) buffer.put(0, x)
+        if (type >= UT_FLOAT2) buffer.put(1, y)
+        if (type >= UT_FLOAT3) buffer.put(2, z)
+        if (type >= UT_FLOAT4) buffer.put(3, w)
+        markDirty()
+    }
 
-    fun setSafe(x: Int, y: Int, z: Int, w: Int) = set(x, y, z, w)
+    fun setSafe(x: Int, y: Int, z: Int, w: Int) {
+        val buffer = ints ?: return
+        buffer.position(0)
+        if (type >= UT_INT1) buffer.put(0, x)
+        if (type >= UT_INT2) buffer.put(1, y)
+        if (type >= UT_INT3) buffer.put(2, z)
+        if (type >= UT_INT4) buffer.put(3, w)
+        markDirty()
+    }
 
     fun upload() {
         if (!dirty && !ALWAYS_UPLOAD) return
@@ -369,6 +386,7 @@ class ShaderInstance(provider: ResourceProvider, val name: String, val vertexFor
     }
 
     companion object {
-        val DUMMY_UNIFORM = Uniform("dummy", Uniform.UT_FLOAT1, 1, null)
+        // takes whatever is written to a uniform the program does not have, up to a matrix
+        val DUMMY_UNIFORM = Uniform("dummy", Uniform.UT_FLOAT1, 16, null)
     }
 }

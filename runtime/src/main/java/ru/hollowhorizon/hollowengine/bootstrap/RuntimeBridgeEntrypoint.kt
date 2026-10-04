@@ -5,6 +5,11 @@ import net.minecraft.server.packs.resources.Resource
 import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.MainTarget
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
+import com.mojang.blaze3d.opengl.GlStateManager as VanillaGl
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
@@ -1009,11 +1014,41 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         frustum: Frustum?,
         stage: RuntimeBridge.RenderLevelStage,
     ) {
-        RenderLevelStageEvent.post(
-            RenderLevelStageEvent(
-                renderer, poseStack, projectionMatrix, ticks, partialTick, camera, frustum, stage.toRenderStage()
-            )
-        )
+        // the level is drawn with a reversed depth in the zero-to-one range, and so is everything added to it here
+        val reversed = RenderSystem.reverseDepth
+        RenderSystem.reverseDepth = true
+        val modelView = RenderSystem.getModelViewStack()
+        modelView.pushMatrix()
+        // as in 1.21 the camera rotation is the model view matrix and the pose stack of the event starts out empty
+        modelView.set(poseStack.last().pose())
+        RenderSystem.applyModelViewMatrix()
+        RenderSystem.backupProjectionMatrix()
+        RenderSystem.setProjectionMatrix(projectionMatrix)
+        try {
+            LegacyGl.scope {
+                // 26.x binds a framebuffer only while one of its render passes runs, and the hooks draw between them
+                val framebuffer = VanillaGl.getFrameBuffer(GL30.GL_DRAW_FRAMEBUFFER)
+                MainTarget.get().bindWrite(true)
+                // a render pass leaves its scissor on, which has nothing to do with what the hooks draw
+                val scissor = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST)
+                if (scissor) VanillaGl._disableScissorTest()
+                try {
+                    RenderLevelStageEvent.post(
+                        RenderLevelStageEvent(
+                            renderer, PoseStack(), projectionMatrix, ticks, partialTick, camera, frustum, stage.toRenderStage()
+                        )
+                    )
+                } finally {
+                    if (scissor) VanillaGl._enableScissorTest()
+                    VanillaGl._glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer)
+                }
+            }
+        } finally {
+            RenderSystem.restoreProjectionMatrix()
+            modelView.popMatrix()
+            RenderSystem.applyModelViewMatrix()
+            RenderSystem.reverseDepth = reversed
+        }
     }
 
     override fun onCommonInitialize() {

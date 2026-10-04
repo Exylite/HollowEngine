@@ -41,6 +41,13 @@ object RenderSystem {
      */
     @JvmField var reverseDepth = false
 
+    /** The depth function that lets what is nearer than what is stored through, in whichever direction depth runs now. */
+    val nearerDepthFunc: Int
+        get() = if (reverseDepth) GL11.GL_GEQUAL else GL11.GL_LEQUAL
+
+    /** Where the far plane is in the depth buffer, in whichever direction depth runs now. */
+    val farDepth: Float get() = if (reverseDepth) 0f else 1f
+
     val screenWidth: Int get() = Minecraft.getInstance().window.width
     val screenHeight: Int get() = Minecraft.getInstance().window.height
 
@@ -136,7 +143,7 @@ object RenderSystem {
 
     @JvmStatic fun enableDepthTest() {
         VanillaGl._enableDepthTest()
-        VanillaGl._depthFunc(if (reverseDepth) GL11.GL_GEQUAL else GL11.GL_LEQUAL)
+        VanillaGl._depthFunc(nearerDepthFunc)
     }
 
     @JvmStatic fun disableDepthTest() = VanillaGl._disableDepthTest()

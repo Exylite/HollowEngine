@@ -4,6 +4,7 @@ import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
 import ru.hollowhorizon.hollowengine.client.render.legacy.id
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.depthInternalFormat
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.client.render.legacy.MeshData
@@ -173,8 +174,9 @@ object VfxSceneTextures {
     fun capture(source: RenderTarget) {
         val width = source.width
         val height = source.height
-        val target = copy?.takeIf { it.width == width && it.height == height }
-            ?: TextureTarget(width, height, true).also {
+        val depthFormat = source.depthInternalFormat()
+        val target = copy?.takeIf { it.width == width && it.height == height && it.depthFormat == depthFormat }
+            ?: TextureTarget(width, height, true, depthFormat = depthFormat).also {
                 copy?.destroyBuffers()
                 copy = it
             }
