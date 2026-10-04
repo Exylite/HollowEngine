@@ -183,6 +183,7 @@ class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSou
         private var nx = 0f
         private var ny = 1f
         private var nz = 0f
+        private var lineWidth = 1f
         private var open = false
 
         private fun commit() {
@@ -195,6 +196,7 @@ class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSou
             data[at] = x; data[at + 1] = y; data[at + 2] = z
             data[at + 3] = u; data[at + 4] = v
             data[at + 5] = nx; data[at + 6] = ny; data[at + 7] = nz
+            data[at + 8] = lineWidth
             val packedAt = vertexCount * PACKED
             packed[packedAt] = color; packed[packedAt + 1] = overlay; packed[packedAt + 2] = light
             vertexCount++
@@ -205,6 +207,7 @@ class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSou
             commit()
             this.x = x; this.y = y; this.z = z
             color = -1; u = 0f; v = 0f; overlay = 0; light = 0; nx = 0f; ny = 1f; nz = 0f
+            lineWidth = RenderSystem.lineWidth
             open = true
             return this
         }
@@ -239,7 +242,10 @@ class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSou
             return this
         }
 
-        override fun setLineWidth(width: Float): VertexConsumer = this
+        override fun setLineWidth(width: Float): VertexConsumer {
+            lineWidth = width
+            return this
+        }
 
         fun replay(out: VertexConsumer, type: RenderType) {
             commit()
@@ -266,10 +272,12 @@ class RecordingBufferSource(val collector: SubmitNodeCollector) : MultiBufferSou
             val light = packed[packedAt + 2]
             out.setUv2(light and 0xFFFF, light ushr 16)
             out.setNormal(data[at + 5], data[at + 6], data[at + 7])
+            // vanilla's line format has a width per vertex and refuses a vertex without it; the other formats skip it
+            out.setLineWidth(data[at + 8])
         }
 
         companion object {
-            private const val STRIDE = 8
+            private const val STRIDE = 9
             private const val PACKED = 3
         }
     }
