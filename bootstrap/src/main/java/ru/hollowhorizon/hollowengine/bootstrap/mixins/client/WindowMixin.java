@@ -31,15 +31,16 @@ public class WindowMixin {
 
 
     @Inject(method = "getGuiScale", at = @At("HEAD"), cancellable = true)
-    public void getGuiScale(CallbackInfoReturnable<Double> cir) {
+    public void getGuiScale(CallbackInfoReturnable<Integer> cir) {
         RuntimeBridge.GameViewportMetrics metrics = BootstrapRuntimeManager.bridge().getGameViewportMetrics();
         if (metrics != null) {
-            cir.setReturnValue(metrics.guiScale());
+            // vanilla's scale is a whole number since 26.1; the fraction lives in the scaled width and height
+            cir.setReturnValue(Math.max(1, (int) Math.round(metrics.guiScale())));
             return;
         }
         Window window = (Window) (Object) this;
         if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().gui.screen())) return;
-        cir.setReturnValue((double) window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode()));
+        cir.setReturnValue(window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode()));
     }
 
     @Inject(method = "getGuiScaledHeight", at = @At("HEAD"), cancellable = true)

@@ -30,8 +30,6 @@ data class GltfTexture(
     var samplerRef: GltfSampler? = null
 
     @Transient
-    private lateinit var createdTex: DynamicTexture
-    @Transient
     private var isRegistered = false
 
     fun makeTexture(location: Identifier): Identifier {
@@ -43,8 +41,11 @@ data class GltfTexture(
             "${location.namespace}:$folderPath/unnamed_texture_$source"
         }
 
-        if (!this::createdTex.isInitialized) {
-            if (uri != null && imageRef.bufferViewRef == null) {
+        val textureId = name.lowercase().rl
+        if (!isRegistered) {
+            isRegistered = true
+            // models load on worker threads: the picture is decoded here, the GPU texture is made on the render thread
+            val image = if (uri != null && imageRef.bufferViewRef == null) {
                 fun retrieveFile(path: String): InputStream {
                     if (path.startsWith("data:application/octet-stream;base64,")) {
                         return Base64.getDecoder().wrap(path.substring(37).byteInputStream())
@@ -56,29 +57,14 @@ data class GltfTexture(
                     return path.rl.stream
                 }
 
-                createdTex = DynamicTexture({ "hollowengine:gltf" }, NativeImage.read(retrieveFile(uri)))
+                NativeImage.read(retrieveFile(uri))
             } else {
-                createdTex = DynamicTexture(
-                    { "hollowengine:gltf" },
-                    NativeImage.read(
-                        ByteArrayInputStream(
-                            imageRef.bufferViewRef!!.getData().toArray()
-                        )
-                    )
-                )
+                NativeImage.read(ByteArrayInputStream(imageRef.bufferViewRef!!.getData().toArray()))
             }
-        }
-
-        val textureId = name.lowercase().rl
-        if (!isRegistered) {
-            isRegistered = true
-            if (RenderSystem.isOnRenderThreadOrInit()) {
-                Minecraft.getInstance().textureManager.register(textureId, createdTex)
-            } else {
-                RenderSystem.recordRenderCall {
-                    Minecraft.getInstance().textureManager.register(textureId, createdTex)
-                }
+            val register = {
+                Minecraft.getInstance().textureManager.register(textureId, DynamicTexture({ "hollowengine:gltf" }, image))
             }
+            if (RenderSystem.isOnRenderThreadOrInit()) register() else RenderSystem.recordRenderCall { register() }
         }
 
         return textureId

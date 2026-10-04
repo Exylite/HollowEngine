@@ -181,8 +181,20 @@ object RenderSystem {
     @JvmStatic fun isOnRenderThreadOrInit(): Boolean = com.mojang.blaze3d.systems.RenderSystem.isOnRenderThread()
     @JvmStatic fun assertOnRenderThread() = com.mojang.blaze3d.systems.RenderSystem.assertOnRenderThread()
 
+    private val renderCalls = java.util.concurrent.ConcurrentLinkedQueue<Runnable>()
+
+    /** Queued for the start of the next frame, as it always was: the first calls come in while the game is still being built. */
     @JvmStatic fun recordRenderCall(call: Runnable) {
-        if (isOnRenderThread()) call.run() else Minecraft.getInstance().execute(call)
+        renderCalls.add(call)
+    }
+
+    /** Runs what [recordRenderCall] queued; the bridge calls it at the start of every frame. */
+    fun replayQueue() {
+        var call = renderCalls.poll()
+        while (call != null) {
+            call.run()
+            call = renderCalls.poll()
+        }
     }
 
     @JvmStatic fun runAsFancy(body: Runnable) = body.run()

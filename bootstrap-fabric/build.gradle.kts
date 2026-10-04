@@ -63,9 +63,6 @@ configurations {
     named("compileClasspath") {
         extendsFrom(getByName("common"))
     }
-    named("runtimeClasspath") {
-        extendsFrom(getByName("common"))
-    }
     named("developmentFabric") {
         extendsFrom(getByName("common"))
     }

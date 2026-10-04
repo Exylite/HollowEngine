@@ -5,6 +5,7 @@ import net.minecraft.server.packs.resources.Resource
 import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
 import com.mojang.blaze3d.platform.Window
@@ -581,6 +582,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onClientRenderTickPre(client: Minecraft) {
+        RenderSystem.replayQueue()
         CutsceneCameraSystem.update(client)
         RenderTickEvent.Pre.post(RenderTickEvent.Pre(client))
     }
