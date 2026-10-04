@@ -6,7 +6,7 @@ import androidx.compose.runtime.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.json.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.widgets.UiTextFieldMode
 import ru.hollowhorizon.hollowengine.client.ui.widgets.tooltipOnHover
@@ -19,7 +19,7 @@ import java.math.RoundingMode
  */
 @Composable
 internal fun AutoFields(
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonObject,
     path: String,
@@ -97,7 +97,7 @@ private fun matchesQuery(query: String, vararg candidates: String): Boolean {
 internal fun ValueEditor(
     label: String?,
     description: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -141,7 +141,7 @@ internal fun ValueEditor(
 private fun NullableEditor(
     label: String?,
     description: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -369,7 +369,7 @@ private fun VectorField(
 @Composable
 private fun NestedField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,
@@ -397,7 +397,7 @@ private fun NestedField(
 @Composable
 private fun ListField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -444,7 +444,7 @@ private fun ListField(
 @Composable
 private fun MapField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,
@@ -499,7 +499,7 @@ private fun MapField(
 @Composable
 private fun PolymorphicField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,

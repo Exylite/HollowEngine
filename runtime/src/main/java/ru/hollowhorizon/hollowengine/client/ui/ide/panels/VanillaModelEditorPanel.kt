@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.client.renderer.block.model.BlockModel
 import net.minecraft.client.renderer.block.model.ItemModelGenerator
 import net.minecraft.client.resources.model.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.util.Mth
 import org.joml.Quaternionf
@@ -114,7 +114,7 @@ private fun VanillaModelPreview(state: VanillaModelViewerState, modifier: Modifi
 
 @Stable
 private class VanillaModelViewerState(
-    private val resource: ResourceLocation,
+    private val resource: Identifier,
     private val resourceManager: ResourceManager,
 ) {
     var yaw by mutableStateOf(35f)
@@ -203,18 +203,18 @@ private class VanillaModelViewerState(
 private class VanillaModelBaker(
     private val resourceManager: ResourceManager,
 ) : ModelBaker {
-    private val unbakedModels = mutableMapOf<ResourceLocation, UnbakedModel>()
-    private val bakedModels = mutableMapOf<ResourceLocation, BakedModel>()
+    private val unbakedModels = mutableMapOf<Identifier, UnbakedModel>()
+    private val bakedModels = mutableMapOf<Identifier, BakedModel>()
     private val itemModelGenerator = ItemModelGenerator()
     private val spriteGetter = Function<Material, TextureAtlasSprite> { material ->
         Minecraft.getInstance().modelManager.getAtlas(material.atlasLocation()).getSprite(material.texture())
     }
 
-    fun bakeResource(resource: ResourceLocation): BakedModel {
+    fun bakeResource(resource: Identifier): BakedModel {
         require(resource.path.startsWith("models/") && resource.path.endsWith(".json")) {
             VanillaModelLang.NOT_JSON_MODEL.lang(resource)
         }
-        val modelId = ResourceLocation.fromNamespaceAndPath(
+        val modelId = Identifier.fromNamespaceAndPath(
             resource.namespace,
             resource.path.removePrefix("models/").removeSuffix(".json"),
         )
@@ -224,7 +224,7 @@ private class VanillaModelBaker(
         }
     }
 
-    override fun getModel(location: ResourceLocation): UnbakedModel = unbakedModels.getOrPut(location) {
+    override fun getModel(location: Identifier): UnbakedModel = unbakedModels.getOrPut(location) {
         when (location.path) {
             "builtin/generated" -> ModelBakery.GENERATION_MARKER
             "builtin/entity" -> ModelBakery.BLOCK_ENTITY_MARKER
@@ -233,7 +233,7 @@ private class VanillaModelBaker(
         }
     }
 
-    override fun bake(location: ResourceLocation, state: ModelState): BakedModel = bakedModels.getOrPut(location) {
+    override fun bake(location: Identifier, state: ModelState): BakedModel = bakedModels.getOrPut(location) {
         val model = getModel(location)
         model.resolveParents(::getModel)
         if (model is BlockModel && model.rootModel === ModelBakery.GENERATION_MARKER) {
@@ -246,8 +246,8 @@ private class VanillaModelBaker(
         }
     }
 
-    private fun loadModel(location: ResourceLocation): BlockModel {
-        val resource = ResourceLocation.fromNamespaceAndPath(location.namespace, "models/${location.path}.json")
+    private fun loadModel(location: Identifier): BlockModel {
+        val resource = Identifier.fromNamespaceAndPath(location.namespace, "models/${location.path}.json")
         val source = resourceManager.getResource(resource).orElseThrow {
             IllegalArgumentException(VanillaModelLang.MISSING_MODEL.lang(resource))
         }
@@ -259,10 +259,10 @@ private class VanillaModelBaker(
     }
 }
 
-private fun String.toAssetResourceLocation(): ResourceLocation {
+private fun String.toAssetResourceLocation(): Identifier {
     val relative = substringAfter("assets/", missingDelimiterValue = "")
     require(relative.isNotEmpty() && '/' in relative) { VanillaModelLang.INVALID_ASSET_PATH.lang(this) }
-    return ResourceLocation.fromNamespaceAndPath(relative.substringBefore('/'), relative.substringAfter('/'))
+    return Identifier.fromNamespaceAndPath(relative.substringBefore('/'), relative.substringAfter('/'))
 }
 
 private fun UiCanvasDrawScope.drawVanillaModelGrid(state: VanillaModelViewerState) {

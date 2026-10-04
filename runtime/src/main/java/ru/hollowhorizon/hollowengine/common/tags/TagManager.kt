@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.tags
 
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
@@ -31,10 +31,10 @@ object TagManager {
     }
 }
 
-fun Block.addTag(tag: ResourceLocation) = addTag(TagKey.create(Registries.BLOCK, tag))
+fun Block.addTag(tag: Identifier) = addTag(TagKey.create(Registries.BLOCK, tag))
 fun Block.addTag(tag: TagKey<Block>) = TagManager.BLOCK_TAGS.getOrPut(tag, ::HashSet).add(this)
 
-fun Item.addTag(tag: ResourceLocation) {
+fun Item.addTag(tag: Identifier) {
     val tagKey = TagKey.create(Registries.ITEM, tag)
     TagManager.ITEM_TAGS.getOrPut(tagKey, ::HashSet).add(this)
 }

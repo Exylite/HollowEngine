@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.ui.render
 
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
@@ -15,7 +15,7 @@ import org.lwjgl.system.MemoryUtil
 import ru.hollowhorizon.hollowengine.HollowEngine
 
 /** Compiles a UI shader stage from a mod resource, throwing with the shader log on failure. */
-internal fun compileUiShader(type: Int, location: ResourceLocation, label: String): Int {
+internal fun compileUiShader(type: Int, location: Identifier, label: String): Int {
     val source = Minecraft.getInstance().resourceManager.getResource(location).orElseThrow {
         IllegalStateException("Missing UI $label shader resource: $location")
     }.open().bufferedReader(Charsets.UTF_8).use { it.readText() }
@@ -46,8 +46,8 @@ internal fun compileUiShader(type: Int, location: ResourceLocation, label: Strin
  */
 internal abstract class UiSdfRenderer(
     private val name: String,
-    private val vertexShaderPath: ResourceLocation,
-    private val fragmentShaderPath: ResourceLocation,
+    private val vertexShaderPath: Identifier,
+    private val fragmentShaderPath: Identifier,
     private val samplerNames: Array<String>,
 ) : AutoCloseable {
     protected val vertexBuffer = UiStreamingGpuBuffer(GL15.GL_ARRAY_BUFFER)

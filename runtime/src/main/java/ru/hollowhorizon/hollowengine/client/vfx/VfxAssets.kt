@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.vfx
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -13,13 +13,13 @@ import ru.hollowhorizon.hollowengine.common.vfx.VfxFormat
  * The `.vfx` files of every loaded pack, by resource id.
  */
 object VfxAssets : ResourceManagerReloadListener {
-    private val effects = HashMap<ResourceLocation, VfxEffect>()
+    private val effects = HashMap<Identifier, VfxEffect>()
 
-    val ids: Set<ResourceLocation> get() = effects.keys
+    val ids: Set<Identifier> get() = effects.keys
 
-    operator fun get(id: ResourceLocation): VfxEffect? = effects[id]
+    operator fun get(id: Identifier): VfxEffect? = effects[id]
 
-    operator fun get(id: String): VfxEffect? = ResourceLocation.tryParse(normalize(id))?.let(effects::get)
+    operator fun get(id: String): VfxEffect? = Identifier.tryParse(normalize(id))?.let(effects::get)
 
     override fun onResourceManagerReload(resourceManager: ResourceManager) {
         effects.clear()

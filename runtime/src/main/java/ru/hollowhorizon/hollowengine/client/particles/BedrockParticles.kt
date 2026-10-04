@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.particles
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -10,7 +10,7 @@ import ru.hollowhorizon.hollowengine.client.particles.file.BedrockParticleFile
 import ru.hollowhorizon.hollowengine.common.utils.json.JsonFormat
 
 object BedrockParticles : ResourceManagerReloadListener {
-    val PARTICLES = hashMapOf<ResourceLocation, BedrockParticleFile>()
+    val PARTICLES = hashMapOf<Identifier, BedrockParticleFile>()
 
     @OptIn(ExperimentalSerializationApi::class)
     override fun onResourceManagerReload(resourceManager: ResourceManager) {

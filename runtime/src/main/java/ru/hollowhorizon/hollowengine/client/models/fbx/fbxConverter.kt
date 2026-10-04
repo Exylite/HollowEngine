@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage
 import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.DynamicTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.fbx.TransformationComp
 import ru.hollowhorizon.hollowengine.client.models.internal.*
@@ -56,7 +56,7 @@ operator fun Array<Mat4f>.set(transf: Tc, mat: Mat4f) = set(transf.i, mat)
 
 const val BBSCALE = 100f
 
-fun Document.convert(location: ResourceLocation): InternalModel {
+fun Document.convert(location: Identifier): InternalModel {
     val isBlockBenchModel = creator.contains("blockbench", ignoreCase = true)
     
     // Сначала конвертируем узлы
@@ -169,7 +169,7 @@ fun convertAnimationStackIntermediate(st: AnimationStack): ImportedAnimation? {
     return ImportedAnimation(cleanName, channels)
 }
 
-fun Document.convertNodes(parentId: Long, location: ResourceLocation): List<NodeDefinition> {
+fun Document.convertNodes(parentId: Long, location: Identifier): List<NodeDefinition> {
     val connections = getConnectionsByDestinationSequenced(parentId, "Model")
 
     val nodes = ArrayList<NodeDefinition>()
@@ -330,7 +330,7 @@ fun convertSkin(fbxSkin: ru.hollowhorizon.hollowengine.client.models.fbx.Skin): 
     )
 }
 
-fun convertModel(model: Model, transform: TrsTransformF, location: ResourceLocation, doc: Document): NodeDefinition {
+fun convertModel(model: Model, transform: TrsTransformF, location: Identifier, doc: Document): NodeDefinition {
     val isBlockBenchModel = doc.creator.contains("blockbench", ignoreCase = true)
     val primitives = model.geometry.mapNotNull {
         (it as? MeshGeometry)?.let { convertMesh(it, model, location, doc, isBlockBenchModel) }
@@ -456,7 +456,7 @@ fun Document.getMorphTargetsForMesh(mesh: MeshGeometry): List<Map<String, FloatA
     return morphTargets
 }
 
-fun convertMesh(mesh: MeshGeometry, model: Model, location: ResourceLocation, doc: Document, isBlockBench: Boolean = false): Primitive {
+fun convertMesh(mesh: MeshGeometry, model: Model, location: Identifier, doc: Document, isBlockBench: Boolean = false): Primitive {
     val (joints, jointWeights) = doc.getSkinDataForMesh(mesh, model)
     val morphTargets = doc.getMorphTargetsForMesh(mesh)
     
@@ -485,7 +485,7 @@ fun convertMesh(mesh: MeshGeometry, model: Model, location: ResourceLocation, do
     )
 }
 
-fun Material.convert(model: ResourceLocation, color: Vec4f): InternalMaterial {
+fun Material.convert(model: Identifier, color: Vec4f): InternalMaterial {
     var diffuseTexture = InternalMaterial.MISSING_TEXTURE
     var normalTexture = InternalMaterial.MISSING_NORMAL
     var specularTexture = InternalMaterial.MISSING_SPECULAR
@@ -495,7 +495,7 @@ fun Material.convert(model: ResourceLocation, color: Vec4f): InternalMaterial {
         texture.media?.let { media ->
             val textureLocation = model.withPath(
                 model.path.substringBefore('.') + '/' + media.name.lowercase()
-                    .filter(ResourceLocation::validPathChar) + ".png"
+                    .filter(Identifier::validPathChar) + ".png"
             )
 
             if (media.content.isNotEmpty()) {

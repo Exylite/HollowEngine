@@ -11,7 +11,7 @@ import net.minecraft.network.chat.ClickEvent
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.HoverEvent
 import net.minecraft.network.chat.MutableComponent
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
@@ -86,12 +86,12 @@ private fun clientRegistries() = if (isPhysicalClient) clientRegistryAccess else
 /**
  * Converts a string to a Minecraft resource location.
  */
-val String.rl: ResourceLocation
+val String.rl: Identifier
     get() =
-        ResourceLocation.parse(this)
+        Identifier.parse(this)
 
 fun String.isValidRL(): Boolean {
-    return ResourceLocation.tryParse(this) != null
+    return Identifier.tryParse(this) != null
 }
 
 val String.literal: MutableComponent get() = Component.literal(this)
@@ -112,7 +112,7 @@ fun MutableComponent.italic(): MutableComponent = this.withStyle { it.withItalic
 fun MutableComponent.obfuscated(): MutableComponent = this.withStyle { it.withObfuscated(true) }
 fun MutableComponent.underlined(): MutableComponent = this.withStyle { it.withUnderlined(true) }
 fun MutableComponent.strikethrough(): MutableComponent = this.withStyle { it.withStrikethrough(true) }
-fun MutableComponent.font(font: ResourceLocation) = this.withStyle { it.withFont(font) }
+fun MutableComponent.font(font: Identifier) = this.withStyle { it.withFont(font) }
 fun MutableComponent.onClickUrl(url: String): MutableComponent =
     this.withStyle { it.withClickEvent(ClickEvent(ClickEvent.Action.OPEN_URL, url)) }
 

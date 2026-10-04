@@ -7,7 +7,7 @@ import net.minecraft.core.particles.ParticleType
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.stats.StatType
 import net.minecraft.util.valueproviders.FloatProviderType
@@ -146,14 +146,14 @@ object CommonRegistryHelper : RegistryHelper {
     }
 
     override fun addBlockModel(
-        location: ResourceLocation,
+        location: Identifier,
         model: AutoModelType,
     ) {
         HollowPack.addBlockModel(location, model)
     }
 
     override fun addItemModel(
-        location: ResourceLocation,
+        location: Identifier,
         model: AutoModelType,
     ) {
         HollowPack.addItemModel(location, model)

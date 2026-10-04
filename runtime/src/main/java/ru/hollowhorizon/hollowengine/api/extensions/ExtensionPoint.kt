@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.api.extensions
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.addons.HollowAddonExtension
 import ru.hollowhorizon.hollowengine.common.addons.HollowAddonExtensionChange
@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * Entries are ordered by priority and then by registration order.
  */
 class ExtensionPoint<T : Any> internal constructor(
-    val id: ResourceLocation,
+    val id: Identifier,
     private val extensionType: KClass<T>? = null,
 ) : Iterable<T> {
     @Volatile
@@ -45,7 +45,7 @@ class ExtensionPoint<T : Any> internal constructor(
      * A stale handle cannot remove a newer registration with the same key.
      */
     @Synchronized
-    fun register(key: ResourceLocation, extension: T): ExtensionHandle {
+    fun register(key: Identifier, extension: T): ExtensionHandle {
         validateType(extension)
         val previous = entries.firstOrNull { it.qualifiedId == key.toString() }
         if (previous != null) remove(previous)
@@ -58,17 +58,17 @@ class ExtensionPoint<T : Any> internal constructor(
     }
 
     @Synchronized
-    fun unregister(key: ResourceLocation): Boolean {
+    fun unregister(key: Identifier): Boolean {
         val entry = entries.firstOrNull { it.qualifiedId == key.toString() } ?: return false
         return remove(entry)
     }
 
-    fun find(key: ResourceLocation): T? = entries.firstOrNull { it.qualifiedId == key.toString() }?.value
+    fun find(key: Identifier): T? = entries.firstOrNull { it.qualifiedId == key.toString() }?.value
 
     /** Addon registrations have owner-qualified IDs and reject duplicate IDs. */
     @Synchronized
     internal fun register(
-        key: ResourceLocation,
+        key: Identifier,
         ownerId: String,
         localId: String,
         classLoader: ClassLoader,
@@ -102,7 +102,7 @@ class ExtensionPoint<T : Any> internal constructor(
     }
 
     private fun entry(
-        key: ResourceLocation,
+        key: Identifier,
         ownerId: String,
         localId: String,
         extension: T,
@@ -171,10 +171,10 @@ fun ExtensionHandle.closeWith(scope: CoroutineScope): ExtensionHandle {
  * Every extension point known to the engine, by id.
  */
 object ExtensionPoints {
-    private val points = HashMap<ResourceLocation, ExtensionPoint<*>>()
+    private val points = HashMap<Identifier, ExtensionPoint<*>>()
 
     @Suppress("UNCHECKED_CAST")
     @Synchronized
-    fun <T : Any> create(id: ResourceLocation, type: KClass<T>? = null): ExtensionPoint<T> =
+    fun <T : Any> create(id: Identifier, type: KClass<T>? = null): ExtensionPoint<T> =
         points.getOrPut(id) { ExtensionPoint(id, type) } as ExtensionPoint<T>
 }

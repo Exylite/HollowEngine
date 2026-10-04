@@ -1,5 +1,5 @@
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.junit.jupiter.api.Test
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import ru.hollowhorizon.hollowengine.common.attachments.sync.EntityStateSync
@@ -18,8 +18,8 @@ class EntityStateSyncTests {
     private val animator = "test:animator".rl
 
     private fun batch(
-        current: Map<ResourceLocation, Component>,
-        previous: Map<ResourceLocation, Component>,
+        current: Map<Identifier, Component>,
+        previous: Map<Identifier, Component>,
     ) = EntityStateSync.batchOf(current, previous)
 
     private fun data(vararg entries: Pair<String, Int>) = CompoundTag().apply {
@@ -86,7 +86,7 @@ class EntityStateSyncTests {
 
     @Test
     fun `nothing to say produces an empty batch`() {
-        val components = mapOf<ResourceLocation, Component>(model to "player.gltf")
+        val components = mapOf<Identifier, Component>(model to "player.gltf")
 
         assertTrue(batch(components, components).isEmpty)
     }

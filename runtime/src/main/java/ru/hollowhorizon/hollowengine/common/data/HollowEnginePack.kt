@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.common.data
 
 import com.google.gson.JsonObject
 import net.minecraft.SharedConstants
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.FilePackResources
 import net.minecraft.server.packs.PackLocationInfo
 import net.minecraft.server.packs.PackResources
@@ -76,11 +76,11 @@ fun addPackListeners(event: RegisterResourcePacksEvent) {
 private class LayeredPackResources(private val layers: List<PackResources>) : PackResources {
     override fun getRootResource(vararg path: String): IoSupplier<InputStream>? = layers.first().getRootResource(*path)
 
-    override fun getResource(type: PackType, location: ResourceLocation): IoSupplier<InputStream>? =
+    override fun getResource(type: PackType, location: Identifier): IoSupplier<InputStream>? =
         layers.firstNotNullOfOrNull { it.getResource(type, location) }
 
     override fun listResources(type: PackType, namespace: String, path: String, output: PackResources.ResourceOutput) {
-        val merged = LinkedHashMap<ResourceLocation, IoSupplier<InputStream>>()
+        val merged = LinkedHashMap<Identifier, IoSupplier<InputStream>>()
         layers.asReversed().forEach { layer ->
             layer.listResources(type, namespace, path) { location, resource -> merged[location] = resource }
         }

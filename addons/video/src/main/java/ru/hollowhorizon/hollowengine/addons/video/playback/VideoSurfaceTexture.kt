@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.addons.video.playback
 import com.mojang.blaze3d.platform.GlStateManager
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.AbstractTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import org.lwjgl.opengl.*
 import ru.hollowhorizon.hollowengine.addons.video.decode.VideoPixelFormat
@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * GPU side of a playback session: decoded YUV planes are uploaded into R8/RG8 textures and converted
  * to RGB by a fragment shader rendering into an FBO-backed RGBA texture. That output texture is
  * registered with Minecraft's [net.minecraft.client.renderer.texture.TextureManager], so anything that
- * draws by [ResourceLocation] (GUI blits, the Compose `Video` widget, world quads) can display the video.
+ * draws by [Identifier] (GUI blits, the Compose `Video` widget, world quads) can display the video.
  */
 class VideoSurfaceTexture : AutoCloseable {
-    val location: ResourceLocation = ResourceLocation.fromNamespaceAndPath(
+    val location: Identifier = Identifier.fromNamespaceAndPath(
         "hollowengine",
         "video/session_${SessionIds.incrementAndGet()}",
     )

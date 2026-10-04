@@ -50,8 +50,8 @@ class CodeInsightPopupLayoutTest {
     @Test
     fun `signature popup grows for wrapped lines without scrolling inside a short editor`() {
         val state = TextFieldState("call(", multiline = true).apply { focus() }
-        val label = "(screen: ResourceLocation, kind: UiSurfaceKind, charDelay: Int, " +
-                "choiceRevealDelay: Long, skipDelay: Int, portrait: ResourceLocation, voice: SoundEvent)"
+        val label = "(screen: Identifier, kind: UiSurfaceKind, charDelay: Int, " +
+                "choiceRevealDelay: Long, skipDelay: Int, portrait: Identifier, voice: SoundEvent)"
         val provider = UiSignatureHelpProvider {
             UiTextSignatureHelp(
                 anchor = state.text.length,
@@ -147,7 +147,7 @@ class CodeInsightPopupLayoutTest {
                 UiTextHoverInfo(
                     symbolStart,
                     text.length,
-                    "UiDialoguePresentation(screen: ResourceLocation, kind: UiSurfaceKind, " +
+                    "UiDialoguePresentation(screen: Identifier, kind: UiSurfaceKind, " +
                             "charDelay: Int, choiceRevealDelay: Long)",
                     "Creates a dialogue presentation with configurable surface and reveal timing.",
                 )

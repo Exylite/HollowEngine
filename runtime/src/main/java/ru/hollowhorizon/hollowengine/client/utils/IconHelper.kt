@@ -1,13 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.utils
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import ru.hollowhorizon.hollowengine.generated.Assets
 
 object IconHelper {
     val Icons = Assets.Hollowengine.Textures.Gui.Icons
 
-    fun forPath(path: String, isFolder: Boolean = false, isOpened: Boolean = false): ResourceLocation {
+    fun forPath(path: String, isFolder: Boolean = false, isOpened: Boolean = false): Identifier {
         return when {
             isFolder -> {
                 if(isOpened) {
@@ -39,7 +39,7 @@ object IconHelper {
      * The icon of a file, by what it is: the engine's own formats first, since several of them end in a
      * suffix another format also uses (`.node.kts` is a `.kts`, `.geo.json` is a `.json`).
      */
-    fun forFile(path: String): ResourceLocation {
+    fun forFile(path: String): Identifier {
         val name = path.substringAfterLast('/').lowercase()
         val icon = FileIcons.firstOrNull { (suffixes, _) -> suffixes.any(name::endsWith) }?.second ?: "file"
         return "hollowengine:textures/gui/icons/files/$icon.svg".rl

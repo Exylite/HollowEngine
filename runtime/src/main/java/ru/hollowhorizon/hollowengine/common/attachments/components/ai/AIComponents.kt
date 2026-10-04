@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.level.Level
@@ -23,7 +23,7 @@ data class EntityReference(
 
     val uuid: @Serializable(ForUuid::class) UUID = EMPTY_UUID,
 
-    val level: @Serializable(ForResourceLocation::class) ResourceLocation = "minecraft:overworld".rl,
+    val level: @Serializable(ForResourceLocation::class) Identifier = "minecraft:overworld".rl,
 ) {
     fun isEmpty(): Boolean = uuid == EMPTY_UUID
 

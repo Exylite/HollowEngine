@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.AbstractTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener
 import net.minecraft.util.profiling.ProfilerFiller
@@ -41,11 +41,11 @@ import java.nio.ByteOrder
 import java.util.concurrent.ConcurrentHashMap
 
 
-object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation, PreparedModelUpdate<Model>>>() {
+object HollowModelManager : SimplePreparableReloadListener<Map<Identifier, PreparedModelUpdate<Model>>>() {
     lateinit var lightTexture: AbstractTexture
-    private val models = ConcurrentHashMap<ResourceLocation, MutableStateFlow<Model>>()
-    private val indexedModels = ConcurrentHashMap.newKeySet<ResourceLocation>()
-    private val metadata = ConcurrentHashMap<ResourceLocation, ModelMetadata>()
+    private val models = ConcurrentHashMap<Identifier, MutableStateFlow<Model>>()
+    private val indexedModels = ConcurrentHashMap.newKeySet<Identifier>()
+    private val metadata = ConcurrentHashMap<Identifier, ModelMetadata>()
     var glProgramSkinning = -1
     var glProgramMorphing = -1
 
@@ -53,7 +53,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
         RegisterModelLoaderEvent.post(RegisterModelLoaderEvent(this))
     }
 
-    private fun loadIntoFlow(location: ResourceLocation, flow: MutableStateFlow<Model>) {
+    private fun loadIntoFlow(location: Identifier, flow: MutableStateFlow<Model>) {
         scopeAsync {
             try {
                 val loaded = loadModel(location)
@@ -64,7 +64,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
         }
     }
 
-    fun getOrCreate(location: ResourceLocation): StateFlow<Model> {
+    fun getOrCreate(location: Identifier): StateFlow<Model> {
         return models.computeIfAbsent(location) {
             val flow = MutableStateFlow(Model.EMPTY)
             loadIntoFlow(location, flow)
@@ -72,7 +72,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
         }
     }
 
-    suspend fun loadModel(location: ResourceLocation): Model {
+    suspend fun loadModel(location: Identifier): Model {
         val extension = location.path.substringAfter('.', "")
 
         val loader = loaders.find { extension in it.supportedFormats }
@@ -85,7 +85,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
     override fun prepare(
         manager: ResourceManager,
         profiler: ProfilerFiller,
-    ): Map<ResourceLocation, PreparedModelUpdate<Model>> {
+    ): Map<Identifier, PreparedModelUpdate<Model>> {
         AnimatorAssets.reload(manager)
         val indexed = readMetadata(manager)
         indexedModels.clear()
@@ -102,7 +102,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
     }
 
     override fun apply(
-        prepared: Map<ResourceLocation, PreparedModelUpdate<Model>>,
+        prepared: Map<Identifier, PreparedModelUpdate<Model>>,
         manager: ResourceManager,
         profiler: ProfilerFiller,
     ) {
@@ -112,7 +112,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
     }
 
     private fun publish(
-        location: ResourceLocation,
+        location: Identifier,
         flow: MutableStateFlow<Model>,
         update: PreparedModelUpdate<Model>,
     ) {
@@ -127,7 +127,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
 
     private suspend fun prepareModelUpdate(
         manager: ResourceManager,
-        location: ResourceLocation,
+        location: Identifier,
     ): PreparedModelUpdate<Model> {
         if (!manager.getResource(location).isPresent) {
             return PreparedModelUpdate(exists = false)
@@ -138,7 +138,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
         })
     }
 
-    private fun readMetadata(manager: ResourceManager): Set<ResourceLocation> {
+    private fun readMetadata(manager: ResourceManager): Set<Identifier> {
         val supportedFormats = loaders.flatMap { it.supportedFormats }.toSet()
         metadata.clear()
 
@@ -156,10 +156,10 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
     }
 
     /** What the model's `.hemeta` says, or empty metadata when it has none. */
-    fun metadata(location: ResourceLocation?): ModelMetadata = location?.let(metadata::get) ?: ModelMetadata.EMPTY
+    fun metadata(location: Identifier?): ModelMetadata = location?.let(metadata::get) ?: ModelMetadata.EMPTY
 
     /** The animator this model wears by default, named by its metadata. */
-    fun animatorOf(location: ResourceLocation?): Animator? =
+    fun animatorOf(location: Identifier?): Animator? =
         AnimatorAssets.get(metadata(location).animationController ?: return null)
 
     private fun destroyLater(model: Model) {
@@ -256,7 +256,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
         createSkinningProgramGL33()
     }
 
-    fun supports(location: ResourceLocation): Boolean {
+    fun supports(location: Identifier): Boolean {
         val extension = location.path.substringAfter('.', "")
 
         return loaders.any { extension in it.supportedFormats }
@@ -276,7 +276,7 @@ object HollowModelManager : SimplePreparableReloadListener<Map<ResourceLocation,
 interface ModelLoader {
     val supportedFormats: Set<String>
 
-    suspend fun load(location: ResourceLocation, side: ModelSide = ModelSide.CLIENT): Model
+    suspend fun load(location: Identifier, side: ModelSide = ModelSide.CLIENT): Model
 
     companion object {
         val FALLBACK_MODEL = "$MODID:models/error.gltf".rl

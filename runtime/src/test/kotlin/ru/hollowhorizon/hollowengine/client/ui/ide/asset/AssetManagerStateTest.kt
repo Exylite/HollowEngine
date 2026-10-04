@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.asset
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
@@ -21,10 +21,10 @@ class AssetManagerStateTest {
     fun `recipe filters keep directories navigable and filter files by state`() {
         val directory = AssetGridEntry.Directory(AssetDirectory("minecraft", "recipe/tools"))
         val hidden = AssetGridEntry.File(
-            AssetFile(ResourceLocation.parse("minecraft:recipe/hidden.json"), "test", AssetResourceState.HIDDEN),
+            AssetFile(Identifier.parse("minecraft:recipe/hidden.json"), "test", AssetResourceState.HIDDEN),
         )
         val untouched = AssetGridEntry.File(
-            AssetFile(ResourceLocation.parse("minecraft:recipe/base.json"), "test", AssetResourceState.UNTOUCHED),
+            AssetFile(Identifier.parse("minecraft:recipe/base.json"), "test", AssetResourceState.UNTOUCHED),
         )
 
         assertTrue(AssetRecipeFilter.HIDDEN.accepts(directory))

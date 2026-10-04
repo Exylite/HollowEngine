@@ -4,7 +4,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import org.spongepowered.asm.mixin.Final;
@@ -19,8 +19,8 @@ import ru.hollowhorizon.hollowengine.bootstrap.runtime.HudLayerIds;
 @Mixin(Gui.class)
 public class GuiMixin {
     @Shadow @Final private Minecraft minecraft;
-    @Shadow @Final private static ResourceLocation PUMPKIN_BLUR_LOCATION;
-    @Shadow @Final private static ResourceLocation POWDER_SNOW_OUTLINE_LOCATION;
+    @Shadow @Final private static Identifier PUMPKIN_BLUR_LOCATION;
+    @Shadow @Final private static Identifier POWDER_SNOW_OUTLINE_LOCATION;
 
     @Inject(method = "render", at = @At("RETURN"))
     private void onRenderHudPost(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
@@ -48,13 +48,13 @@ public class GuiMixin {
     }
 
     @Inject(method = "renderTextureOverlay", at = @At("HEAD"), cancellable = true)
-    private void onRenderTextureOverlayPre(GuiGraphics guiGraphics, ResourceLocation shaderLocation, float alpha, CallbackInfo ci) {
+    private void onRenderTextureOverlayPre(GuiGraphics guiGraphics, Identifier shaderLocation, float alpha, CallbackInfo ci) {
         String overlay = shaderLocation == POWDER_SNOW_OUTLINE_LOCATION ? HudLayerIds.FROSTBITE : HudLayerIds.HELMET;
         if (BootstrapRuntimeManager.bridge().onRenderOverlayPre(minecraft.getWindow(), guiGraphics, minecraft.getTimer().getGameTimeDeltaPartialTick(false), overlay)) ci.cancel();
     }
 
     @Inject(method = "renderTextureOverlay", at = @At("RETURN"))
-    private void onRenderTextureOverlayPost(GuiGraphics guiGraphics, ResourceLocation shaderLocation, float alpha, CallbackInfo ci) {
+    private void onRenderTextureOverlayPost(GuiGraphics guiGraphics, Identifier shaderLocation, float alpha, CallbackInfo ci) {
         String overlay = shaderLocation == POWDER_SNOW_OUTLINE_LOCATION ? HudLayerIds.FROSTBITE : HudLayerIds.HELMET;
         BootstrapRuntimeManager.bridge().onRenderOverlayPost(minecraft.getWindow(), guiGraphics, minecraft.getTimer().getGameTimeDeltaPartialTick(false), overlay);
     }

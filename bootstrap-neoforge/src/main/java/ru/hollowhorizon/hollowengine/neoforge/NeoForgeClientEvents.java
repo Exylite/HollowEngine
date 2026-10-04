@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.common.NeoForge;
@@ -93,7 +93,7 @@ public class NeoForgeClientEvents {
 
     private record NeoForgeShaders(RegisterShadersEvent event) implements EventBridge.ShaderRegistration {
         @Override
-        public void register(ResourceLocation id, VertexFormat vertexFormat, Consumer<ShaderInstance> loadCallback) throws IOException {
+        public void register(Identifier id, VertexFormat vertexFormat, Consumer<ShaderInstance> loadCallback) throws IOException {
             var shader = new ShaderInstance(event.getResourceProvider(), id, vertexFormat);
             event.registerShader(shader, loadCallback);
         }

@@ -12,7 +12,7 @@ import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.descriptors.elementDescriptors
 import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.json.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import ru.hollowhorizon.hollowengine.common.attachments.components.ComponentDescriptorRegistry
 import ru.hollowhorizon.hollowengine.common.attachments.editor.VirtualComponentRegistry
@@ -38,7 +38,7 @@ internal object ComponentJson {
 
     fun serializerOf(component: Component): KSerializer<Component>? = serializerOf(component::class)
 
-    fun idOf(component: Component): ResourceLocation? =
+    fun idOf(component: Component): Identifier? =
         ComponentDescriptorRegistry.idFor(component::class)
             ?: VirtualComponentRegistry.descriptor(component::class)?.id
 

@@ -37,6 +37,11 @@ architectury {
 
 loom {
     silentMojangMappingsLicense()
+
+    val accessWidener = rootProject.file("runtime/src/main/resources/$modId.accesswidener")
+    if (accessWidener.exists()) {
+        accessWidenerPath.set(accessWidener)
+    }
 }
 
 dependencies {

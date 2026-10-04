@@ -22,7 +22,7 @@ import net.minecraft.nbt.*
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.RegistryOps
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.monster.Zombie
 import net.minecraft.world.item.ItemStack
@@ -64,10 +64,10 @@ object ForBlockPos : KSerializer<BlockPos> {
     override fun deserialize(decoder: Decoder): BlockPos = BlockPos.of(decoder.decodeLong())
 }
 
-object ForResourceLocation : KSerializer<ResourceLocation> {
+object ForResourceLocation : KSerializer<Identifier> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Identifier", PrimitiveKind.STRING)
-    override fun serialize(encoder: Encoder, value: ResourceLocation) = encoder.encodeString(value.toString())
-    override fun deserialize(decoder: Decoder): ResourceLocation = decoder.decodeString().rl
+    override fun serialize(encoder: Encoder, value: Identifier) = encoder.encodeString(value.toString())
+    override fun deserialize(decoder: Decoder): Identifier = decoder.decodeString().rl
 }
 
 object ForByteNBT : KSerializer<ByteTag> {

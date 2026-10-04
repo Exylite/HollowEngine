@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.ui.hud
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
 import ru.hollowhorizon.hollowengine.common.events.client.render.RenderArmEvent
@@ -13,17 +13,17 @@ import ru.hollowhorizon.hollowengine.common.utils.rl
  */
 object EngineHudLayers {
     /** The first-person arm and whatever it is holding. */
-    val HAND: ResourceLocation = "hollowengine:hand".rl
+    val HAND: Identifier = "hollowengine:hand".rl
 
-    val all: Set<ResourceLocation> = setOf(HAND)
+    val all: Set<Identifier> = setOf(HAND)
 
     /**
      * Parses a layer name from a script or a story. A bare name is looked up among the engine's own
      * layers first, then treated as vanilla, so `hand` reaches [HAND] rather than becoming
      * `minecraft:hand`, which is nothing.
      */
-    fun parse(name: String): ResourceLocation {
-        if (':' in name) return ResourceLocation.parse(name)
+    fun parse(name: String): Identifier {
+        if (':' in name) return Identifier.parse(name)
         return all.firstOrNull { it.path == name } ?: VanillaHudLayers.parse(name)
     }
 }

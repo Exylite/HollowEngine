@@ -8,7 +8,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.Resource
 import net.minecraft.server.packs.resources.ResourceProvider
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -38,7 +38,7 @@ object ShaderGraphPrograms {
             stages.forEach { (extension, source) -> put("shaders/core/$FOLDER/$name.$extension", source) }
         }
         val provider = ResourceProvider { wanted ->
-            val text = files[wanted.path].takeIf { wanted.namespace == ResourceLocation.DEFAULT_NAMESPACE }
+            val text = files[wanted.path].takeIf { wanted.namespace == Identifier.DEFAULT_NAMESPACE }
             if (text != null) {
                 Optional.of(Resource(pack) { ByteArrayInputStream(text.toByteArray()) })
             } else {

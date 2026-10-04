@@ -5,7 +5,7 @@ import kotlinx.coroutines.cancel
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
@@ -34,7 +34,7 @@ private data class LevelEntityState(
 
 /** The pieces of a [HollowAttachments] that outlive the entity instance they were attached to. */
 private class PendingTransfer(
-    val components: Map<ResourceLocation, Component>?,
+    val components: Map<Identifier, Component>?,
     val data: NbtDataStore?,
 )
 
@@ -133,10 +133,10 @@ object AttachmentRegistry {
         promote(entity).activateNodes()
     }
 
-    fun componentsById(entity: MCEntity): MutableMap<ResourceLocation, Any> = state(entity).components.asMutableMap()
+    fun componentsById(entity: MCEntity): MutableMap<Identifier, Any> = state(entity).components.asMutableMap()
 
     /** The components that are allowed over the network, i.e. the ones whose descriptor is `@Syncable`. */
-    fun syncableComponents(entity: Entity): Map<ResourceLocation, Component> {
+    fun syncableComponents(entity: Entity): Map<Identifier, Component> {
         val state = existingState(entity) ?: return emptyMap()
         return state.components.readOnly.filterKeys { id ->
             ComponentDescriptorRegistry.descriptorOrNull(id)?.syncPolicy == ComponentSyncPolicy.SYNC
@@ -151,10 +151,10 @@ object AttachmentRegistry {
 
     fun nextSyncVersion(entity: Entity): Long = state(entity).let { ++it.syncVersion }
 
-    fun lastSyncedComponents(entity: Entity): Map<ResourceLocation, Component> =
+    fun lastSyncedComponents(entity: Entity): Map<Identifier, Component> =
         existingState(entity)?.lastSyncedComponents ?: emptyMap()
 
-    fun setLastSyncedComponents(entity: Entity, components: Map<ResourceLocation, Component>) {
+    fun setLastSyncedComponents(entity: Entity, components: Map<Identifier, Component>) {
         state(entity).lastSyncedComponents = components
     }
 

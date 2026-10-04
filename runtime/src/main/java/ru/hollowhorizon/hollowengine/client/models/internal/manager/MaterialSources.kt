@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.DefaultPlayerSkin
 import net.minecraft.client.resources.PlayerSkin
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.entity.SkullBlockEntity
 import ru.hollowhorizon.hollowengine.common.attachments.components.PlayerArms
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
@@ -16,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 /** A material source turned into something the renderer can bind. */
 data class ResolvedMaterial(
-    val texture: ResourceLocation?,
-    val normal: ResourceLocation? = null,
-    val specular: ResourceLocation? = null,
+    val texture: Identifier?,
+    val normal: Identifier? = null,
+    val specular: Identifier? = null,
     val color: String? = null,
 )
 

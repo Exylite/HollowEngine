@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.attachments.api
 
 import kotlinx.coroutines.CoroutineScope
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.common.coroutines.EntityScope
 import androidx.compose.runtime.mutableStateMapOf
@@ -81,7 +81,7 @@ class HollowAttachments internal constructor(entity: MCEntity) {
     var syncVersion: Long = 0L
 
     /** What the clients tracking this entity were last told, so a batch can carry only the difference. */
-    var lastSyncedComponents: Map<ResourceLocation, Component> = emptyMap()
+    var lastSyncedComponents: Map<Identifier, Component> = emptyMap()
 
     /** The [Sync.TRACKING] data every tracking client was last told, for the same reason. */
     var lastSyncedData: CompoundTag = CompoundTag()

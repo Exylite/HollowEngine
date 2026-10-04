@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.utils.mc
 import ru.hollowhorizon.hollowengine.common.ui.UiData
@@ -31,7 +31,7 @@ internal object UiAdaptiveSurfaces {
      */
     private var swapping: Int? = null
 
-    fun open(sessionId: Int, surface: ResourceLocation, state: CompoundTag) {
+    fun open(sessionId: Int, surface: Identifier, state: CompoundTag) {
         val definition = UiDefinitionRegistry.surface(surface) ?: run {
             HollowEngine.LOGGER.warn("Server opened unknown UI surface {}", surface)
             return

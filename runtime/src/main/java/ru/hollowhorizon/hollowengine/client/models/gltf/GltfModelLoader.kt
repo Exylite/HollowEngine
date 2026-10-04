@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.gltf
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.HollowEngine.MODID
 import ru.hollowhorizon.hollowengine.client.models.internal.*
@@ -19,14 +19,14 @@ object GltfModelLoader : ModelLoader {
 
     private val supportedExtensions = setOf("KHR_texture_transform")
 
-    override suspend fun load(location: ResourceLocation, side: ModelSide): Model {
+    override suspend fun load(location: Identifier, side: ModelSide): Model {
         val resolvedLocation = if (!location.exists(side)) ModelLoader.FALLBACK_MODEL else location
 
         val gltf = loadGltf(resolvedLocation, side)
         return load(gltf.getOrThrow(), resolvedLocation, side)
     }
 
-    fun load(file: GltfFile, location: ResourceLocation, side: ModelSide): Model {
+    fun load(file: GltfFile, location: Identifier, side: ModelSide): Model {
         warnUnsupportedExtensions(file, location)
         val skins = parseSkins(file)
         val materials = if (side == ModelSide.SERVER) emptyList() else {
@@ -224,14 +224,14 @@ object GltfModelLoader : ModelLoader {
         return Array(size) { index -> uvTransform.transform.apply(this[index].x, this[index].y) }
     }
 
-    private fun warnUnsupportedExtensions(file: GltfFile, location: ResourceLocation) {
+    private fun warnUnsupportedExtensions(file: GltfFile, location: Identifier) {
         val missing = file.extensionsRequired.filterNot { it in supportedExtensions }
         if (missing.isNotEmpty()) {
             HollowEngine.LOGGER.warn("Model $location requires glTF extensions the engine ignores: ${missing.joinToString()}")
         }
     }
 
-    private fun ResourceLocation.exists(side: ModelSide): Boolean = when (side) {
+    private fun Identifier.exists(side: ModelSide): Boolean = when (side) {
         ModelSide.CLIENT -> exists()
         ModelSide.SERVER -> ModelResourceIO.exists(this)
     }

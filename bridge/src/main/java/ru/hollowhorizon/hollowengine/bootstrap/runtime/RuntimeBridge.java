@@ -7,9 +7,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Either;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.model.SkullModelBase;
+import net.minecraft.client.model.object.skull.SkullModelBase;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
@@ -18,11 +18,12 @@ import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+
 import net.minecraft.client.sounds.AudioStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,7 +31,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +45,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.PlayerModelType;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
@@ -120,7 +123,7 @@ public interface RuntimeBridge extends AutoCloseable {
 
     @Nullable ItemStack onArrowNock(ItemStack stack, Level level, Player player, InteractionHand usedHand);
 
-    void onRegisterTags(Object registry, Map<ResourceLocation, List<TagLoader.EntryWithSource>> value);
+    void onRegisterTags(Object registry, Map<Identifier, List<TagLoader.EntryWithSource>> value);
 
     float getSkySunSize(ClientLevel level, float originalSize);
 
@@ -132,11 +135,11 @@ public interface RuntimeBridge extends AutoCloseable {
 
     void onScreenClose(Screen screen);
 
-    boolean onScreenRenderPre(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
+    boolean onScreenRenderPre(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick);
 
-    void onScreenRenderPost(Screen screen, GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
+    void onScreenRenderPost(Screen screen, GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick);
 
-    boolean onRenderArm(PoseStack stack, MultiBufferSource multiBufferSource, int packedLight, AbstractClientPlayer player, HumanoidArm arm);
+    boolean onRenderArm(PoseStack stack, SubmitNodeCollector submitNodeCollector, int packedLight, AbstractClientPlayer player, HumanoidArm arm);
 
     boolean onRenderItemInHand(Camera camera, float partialTick, Matrix4f projectionMatrix);
 
@@ -150,9 +153,9 @@ public interface RuntimeBridge extends AutoCloseable {
 
     void onDebugClientMain();
 
-    @Nullable CompletableFuture<SoundBuffer> onLoadCompleteSound(ResourceLocation soundId, ResourceProvider resourceManager, Map<ResourceLocation, CompletableFuture<SoundBuffer>> cache);
+    @Nullable CompletableFuture<SoundBuffer> onLoadCompleteSound(Identifier soundId, ResourceProvider resourceManager, Map<Identifier, CompletableFuture<SoundBuffer>> cache);
 
-    @Nullable CompletableFuture<AudioStream> onLoadStreamSound(ResourceLocation soundId, ResourceProvider resourceManager, boolean isWrapper);
+    @Nullable CompletableFuture<AudioStream> onLoadStreamSound(Identifier soundId, ResourceProvider resourceManager, boolean isWrapper);
 
     @Nullable FileToIdConverter createSoundConverter();
 
@@ -205,11 +208,11 @@ public interface RuntimeBridge extends AutoCloseable {
 
     void onRecipeManagerCreated(RecipeManager recipeManager);
 
-    void onAddEntityRendererLayers(Map<EntityType<?>, EntityRenderer<?>> renderers, Map<String, EntityRenderer<? extends Player>> playerRenderers, EntityRendererProvider.Context context);
+    void onAddEntityRendererLayers(Map<EntityType<?>, EntityRenderer<?, ?>> renderers, Map<PlayerModelType, AvatarRenderer<AbstractClientPlayer>> playerRenderers, EntityRendererProvider.Context context);
 
-    boolean onRenderEntityPre(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight);
+    boolean onRenderEntityPre(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight);
 
-    void onRenderEntityPost(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight);
+    void onRenderEntityPost(Entity entity, float entityYaw, float partialTick, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight);
 
     AABB extendEntityCullingBounds(Entity entity, AABB vanillaBounds);
 
@@ -227,7 +230,7 @@ public interface RuntimeBridge extends AutoCloseable {
 
     void onCreateSkullModels(ImmutableMap.Builder<SkullBlock.Type, SkullModelBase> builder, EntityModelSet entityModelSet);
 
-    boolean onRenderPlayer(AbstractClientPlayer player, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight);
+    boolean onRenderPlayer(AbstractClientPlayer player, float entityYaw, float partialTicks, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, int packedLight);
 
     /**
      * The skin this player should render with, or null to leave the one vanilla worked out alone.
@@ -257,11 +260,11 @@ public interface RuntimeBridge extends AutoCloseable {
      * named layer through {@code RenderGuiLayerEvent.getName()}. Returns whether the
      * vanilla layer should be cancelled.
      */
-    boolean onRenderOverlayPre(Window window, GuiGraphics guiGraphics, float partialTick, String layerId);
+    boolean onRenderOverlayPre(Window window, GuiGraphicsExtractor guiGraphics, float partialTick, String layerId);
 
-    void onRenderOverlayPost(Window window, GuiGraphics guiGraphics, float partialTick, String layerId);
+    void onRenderOverlayPost(Window window, GuiGraphicsExtractor guiGraphics, float partialTick, String layerId);
 
-    void onRenderHudPost(Window window, GuiGraphics guiGraphics, float partialTick);
+    void onRenderHudPost(Window window, GuiGraphicsExtractor guiGraphics, float partialTick);
 
     boolean onKeyboardKey(long windowPointer, int key, int scanCode, int action, int modifiers);
 

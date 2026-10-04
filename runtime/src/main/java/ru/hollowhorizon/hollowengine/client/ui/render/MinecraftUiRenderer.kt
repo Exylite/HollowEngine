@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.LightTexture
 import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.client.renderer.texture.SimpleTexture
 import net.minecraft.client.renderer.texture.TextureAtlas
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -41,19 +41,19 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.*
 
 private data class SvgRasterKey(
-    val location: ResourceLocation,
+    val location: Identifier,
     val revision: Long,
     val width: Int,
     val height: Int,
 )
 
 private data class SvgRasterTexture(
-    val location: ResourceLocation,
+    val location: Identifier,
     val texture: DynamicTexture,
 )
 
 private data class SvgRasterQuad(
-    val texture: ResourceLocation,
+    val texture: Identifier,
     val width: Float,
     val height: Float,
     val transform: UiMatrix4,
@@ -166,7 +166,7 @@ class MinecraftUiRenderer {
     private val shapeBatchBounds = UiBatchBounds()
     private val imageBatchBounds = UiBatchBounds()
     private val textBatchBounds = UiBatchBounds()
-    private val phaseImageBatches = linkedMapOf<ResourceLocation, MutableList<UiTexturedQuad>>()
+    private val phaseImageBatches = linkedMapOf<Identifier, MutableList<UiTexturedQuad>>()
     private var quadMinX = 0f
     private var quadMinY = 0f
     private var quadMaxX = 0f
@@ -564,7 +564,7 @@ class MinecraftUiRenderer {
     private fun drawParticles(command: DrawParticlesCommand) {
         val transform = effective(command.transform)
         if (isBackfaceHidden(command.rect.width, command.rect.height, transform, command.backfaceVisibility)) return
-        val batches = linkedMapOf<ResourceLocation, MutableList<UiTexturedQuad>>()
+        val batches = linkedMapOf<Identifier, MutableList<UiTexturedQuad>>()
         appendParticleQuads(command, transform, batches)
         activeProfile?.let { it.imageDraws += batches.size }
         batches.forEach { (texture, quads) -> UiTextureEffects.drawTexturedQuads(texture, quads, command.filter) }
@@ -599,7 +599,7 @@ class MinecraftUiRenderer {
         imageBatchBounds.clear()
     }
 
-    private fun flushImageBatches(imageBatches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>) {
+    private fun flushImageBatches(imageBatches: MutableMap<Identifier, MutableList<UiTexturedQuad>>) {
         if (imageBatches.isEmpty()) return
         activeProfile?.let { it.imageDraws += imageBatches.size }
         imageBatches.forEach { (texture, quads) -> UiTextureEffects.drawTexturedQuads(texture, quads) }
@@ -608,10 +608,10 @@ class MinecraftUiRenderer {
 
     private fun appendImageBatch(
         command: DrawImageCommand,
-        batches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>,
+        batches: MutableMap<Identifier, MutableList<UiTexturedQuad>>,
     ) {
         if (command.rect.width <= 0f || command.rect.height <= 0f || command.opacity <= 0f) return
-        val location = ResourceLocation.tryParse(command.source) ?: return
+        val location = Identifier.tryParse(command.source) ?: return
         val transform = effective(command.transform)
         if (isBackfaceHidden(command.rect.width, command.rect.height, transform, command.backfaceVisibility)) return
         batches.getOrPut(location) { mutableListOf() } += UiTexturedQuad(
@@ -628,7 +628,7 @@ class MinecraftUiRenderer {
 
     private fun appendSvgImage(
         command: DrawImageCommand,
-        batches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>,
+        batches: MutableMap<Identifier, MutableList<UiTexturedQuad>>,
     ): Boolean {
         val quad = svgRasterQuad(
             width = command.rect.width,
@@ -700,9 +700,9 @@ class MinecraftUiRenderer {
         return SvgRasterTexture(location, texture)
     }
 
-    private fun svgDynamicTextureLocation(key: SvgRasterKey): ResourceLocation {
+    private fun svgDynamicTextureLocation(key: SvgRasterKey): Identifier {
         val hash = key.hashCode().toString().replace("-", "n")
-        return ResourceLocation.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/svg/$hash")
+        return Identifier.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/svg/$hash")
     }
 
     private fun flushShapeBatch() {
@@ -1338,7 +1338,7 @@ class MinecraftUiRenderer {
         if (ModShaders.UI_IMAGE_SHADOW == null || ModShaders.UI_EFFECT == null) return true
         if (command.opacity <= 0f || image.tintAlpha <= 0f || image.rect.width <= 0f || image.rect.height <= 0f) return true
         val svg = svgRasterQuad(image.rect.width, image.rect.height, image.source, 1f, UiMatrix4.identity(), image.fit)
-        val location = svg?.texture ?: ResourceLocation.tryParse(image.source) ?: return true
+        val location = svg?.texture ?: Identifier.tryParse(image.source) ?: return true
         if (svg == null && svgLocation(image.source) != null) return true
         val sourceTexture = Minecraft.getInstance().textureManager.getTexture(location)
         val placement = if (svg != null) {
@@ -2053,7 +2053,7 @@ class MinecraftUiRenderer {
             return
         }
         if (svgLocation(source) != null) return
-        val location = ResourceLocation.tryParse(source) ?: return
+        val location = Identifier.tryParse(source) ?: return
         RenderSystem.setShaderTexture(0, location)
         UiTextureEffects.drawTexturedQuad(
             width,
@@ -2070,8 +2070,8 @@ class MinecraftUiRenderer {
         )
     }
 
-    private fun svgLocation(source: String): ResourceLocation? {
-        val location = ResourceLocation.tryParse(source) ?: return null
+    private fun svgLocation(source: String): Identifier? {
+        val location = Identifier.tryParse(source) ?: return null
         return location.takeIf { it.path.endsWith(".svg", ignoreCase = true) }
     }
 

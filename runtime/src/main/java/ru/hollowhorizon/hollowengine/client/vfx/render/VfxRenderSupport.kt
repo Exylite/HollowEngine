@@ -9,7 +9,7 @@ import com.mojang.blaze3d.vertex.VertexBuffer
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceProvider
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -134,17 +134,17 @@ object VfxShaders {
     }
 
     private fun load(location: String, format: VertexFormat): ShaderInstance? {
-        val id = ResourceLocation.tryParse(location) ?: return null
+        val id = Identifier.tryParse(location) ?: return null
         val alias = "$ALIAS_FOLDER/${id.namespace}/${id.path}"
         val resources = Minecraft.getInstance().resourceManager
         val provider = ResourceProvider { wanted ->
             val path = wanted.path
             val prefix = "shaders/core/$ALIAS_FOLDER/"
-            if (wanted.namespace == ResourceLocation.DEFAULT_NAMESPACE && path.startsWith(prefix)) {
+            if (wanted.namespace == Identifier.DEFAULT_NAMESPACE && path.startsWith(prefix)) {
                 val rest = path.removePrefix(prefix)
                 val namespace = rest.substringBefore('/')
                 val file = "shaders/core/${rest.substringAfter('/')}"
-                resources.getResource(ResourceLocation.fromNamespaceAndPath(namespace, file))
+                resources.getResource(Identifier.fromNamespaceAndPath(namespace, file))
             } else {
                 resources.getResource(wanted)
             }

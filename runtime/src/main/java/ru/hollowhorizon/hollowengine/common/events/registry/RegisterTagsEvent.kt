@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.events.registry
 
 import net.minecraft.core.Registry
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.TagEntry
 import net.minecraft.tags.TagKey
 import net.minecraft.tags.TagLoader
@@ -12,7 +12,7 @@ import ru.hollowhorizon.hollowengine.common.utils.JavaHacks
 
 class RegisterTagsEvent(
     val registry: Registry<*>,
-    private val tags: MutableMap<ResourceLocation, MutableList<TagLoader.EntryWithSource>>,
+    private val tags: MutableMap<Identifier, MutableList<TagLoader.EntryWithSource>>,
 ) : ServerEvent {
     companion object : EventHandler<RegisterTagsEvent>()
 

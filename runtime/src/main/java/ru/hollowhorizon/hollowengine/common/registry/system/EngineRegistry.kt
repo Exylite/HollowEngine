@@ -2,7 +2,7 @@
 
 package ru.hollowhorizon.hollowengine.common.registry.system
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import ru.hollowhorizon.hollowengine.fabric.internal.FabricRegistry
 import java.util.IdentityHashMap
@@ -43,7 +43,7 @@ data class RegistryVersion(val major: Int, val minor: Int, val patch: Int) : Com
 }
 
 open class Holder<T : Any>(
-    val key: ResourceLocation,
+    val key: Identifier,
     var id: Int,
     val flags: Int = 0,
 ) {
@@ -55,27 +55,27 @@ open class Holder<T : Any>(
 }
 
 interface Registry<T : Any> : Iterable<Holder<T>> {
-    val key: ResourceLocation
+    val key: Identifier
     val state: RegistryState
     val size: Int
     fun getId(value: T): Int
-    fun getIdByLocation(location: ResourceLocation): Int? {
+    fun getIdByLocation(location: Identifier): Int? {
         val holder = getHolder(location) ?: return null
         return holder.id
     }
-    fun getLocationById(id: Int): ResourceLocation? = getHolder(id)?.key
+    fun getLocationById(id: Int): Identifier? = getHolder(id)?.key
     fun getById(id: Int): T?
     fun getHolder(id: Int): Holder<T>?
-    operator fun get(key: ResourceLocation): T = getOrNull(key) ?: error("No value found for $key")
-    fun getOrNull(key: ResourceLocation): T?
-    fun getHolder(key: ResourceLocation): Holder<T>?
-    fun contains(key: ResourceLocation): Boolean
+    operator fun get(key: Identifier): T = getOrNull(key) ?: error("No value found for $key")
+    fun getOrNull(key: Identifier): T?
+    fun getHolder(key: Identifier): Holder<T>?
+    fun contains(key: Identifier): Boolean
 }
 
 interface MutableRegistry<T : Any> : Registry<T> {
     val version: RegistryVersion
-    fun register(key: ResourceLocation, supplier: () -> T): Holder<T>
-    fun unregister(key: ResourceLocation): Boolean
+    fun register(key: Identifier, supplier: () -> T): Holder<T>
+    fun unregister(key: Identifier): Boolean
     fun bake()
     fun freeze()
     fun unfreeze()
@@ -120,7 +120,7 @@ class IntObjectTable<T : Any> {
 }
 
 class DefaultMutableRegistry<T : Any>(
-    override val key: ResourceLocation,
+    override val key: Identifier,
     private val idPolicy: IdPolicy = IdPolicy.NEVER_REUSE,
     override val version: RegistryVersion = RegistryVersion(1, 0, 0),
 ) : MutableRegistry<T> {
@@ -129,19 +129,19 @@ class DefaultMutableRegistry<T : Any>(
     private var _state: RegistryState = RegistryState.CONSTRUCTING
     override val state: RegistryState get() = lock.read { _state }
 
-    private val byKey = LinkedHashMap<ResourceLocation, Holder<T>>()
+    private val byKey = LinkedHashMap<Identifier, Holder<T>>()
     private val byValueId = IdentityHashMap<T, Int>()
 
-    private val keyToId = HashMap<ResourceLocation, Int>()
+    private val keyToId = HashMap<Identifier, Int>()
     private val idToValue = IntObjectTable<T>()
 
-    private val queue = LinkedHashMap<ResourceLocation, Pair<Holder<T>, () -> T>>()
+    private val queue = LinkedHashMap<Identifier, Pair<Holder<T>, () -> T>>()
     private val nextId = AtomicInteger(0)
     private val freeIds = ArrayDeque<Int>()
 
     override val size: Int get() = lock.read { byKey.size }
 
-    override fun register(key: ResourceLocation, supplier: () -> T): Holder<T> = lock.write {
+    override fun register(key: Identifier, supplier: () -> T): Holder<T> = lock.write {
         check(_state == RegistryState.CONSTRUCTING || _state == RegistryState.REGISTERING) {
             "Cannot register into state $_state"
         }
@@ -152,7 +152,7 @@ class DefaultMutableRegistry<T : Any>(
         return holder
     }
 
-    override fun unregister(key: ResourceLocation): Boolean = lock.write {
+    override fun unregister(key: Identifier): Boolean = lock.write {
         check(_state != RegistryState.FROZEN) { "Cannot unregister from frozen registry" }
         var removed = false
         if (queue.remove(key) != null) removed = true
@@ -233,11 +233,11 @@ class DefaultMutableRegistry<T : Any>(
         Holder<T>(k, id).also { it.value = v }
     }
 
-    override fun getOrNull(key: ResourceLocation): T? = lock.read { byKey[key]?.value }
+    override fun getOrNull(key: Identifier): T? = lock.read { byKey[key]?.value }
 
-    override fun getHolder(key: ResourceLocation): Holder<T>? = lock.read { byKey[key] }
+    override fun getHolder(key: Identifier): Holder<T>? = lock.read { byKey[key] }
 
-    override fun contains(key: ResourceLocation): Boolean = lock.read { key in byKey || key in queue }
+    override fun contains(key: Identifier): Boolean = lock.read { key in byKey || key in queue }
 
     override fun iterator(): Iterator<Holder<T>> = lock.read { byKey.values.toList().iterator() }
 }
@@ -246,7 +246,7 @@ class DeferredRegister<T : Any>(
     private val registry: MutableRegistry<T>,
     private val namespace: String,
 ) {
-    fun register(path: String, supplier: () -> T): ResourceLocation {
+    fun register(path: String, supplier: () -> T): Identifier {
         val k = "$namespace:$path".rl
         registry.register(k, supplier)
         return k
@@ -254,10 +254,10 @@ class DeferredRegister<T : Any>(
 }
 
 object RegistryManager {
-    private val registries = ConcurrentHashMap<ResourceLocation, MutableRegistry<*>>()
+    private val registries = ConcurrentHashMap<Identifier, MutableRegistry<*>>()
 
     fun <T : Any> create(
-        key: ResourceLocation,
+        key: Identifier,
         idPolicy: IdPolicy = IdPolicy.NEVER_REUSE,
         version: RegistryVersion = RegistryVersion(1, 0, 0),
     ): MutableRegistry<T> {
@@ -272,9 +272,9 @@ object RegistryManager {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Any> get(key: ResourceLocation): MutableRegistry<T>? = registries[key] as MutableRegistry<T>?
+    fun <T : Any> get(key: Identifier): MutableRegistry<T>? = registries[key] as MutableRegistry<T>?
 
-    fun all(): Map<ResourceLocation, MutableRegistry<*>> = registries
+    fun all(): Map<Identifier, MutableRegistry<*>> = registries
 
     fun bakeAll() {
         registries.values.forEach { it.bake() }
@@ -286,7 +286,7 @@ object RegistryManager {
 }
 
 data class RegistrySnapshot<T : Any>(
-    val registry: ResourceLocation,
+    val registry: Identifier,
     val version: RegistryVersion,
     val entries: List<Holder<T>>,
 )

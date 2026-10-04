@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.*
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import ru.hollowhorizon.hollowengine.client.ui.UiInsets
 import ru.hollowhorizon.hollowengine.client.ui.UiMatrix4
@@ -81,7 +81,7 @@ internal object UiTextureEffects {
         opacity: Float,
         flipY: Boolean,
         fit: UiImageFit = UiImageFit.STRETCH,
-        texture: ResourceLocation? = null,
+        texture: Identifier? = null,
         filter: UiFilterChain = UiFilterChain.Empty,
         slice: UiInsets = UiInsets.Zero,
         textureWidth: Float = width,
@@ -124,7 +124,7 @@ internal object UiTextureEffects {
     }
 
     fun drawTexturedQuads(
-        texture: ResourceLocation,
+        texture: Identifier,
         quads: List<UiTexturedQuad>,
         filter: UiFilterChain = UiFilterChain.Empty,
     ) {
@@ -483,7 +483,7 @@ internal object UiTextureEffects {
         buffer: BufferBuilder,
         transform: UiMatrix4,
         placement: ImagePlacement,
-        texture: ResourceLocation?,
+        texture: Identifier?,
         fit: UiImageFit,
         slice: UiInsets,
         flipY: Boolean,

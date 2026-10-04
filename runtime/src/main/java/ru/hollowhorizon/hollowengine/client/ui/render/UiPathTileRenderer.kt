@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
 import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener
 import org.lwjgl.opengl.GL11
@@ -155,11 +155,11 @@ internal class UiPathTileRenderer : UiSdfRenderer(
 
     private companion object {
         const val StorageBindingCount = 8
-        val VertexShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val VertexShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/path_tile.vsh",
         )
-        val FragmentShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val FragmentShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/path_tile.fsh",
         )

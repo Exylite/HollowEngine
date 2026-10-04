@@ -9,6 +9,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,13 +25,13 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerExtensio
         super(entityType, level);
     }
 
-    @Shadow @Nullable public abstract ItemEntity drop(ItemStack droppedItem, boolean dropAround, boolean includeThrowerName);
+    @Shadow @Nullable public abstract ItemEntity drop(ItemStack droppedItem, boolean includeThrowerName);
 
     @Shadow protected abstract void doCloseContainer();
 
     @Inject(method = "interactOn", at = @At("HEAD"), cancellable = true)
-    private void onInteract(Entity entityToInteractOn, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
-        if (level().isClientSide) return;
+    private void onInteract(Entity entityToInteractOn, InteractionHand hand, Vec3 location, CallbackInfoReturnable<InteractionResult> cir) {
+        if (level().isClientSide()) return;
         if (BootstrapRuntimeManager.bridge().onPlayerInteractEntity((Player) (Object) this, hand, entityToInteractOn)) {
             cir.setReturnValue(InteractionResult.PASS);
         }

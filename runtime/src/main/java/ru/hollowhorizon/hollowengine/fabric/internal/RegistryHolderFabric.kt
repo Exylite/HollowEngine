@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.fabric.internal
 
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.registry.system.Holder
 import ru.hollowhorizon.hollowengine.common.registry.system.RegistryState
 import ru.hollowhorizon.hollowengine.common.registry.system.RegistryVersion
@@ -12,7 +12,7 @@ import kotlin.jvm.optionals.getOrNull
 
 class FabricRegistry<T : Any>(val registry: Registry<T>) :
     ru.hollowhorizon.hollowengine.common.registry.system.MutableRegistry<T> {
-    override val key: ResourceLocation = registry.key().location()
+    override val key: Identifier = registry.key().location()
     override val state: RegistryState = RegistryState.REGISTERING
     override val size: Int get() = registry.size()
 
@@ -27,11 +27,11 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
         }
     }
 
-    override fun getOrNull(key: ResourceLocation): T? {
+    override fun getOrNull(key: Identifier): T? {
         return registry.get(key)
     }
 
-    override fun getHolder(key: ResourceLocation): Holder<T>? {
+    override fun getHolder(key: Identifier): Holder<T>? {
         val holder =
             registry.getHolder(ResourceKey.create(registry.key(), key)).getOrNull()
                 ?: return null
@@ -40,7 +40,7 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
         }
     }
 
-    override fun contains(key: ResourceLocation): Boolean {
+    override fun contains(key: Identifier): Boolean {
         return registry.containsKey(key)
     }
 
@@ -55,7 +55,7 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
     override val version: RegistryVersion = RegistryVersion(1, 0, 0)
 
     override fun register(
-        key: ResourceLocation,
+        key: Identifier,
         supplier: () -> T,
     ): Holder<T> {
         val item = supplier()
@@ -65,7 +65,7 @@ class FabricRegistry<T : Any>(val registry: Registry<T>) :
         }
     }
 
-    override fun unregister(key: ResourceLocation): Boolean {
+    override fun unregister(key: Identifier): Boolean {
         throw UnsupportedOperationException("Unregister is not supported in Fabric")
     }
 

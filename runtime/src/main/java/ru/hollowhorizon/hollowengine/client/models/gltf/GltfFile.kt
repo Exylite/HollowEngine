@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.models.gltf
 
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.ModelSide
 import ru.hollowhorizon.hollowengine.client.utils.stream
@@ -15,7 +15,7 @@ import ru.hollowhorizon.hollowengine.common.utils.nbt.ListOrSingle
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import java.util.*
 
-suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLIENT): Result<GltfFile> {
+suspend fun loadGltf(location: Identifier, side: ModelSide = ModelSide.CLIENT): Result<GltfFile> {
     val data = Uint8Buffer(location.readModelBytes(side))
 
     return try {
@@ -67,7 +67,7 @@ suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLI
     }
 }
 
-private fun ResourceLocation.readModelBytes(side: ModelSide): ByteArray =
+private fun Identifier.readModelBytes(side: ModelSide): ByteArray =
     when (side) {
         ModelSide.CLIENT -> stream.readBytes()
         ModelSide.SERVER -> ModelResourceIO.open(this).use { it.readBytes() }

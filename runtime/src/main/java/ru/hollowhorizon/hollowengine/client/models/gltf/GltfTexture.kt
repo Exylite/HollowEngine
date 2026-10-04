@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.DynamicTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.utils.stream
 import ru.hollowhorizon.hollowengine.common.utils.math.Vec2f
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -34,7 +34,7 @@ data class GltfTexture(
     @Transient
     private var isRegistered = false
 
-    fun makeTexture(location: ResourceLocation): ResourceLocation {
+    fun makeTexture(location: Identifier): Identifier {
         val uri = imageRef.uri
         val name = if (uri != null && !uri.startsWith("data:", true)) {
             uri
@@ -96,7 +96,7 @@ data class GltfTexture(
 
         val transform: TextureTransform? get() = extensions?.textureTransform?.takeUnless { it.isIdentity }
 
-        fun getTexture(gltfFile: GltfFile, location: ResourceLocation): ResourceLocation {
+        fun getTexture(gltfFile: GltfFile, location: Identifier): Identifier {
             return gltfFile.textures[index].makeTexture(location)
         }
     }

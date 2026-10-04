@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.fabric.internal;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -17,11 +17,11 @@ public class FabricRegistryHolder<T> implements RegistryHolder<T> {
     private static final RegistryHelper registryHelper = BootstrapRuntimeManager.bridge().getRegistryHelper();
     private final T result;
     private final Class<T> target;
-    private final ResourceLocation location;
+    private final Identifier location;
     private final AutoModelType autoModel;
 
     @SuppressWarnings("unchecked")
-    public FabricRegistryHolder(ResourceLocation location, Registry<T> registry, AutoModelType autoModel, Supplier<T> supplier, Class<T> target) {
+    public FabricRegistryHolder(Identifier location, Registry<T> registry, AutoModelType autoModel, Supplier<T> supplier, Class<T> target) {
         this.target = target;
         this.location = location;
         this.autoModel = autoModel;

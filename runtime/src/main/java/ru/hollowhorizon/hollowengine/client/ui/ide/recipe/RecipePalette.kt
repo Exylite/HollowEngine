@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import net.minecraft.client.Minecraft
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.client.ui.*
@@ -81,7 +81,7 @@ internal object RecipeItemIndex {
             .mapNotNull { id ->
                 val first = BuiltInRegistries.ITEM.getTag(
                     TagKey.create(
-                        Registries.ITEM, ResourceLocation.tryParse(id) ?: return@mapNotNull null
+                        Registries.ITEM, Identifier.tryParse(id) ?: return@mapNotNull null
                     )
                 ).flatMap { set -> set.stream().findFirst() }.orElse(null) ?: return@mapNotNull null
                 PaletteEntry(RecipePick(ItemStack(first.value()), tag = id), "#$id", "#$id")

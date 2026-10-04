@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.network
 
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.server.packs.PackType
 import net.minecraft.world.entity.player.Player
@@ -44,7 +44,7 @@ class RequestServerAssetDirectoryPacket(
                 }
             } else {
                 val cleanPath = path.trim('/')
-                require(ResourceLocation.tryBuild(namespace, cleanPath.ifEmpty { "root" }) != null) {
+                require(Identifier.tryBuild(namespace, cleanPath.ifEmpty { "root" }) != null) {
                     "Invalid resource directory: $namespace:$cleanPath"
                 }
                 val prefix = cleanPath.takeIf(String::isNotEmpty)?.plus('/') ?: ""
@@ -126,7 +126,7 @@ class RequestServerAssetFilePacket(
                 .send(serverPlayer)
             return
         }
-        val location = ResourceLocation.tryBuild(namespace, path)
+        val location = Identifier.tryBuild(namespace, path)
         val bytes = runCatching {
             requireNotNull(location) { "Invalid resource location: $namespace:$path" }
             require(offset in 0 until MaxRemoteAssetBytes) { "Invalid resource chunk offset." }

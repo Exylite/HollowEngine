@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.common.dialogue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import ru.hollowhorizon.hollowengine.common.data.write
 import ru.hollowhorizon.hollowengine.common.dialogue.text.FormattedTextParser
@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
  */
 class UiDialoguePresentation(
     /** Screen to open; the engine's own is the default and any `.ui.kts` screen can take its place. */
-    val screen: ResourceLocation = DEFAULT_SCREEN,
+    val screen: Identifier = DEFAULT_SCREEN,
     /**
      * What [screen] declares. A plain `screen { }` is the default; point this at
      * [UiSurfaceKind.ADAPTIVE] for a `surface { }` that reads as an overlay while a line is up and
@@ -180,7 +180,7 @@ class UiDialoguePresentation(
     private fun broadcast(block: (UiSession) -> Unit) = sessions.values.forEach(block)
 
     companion object {
-        val DEFAULT_SCREEN: ResourceLocation = ResourceLocation.fromNamespaceAndPath("hollowengine", "dialogue")
+        val DEFAULT_SCREEN: Identifier = Identifier.fromNamespaceAndPath("hollowengine", "dialogue")
 
         const val ICON_PARAMETER = "icon"
     }

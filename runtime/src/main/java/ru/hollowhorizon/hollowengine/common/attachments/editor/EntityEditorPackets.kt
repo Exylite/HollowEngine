@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.json.JsonObject
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -77,7 +77,7 @@ object EntityEditorService {
         AttachmentRegistry.componentsById(entity)[id] = component
     }
 
-    fun remove(entity: Entity, id: ResourceLocation) {
+    fun remove(entity: Entity, id: Identifier) {
         if (VirtualComponentRegistry.isVirtual(id)) return
         AttachmentRegistry.componentsById(entity).remove(id)
     }
@@ -118,7 +118,7 @@ class SetEntityComponentsPacket(
 
 @HollowPacketHandler(HollowPacketHandler.Direction.TO_SERVER)
 @Serializable
-class RemoveEntityComponentPacket(val entityId: Int, val component: ResourceLocation) : HollowPacket {
+class RemoveEntityComponentPacket(val entityId: Int, val component: Identifier) : HollowPacket {
     override fun handle(player: Player) {
         if (!player.canEditEntities()) return
         val target = player.level().getEntity(entityId) ?: return
@@ -154,7 +154,7 @@ object EntityEditorSlots {
     const val EQUIPMENT = "equipment"
     const val INVENTORY = "inventory"
 
-    val SURFACE: ResourceLocation = ResourceLocation.fromNamespaceAndPath("hollowengine", "entity_editor_slots")
+    val SURFACE: Identifier = Identifier.fromNamespaceAndPath("hollowengine", "entity_editor_slots")
 }
 
 @HollowPacketHandler(HollowPacketHandler.Direction.TO_SERVER)

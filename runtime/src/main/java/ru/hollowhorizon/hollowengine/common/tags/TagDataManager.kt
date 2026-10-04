@@ -4,7 +4,7 @@ package ru.hollowhorizon.hollowengine.common.tags
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
 import ru.hollowhorizon.hollowengine.common.events.registry.RegisterTagsEvent
 import ru.hollowhorizon.hollowengine.common.files.DirectoryManager
@@ -16,9 +16,9 @@ import ru.hollowhorizon.hollowengine.common.utils.yaml.YamlFormat
 import java.io.File
 
 object TagDataManager {
-    private val blockChanges = HashMap<ResourceLocation, MutableSet<ResourceLocation>>()
-    private val itemChanges = HashMap<ResourceLocation, MutableSet<ResourceLocation>>()
-    private val deletedTags = HashSet<ResourceLocation>()
+    private val blockChanges = HashMap<Identifier, MutableSet<Identifier>>()
+    private val itemChanges = HashMap<Identifier, MutableSet<Identifier>>()
+    private val deletedTags = HashSet<Identifier>()
 
     private val folder = DirectoryManager.HOLLOW_ENGINE.resolve("tags").toFile().apply { if (!exists()) mkdirs() }
     private val configFile = File(folder, "tag_changes.yml")
@@ -27,34 +27,34 @@ object TagDataManager {
         load()
     }
 
-    fun addEntry(tag: ResourceLocation, entry: ResourceLocation, type: String) {
+    fun addEntry(tag: Identifier, entry: Identifier, type: String) {
         val map = if (type == "BLOCK") blockChanges else itemChanges
         map.getOrPut(tag) { HashSet() }.add(entry)
     }
 
-    fun removeEntry(tag: ResourceLocation, entry: ResourceLocation, type: String) {
+    fun removeEntry(tag: Identifier, entry: Identifier, type: String) {
         val map = if (type == "BLOCK") blockChanges else itemChanges
         map[tag]?.remove(entry)
     }
 
-    fun deleteTag(tag: ResourceLocation, type: String) {
+    fun deleteTag(tag: Identifier, type: String) {
         deletedTags.add(tag)
     }
 
-    fun restoreTag(tag: ResourceLocation, type: String) {
+    fun restoreTag(tag: Identifier, type: String) {
         deletedTags.remove(tag)
     }
 
-    fun createTag(tag: ResourceLocation, type: String) {
+    fun createTag(tag: Identifier, type: String) {
         val map = if (type == "BLOCK") blockChanges else itemChanges
         map.getOrPut(tag) { HashSet() }
     }
 
     @Serializable
     class TagStorage(
-        val blockChanges: Map<ResourceLocation, Set<ResourceLocation>>,
-        val itemChanges: Map<ResourceLocation, Set<ResourceLocation>>,
-        val deletedTags: Set<ResourceLocation>,
+        val blockChanges: Map<Identifier, Set<Identifier>>,
+        val itemChanges: Map<Identifier, Set<Identifier>>,
+        val deletedTags: Set<Identifier>,
     )
 
     fun save() {

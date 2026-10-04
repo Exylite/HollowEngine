@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.attachments.sync
 
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
@@ -229,7 +229,7 @@ object EntityStateSync {
         fun drain(): List<EntityStateSyncPacket> = packets.toList().also { packets.clear() }
     }
 
-    private fun syncableOf(entity: Entity): Map<ResourceLocation, Component> =
+    private fun syncableOf(entity: Entity): Map<Identifier, Component> =
         AttachmentRegistry.syncableComponents(entity)
 
     private fun storeOf(entity: Entity): NbtDataStore? = AttachmentRegistry.entityDataOrNull(entity)
@@ -244,8 +244,8 @@ object EntityStateSync {
 
     /** What a delta has to carry to turn [previous] into [current] on the client. */
     internal fun batchOf(
-        current: Map<ResourceLocation, Component>,
-        previous: Map<ResourceLocation, Component>,
+        current: Map<Identifier, Component>,
+        previous: Map<Identifier, Component>,
     ): ComponentBatch = ComponentBatch(
         changed = current.filter { (id, component) -> previous[id] != component },
         removed = previous.keys.filterNot { it in current },
@@ -271,8 +271,8 @@ object EntityStateSync {
         if (full) version >= applied else version > applied
 
     internal data class ComponentBatch(
-        val changed: Map<ResourceLocation, Component>,
-        val removed: List<ResourceLocation>,
+        val changed: Map<Identifier, Component>,
+        val removed: List<Identifier>,
     ) {
         val isEmpty: Boolean get() = changed.isEmpty() && removed.isEmpty()
     }
@@ -284,7 +284,7 @@ object EntityStateSync {
         val isEmpty: Boolean get() = changed.isEmpty && removed.isEmpty()
     }
 
-    private fun idOf(component: Component): ResourceLocation =
+    private fun idOf(component: Component): Identifier =
         ComponentDescriptorRegistry.idFor(component::class)
             ?: error("Component descriptor not found for ${component::class.qualifiedName}")
 

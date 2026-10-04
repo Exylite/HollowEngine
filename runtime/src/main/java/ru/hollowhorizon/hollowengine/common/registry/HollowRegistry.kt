@@ -2,7 +2,7 @@
 package ru.hollowhorizon.hollowengine.common.registry
 
 import net.minecraft.core.Registry
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Items
 import ru.hollowhorizon.hollowengine.HollowEngine.MODID
@@ -20,10 +20,10 @@ open class HollowRegistry(val modId: String = MODID) {
     fun <T> promise(): T = null as T
 
     inline fun <reified T : Any> register(
-        location: ResourceLocation,
+        location: Identifier,
         autoModel: AutoModelType? = AutoModelType.DEFAULT,
         registry: Registry<in T>? = null,
-        noinline registryEntry: (ResourceLocation) -> T,
+        noinline registryEntry: (Identifier) -> T,
     ): RegistryHolder<T> {
         return CommonRegistryProvider.register(
             location,
@@ -38,11 +38,11 @@ open class HollowRegistry(val modId: String = MODID) {
         id: String,
         autoModel: AutoModelType? = AutoModelType.DEFAULT,
         registry: Registry<in T>? = null,
-        noinline registryEntry: (ResourceLocation) -> T,
+        noinline registryEntry: (Identifier) -> T,
     ): RegistryHolder<T> = register(location(id), autoModel, registry, registryEntry)
 
     /** A plain [id] lands in [modId]; a full `namespace:path` is used as written. */
-    fun location(id: String): ResourceLocation = if (':' in id) id.rl else "$modId:$id".rl
+    fun location(id: String): Identifier = if (':' in id) id.rl else "$modId:$id".rl
 
     fun creativeTab(name: String, block: CreativeModeTab.Builder.() -> Unit = {}) = register(name) {
         HollowCreativeTab.builder()

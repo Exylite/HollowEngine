@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.common.attachments.components
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import ru.hollowhorizon.hollowengine.common.registry.system.MutableRegistry
 import ru.hollowhorizon.hollowengine.common.registry.system.RegistryManager
@@ -24,7 +24,7 @@ enum class ComponentSyncPolicy {
 }
 
 data class ComponentDescriptor<T : Any>(
-    val id: ResourceLocation,
+    val id: Identifier,
     val value: KClass<T>,
     val serializer: KSerializer<T>,
     val persistencePolicy: ComponentPersistencePolicy = ComponentPersistencePolicy.PERSIST,
@@ -77,7 +77,7 @@ object ComponentDescriptorRegistry :
         )
     }
 
-    fun unregisterDescriptor(id: ResourceLocation): Boolean {
+    fun unregisterDescriptor(id: Identifier): Boolean {
         ensureRegisteringState()
         val removed = mutableRegistry.unregister(id)
         mutableRegistry.bake()
@@ -85,12 +85,12 @@ object ComponentDescriptorRegistry :
         return removed
     }
 
-    fun descriptorOrNull(id: ResourceLocation): ComponentDescriptor<*>? = getOrNull(id)
+    fun descriptorOrNull(id: Identifier): ComponentDescriptor<*>? = getOrNull(id)
 
     fun descriptorOrNull(type: KClass<*>): ComponentDescriptor<*>? =
         firstOrNull { it.value.value == type }?.value
 
-    fun idFor(type: KClass<*>): ResourceLocation? = descriptorOrNull(type)?.id
+    fun idFor(type: KClass<*>): Identifier? = descriptorOrNull(type)?.id
 
     fun isLooseOnDeath(component: Any): Boolean =
         descriptorOrNull(component::class)?.persistencePolicy == ComponentPersistencePolicy.LOOSE_ON_DEATH

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.shadergraph.*
 import java.util.*
@@ -43,7 +43,7 @@ object VfxGraphMaterials {
 
     /** The graph at [location] as the packs have it now, or null when there is none or it does not read. */
     fun read(location: String): ShaderGraph? {
-        val id = ResourceLocation.tryParse(location) ?: return null
+        val id = Identifier.tryParse(location) ?: return null
         val resource = Minecraft.getInstance().resourceManager.getResource(id).orElse(null) ?: return null
         return runCatching {
             resource.openAsReader().use { ShaderGraphFormat.read(it.readText()) }

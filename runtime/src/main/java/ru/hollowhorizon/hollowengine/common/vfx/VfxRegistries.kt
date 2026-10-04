@@ -4,7 +4,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.polymorphic
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionHandle
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionPoints
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -27,7 +27,7 @@ class VfxNodeType<S : VfxNodeSpec>(
     val icon: String? = null,
     val createDefault: (() -> S)? = null,
 ) {
-    val key: ResourceLocation = id.rl
+    val key: Identifier = id.rl
 }
 
 object VfxNodeTypes {
@@ -99,7 +99,7 @@ class VfxModuleType<S : VfxModuleSpec>(
     val appliesTo: (VfxEmitterSpec) -> Boolean = { true },
     val repeatable: Boolean = false,
 ) {
-    val key: ResourceLocation = id.rl
+    val key: Identifier = id.rl
 }
 
 object VfxModuleTypes {

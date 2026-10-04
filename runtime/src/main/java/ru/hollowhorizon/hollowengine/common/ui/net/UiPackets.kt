@@ -5,7 +5,7 @@ package ru.hollowhorizon.hollowengine.common.ui.net
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.client.ui.script.UiScriptClient
 import ru.hollowhorizon.hollowengine.common.network.HollowPacket
@@ -18,7 +18,7 @@ import ru.hollowhorizon.hollowengine.common.utils.nbt.ForResourceLocation
 @Serializable
 class OpenUiScreenPacket(
     val sessionId: Int,
-    val screen: ResourceLocation,
+    val screen: Identifier,
     val state: CompoundTag = CompoundTag(),
 ) : HollowPacket {
     override fun handle(player: Player) = UiScriptClient.openScreen(sessionId, screen, state)
@@ -29,7 +29,7 @@ class OpenUiScreenPacket(
 @Serializable
 class ShowUiOverlayPacket(
     val sessionId: Int,
-    val overlay: ResourceLocation,
+    val overlay: Identifier,
     val state: CompoundTag = CompoundTag(),
 ) : HollowPacket {
     override fun handle(player: Player) = UiScriptClient.showOverlay(sessionId, overlay, state)
@@ -39,7 +39,7 @@ class ShowUiOverlayPacket(
 @Serializable
 class OpenUiSurfacePacket(
     val sessionId: Int,
-    val surface: ResourceLocation,
+    val surface: Identifier,
     val state: CompoundTag = CompoundTag(),
 ) : HollowPacket {
     override fun handle(player: Player) = UiScriptClient.openSurface(sessionId, surface, state)
@@ -85,6 +85,6 @@ class UiEventPacket(
 /** Replaces the set of HUD layers the server wants hidden, vanilla ones included. */
 @HollowPacketHandler(HollowPacketHandler.Direction.TO_CLIENT)
 @Serializable
-class SetHiddenHudLayersPacket(val layers: List<ResourceLocation> = emptyList()) : HollowPacket {
+class SetHiddenHudLayersPacket(val layers: List<Identifier> = emptyList()) : HollowPacket {
     override fun handle(player: Player) = UiScriptClient.setHiddenLayers(layers)
 }

@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.fabric.internal;
 
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -18,8 +18,8 @@ public record DelegatedReloadListener(
     }
 
     @Override
-    public ResourceLocation getFabricId() {
-        return ResourceLocation.fromNamespaceAndPath("hollowengine", eventListener.getClass().getName().toLowerCase(Locale.ROOT).replace('$', '.'));
+    public Identifier getFabricId() {
+        return Identifier.fromNamespaceAndPath("hollowengine", eventListener.getClass().getName().toLowerCase(Locale.ROOT).replace('$', '.'));
     }
 
     @Override

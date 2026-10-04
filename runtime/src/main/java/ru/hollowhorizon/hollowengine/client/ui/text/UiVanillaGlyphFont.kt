@@ -1,10 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 
 internal class UiVanillaGlyphFont(private val face: UiVanillaFontFace) : UiGlyphFont {
-    private val pages = HashMap<ResourceLocation, UiGlyphAtlasPage>()
+    private val pages = HashMap<Identifier, UiGlyphAtlasPage>()
     private val placed = HashMap<Int, UiPlacedGlyph>()
 
     private var epoch = UiFontResources.generation
@@ -44,7 +44,7 @@ internal class UiVanillaGlyphFont(private val face: UiVanillaFontFace) : UiGlyph
         ).also { placed[codepoint] = it }
     }
 
-    private fun pageFor(texture: ResourceLocation): UiGlyphAtlasPage {
+    private fun pageFor(texture: Identifier): UiGlyphAtlasPage {
         val size = face.sheetSizes[texture]
         return UiGlyphAtlasPage(
             textureId = Minecraft.getInstance().textureManager.getTexture(texture).id,

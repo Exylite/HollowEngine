@@ -15,15 +15,15 @@ import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge;
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
     @Shadow public ServerPlayer player;
-    @Shadow protected abstract void detectRateSpam();
+    @Shadow protected abstract void detectChatRateSpam();
 
     @Inject(method = "broadcastChatMessage", at = @At("HEAD"), cancellable = true)
     private void hollowengine$onHandleChat(PlayerChatMessage message, CallbackInfo ci) {
         Component content = message.decoratedContent();
         RuntimeBridge.ChatResult result = BootstrapRuntimeManager.bridge().onServerChat(player, content);
         if (result.message() != content) {
-            player.server.getPlayerList().getPlayers().forEach(target -> target.sendSystemMessage(result.message()));
-            detectRateSpam();
+            player.level().getServer().getPlayerList().getPlayers().forEach(target -> target.sendSystemMessage(result.message()));
+            detectChatRateSpam();
             ci.cancel();
             return;
         }

@@ -32,7 +32,7 @@ import net.minecraft.core.Direction
 import net.minecraft.core.NonNullList
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.FileToIdConverter
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -308,7 +308,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         return event.stack.takeIf { it != stack }
     }
 
-    override fun onRegisterTags(registry: Any, value: Map<ResourceLocation, List<TagLoader.EntryWithSource>>) {
+    override fun onRegisterTags(registry: Any, value: Map<Identifier, List<TagLoader.EntryWithSource>>) {
         @Suppress("UNCHECKED_CAST") RegisterTagsEvent.post(
             RegisterTagsEvent(
                 registry as net.minecraft.core.Registry<*>,
@@ -448,15 +448,15 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLoadCompleteSound(
-        soundId: ResourceLocation,
+        soundId: Identifier,
         resourceManager: ResourceProvider,
-        cache: Map<ResourceLocation, CompletableFuture<SoundBuffer>>,
+        cache: Map<Identifier, CompletableFuture<SoundBuffer>>,
     ): CompletableFuture<SoundBuffer>? {
         val path = soundId.path
         if (!path.endsWith(".mp3") && !path.endsWith(".wav")) return null
 
         @Suppress("UNCHECKED_CAST") val mutableCache =
-            cache as MutableMap<ResourceLocation, CompletableFuture<SoundBuffer>>
+            cache as MutableMap<Identifier, CompletableFuture<SoundBuffer>>
         return mutableCache.computeIfAbsent(soundId) { resourceLocation ->
             CompletableFuture.supplyAsync({
                 try {
@@ -471,7 +471,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLoadStreamSound(
-        soundId: ResourceLocation,
+        soundId: Identifier,
         resourceManager: ResourceProvider,
         isWrapper: Boolean,
     ): CompletableFuture<AudioStream>? {
@@ -821,7 +821,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         partialTick: Float,
         layerId: String,
     ): Boolean {
-        val layer = ResourceLocation.parse(layerId)
+        val layer = Identifier.parse(layerId)
         val event = RenderOverlayEvent.Pre(window, guiGraphics, partialTick, layer)
         RenderOverlayEvent.Pre.post(event)
 
@@ -839,7 +839,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         partialTick: Float,
         layerId: String,
     ) {
-        val layer = ResourceLocation.parse(layerId)
+        val layer = Identifier.parse(layerId)
         RenderOverlayEvent.Post.post(RenderOverlayEvent.Post(window, guiGraphics, partialTick, layer))
         UiScriptHudHost.render(layer, HudPlacement.AFTER, System.nanoTime())
     }

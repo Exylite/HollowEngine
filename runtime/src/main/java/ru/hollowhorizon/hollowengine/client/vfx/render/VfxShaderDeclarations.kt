@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.client.vfx.render
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.vfx.VfxColorValue
 import ru.hollowhorizon.hollowengine.common.vfx.VfxRgba
@@ -110,8 +110,8 @@ object VfxShaderDeclarations {
 
     private fun load(location: String): VfxShaderDeclaration? {
         if (VfxGraphMaterials.isGraph(location)) return VfxGraphMaterials.read(location)?.let(VfxGraphMaterials::declaration)
-        val id = ResourceLocation.tryParse(location) ?: return null
-        val file = ResourceLocation.fromNamespaceAndPath(id.namespace, "shaders/core/${id.path}.json")
+        val id = Identifier.tryParse(location) ?: return null
+        val file = Identifier.fromNamespaceAndPath(id.namespace, "shaders/core/${id.path}.json")
         val resource = Minecraft.getInstance().resourceManager.getResource(file).orElse(null) ?: return null
         return try {
             resource.openAsReader().use { VfxShaderDeclaration.parse(JsonParser.parseReader(it).asJsonObject) }

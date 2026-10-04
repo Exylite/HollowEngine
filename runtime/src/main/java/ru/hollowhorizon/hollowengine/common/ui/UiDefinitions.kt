@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.ui
 
 import androidx.compose.runtime.Composable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.ui.net.UiSurfaceKind
 
 /** The composable body of a scripted screen or overlay. */
@@ -39,7 +39,7 @@ class ScreenOverride(
  * own screen behaves.
  */
 class UiScreenDefinition(
-    val id: ResourceLocation,
+    val id: Identifier,
     val title: String,
     val closeOnEscape: Boolean,
     val pausesGame: Boolean,
@@ -69,8 +69,8 @@ class UiScreenDefinition(
  * that tracks live game state.
  */
 class UiOverlayDefinition(
-    val id: ResourceLocation,
-    val anchor: ResourceLocation,
+    val id: Identifier,
+    val anchor: Identifier,
     val placement: HudPlacement,
     val autoShow: Boolean,
     val input: OverlayInput,
@@ -89,7 +89,7 @@ class UiOverlayDefinition(
  * on, and the moment a menu appears it has to become a screen that owns the cursor.
  */
 class UiSurfaceDefinition(
-    val id: ResourceLocation,
+    val id: Identifier,
     /** How it behaves while it is a screen. */
     val screen: UiScreenDefinition,
     /** How it behaves while it is an overlay. */

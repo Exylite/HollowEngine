@@ -8,7 +8,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
 import ru.hollowhorizon.hollowengine.client.ui.inspector.*
 import ru.hollowhorizon.hollowengine.client.ui.*
@@ -104,7 +104,7 @@ private fun AnimationsExtras(scope: ComponentEditorScope) {
     val session = LocalEntityEditorSession.current ?: return
     val component = scope.component as? AnimationsComponent ?: return
     val modelPath = session.entries.firstNotNullOfOrNull { (it.value as? Model)?.model } ?: return
-    val location = remember(modelPath) { ResourceLocation.tryParse(modelPath) } ?: return
+    val location = remember(modelPath) { Identifier.tryParse(modelPath) } ?: return
     val model by remember(location) { HollowModelManager.getOrCreate(location) }.collectAsState()
     val names = model.animations.map { it.name }.sorted()
 

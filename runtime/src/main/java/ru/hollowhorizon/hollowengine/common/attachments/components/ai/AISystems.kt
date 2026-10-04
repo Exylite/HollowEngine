@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.components.ai
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Mob
@@ -27,7 +27,7 @@ object AIComponentSystems {
     private val lookAtId by lazy { descriptorId(LookAtTargetComponent::class) }
     private val pickupId by lazy { descriptorId(PickupLootComponent::class) }
 
-    fun tickEntity(entity: MCEntity, components: Map<ResourceLocation, Any>) {
+    fun tickEntity(entity: MCEntity, components: Map<Identifier, Any>) {
         val attack = components[attackId] as? AttackTargetComponent
         val follow = components[followId] as? FollowTargetComponent
         val moveTo = components[moveToId] as? MoveToPositionComponent
@@ -236,7 +236,7 @@ object AIComponentSystems {
         if (pickup == null) AIRuntimeState.lootScanCooldowns.remove(entityId)
     }
 
-    private fun descriptorId(type: kotlin.reflect.KClass<*>): ResourceLocation =
+    private fun descriptorId(type: kotlin.reflect.KClass<*>): Identifier =
         ComponentDescriptorRegistry.idFor(type)
             ?: error("Component descriptor not found for ${type.qualifiedName}")
 }

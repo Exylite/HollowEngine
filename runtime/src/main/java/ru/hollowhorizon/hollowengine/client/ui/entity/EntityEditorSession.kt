@@ -7,7 +7,7 @@ import androidx.compose.runtime.setValue
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonObject
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.client.ui.inspector.*
 import ru.hollowhorizon.hollowengine.client.ui.UiEntityView
@@ -21,7 +21,7 @@ internal enum class EntityEditorTab { COMPONENTS, SCRIPTS }
 
 /** One editable component: its identity, its value, and the serializer the fields are built from. */
 internal data class ComponentEntry(
-    val id: ResourceLocation,
+    val id: Identifier,
     val value: Component,
     val serializer: KSerializer<Component>,
     val virtual: Boolean,
@@ -168,6 +168,6 @@ internal class EntityEditorSession(initial: EntityEditorSnapshot) : InspectorHos
         return ComponentEntry(id, component, serializer, virtual)
     }
 
-    private fun List<Component>.replacing(id: ResourceLocation, value: Component): List<Component> =
+    private fun List<Component>.replacing(id: Identifier, value: Component): List<Component> =
         map { if (ComponentJson.idOf(it) == id) value else it }
 }

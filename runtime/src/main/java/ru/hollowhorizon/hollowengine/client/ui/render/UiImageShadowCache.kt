@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.VertexSorting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.AbstractTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
@@ -35,7 +35,7 @@ internal data class UiImageShadowKey(
     val spread: Float,
 )
 
-internal data class UiImageShadowMask(val texture: ResourceLocation, val bounds: UiRect)
+internal data class UiImageShadowMask(val texture: Identifier, val bounds: UiRect)
 
 internal fun imageShadowBounds(bounds: UiRect, blur: Float, spread: Float): UiRect {
     val padding = ceil(abs(spread) + blur.coerceAtLeast(0f) * 1.5f + 2f)
@@ -108,7 +108,7 @@ internal class UiImageShadowCache : AutoCloseable {
         val height = ceil(bounds.height * scale).toInt().coerceIn(1, heightLimit)
         val texture = previous?.texture ?: MaskTexture(UiFramebuffer(width, height, withDepth = false))
         val mask = previous?.mask ?: UiImageShadowMask(
-            ResourceLocation.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/shadow/${Ids.incrementAndGet()}"), bounds,
+            Identifier.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/shadow/${Ids.incrementAndGet()}"), bounds,
         )
         val workspace = if (needsFiltering) previous?.workspace ?: Workspace(width, height) else null
         try {

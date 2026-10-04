@@ -1,10 +1,8 @@
 package ru.hollowhorizon.hollowengine.bootstrap.runtime;
 
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.commands.CommandBuildContext;
@@ -13,7 +11,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
@@ -32,17 +29,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public interface EventBridge {
-    void onRegisterShaders(ShaderRegistration registration);
-
     void onRegisterEntityRenderers(BiConsumer<EntityType<? extends Entity>, EntityRendererProvider<Entity>> consumer);
 
-    void onRegisterBlockEntityRenderers(BiConsumer<BlockEntityType<? extends BlockEntity>, BlockEntityRendererProvider<BlockEntity>> consumer);
+    void onRegisterBlockEntityRenderers(BiConsumer<BlockEntityType<? extends BlockEntity>, BlockEntityRendererProvider<BlockEntity, ?>> consumer);
 
     void onRegisterKeybindings(Consumer<KeyMapping> consumer);
 
@@ -77,10 +71,6 @@ public interface EventBridge {
     boolean onBlockBreak(Level level, BlockPos pos, BlockState state, ServerPlayer player);
 
     void onBuildTabContents(CreativeModeTab tab, ResourceKey<CreativeModeTab> tabKey, CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output);
-
-    interface ShaderRegistration {
-        void register(ResourceLocation id, VertexFormat vertexFormat, Consumer<ShaderInstance> loadCallback) throws IOException;
-    }
 
     interface ReloadListenerRegistration {
         void register(PreparableReloadListener listener);

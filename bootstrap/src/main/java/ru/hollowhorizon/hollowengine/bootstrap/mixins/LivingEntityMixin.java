@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.bootstrap.mixins;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,8 +19,8 @@ public class LivingEntityMixin {
 
     // LivingEntity overrides Entity#hurt without calling super, so the Entity mixin never fires for
     // living entities. Post EntityEvent.Hurt here too so onHurt handlers run for mobs and players.
-    @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
-    private void hollowengine$hurt(DamageSource damageSource, float amount, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
+    private void hollowengine$hurt(ServerLevel level, DamageSource damageSource, float amount, CallbackInfoReturnable<Boolean> cir) {
         if (BootstrapRuntimeManager.bridge().onEntityHurt((LivingEntity) (Object) this, damageSource, amount)) {
             cir.setReturnValue(false);
         }

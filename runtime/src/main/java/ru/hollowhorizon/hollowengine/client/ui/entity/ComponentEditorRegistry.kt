@@ -5,7 +5,7 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.inspector.withField
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 
@@ -17,7 +17,7 @@ class ComponentEditorScope internal constructor(
     private val apply: (JsonObject) -> Unit,
 ) {
     val component: Component get() = entry.value
-    val id: ResourceLocation get() = entry.id
+    val id: Identifier get() = entry.id
     val json: JsonObject get() = document
 
     fun set(field: String, value: JsonElement) = apply(document.withField(field, value))
@@ -37,14 +37,14 @@ internal class ComponentEditorRegistration(
  * Extra UI for a specific component.
  */
 object ComponentEditors {
-    private val registry = LinkedHashMap<ResourceLocation, ComponentEditorRegistration>()
+    private val registry = LinkedHashMap<Identifier, ComponentEditorRegistration>()
 
     /**
      * @param before draws the extra UI above the generated fields instead of below them.
      * @param replacesFields hides the generated fields entirely.
      */
     fun register(
-        id: ResourceLocation,
+        id: Identifier,
         before: Boolean = false,
         replacesFields: Boolean = false,
         content: ComponentEditorContent,
@@ -52,9 +52,9 @@ object ComponentEditors {
         registry[id] = ComponentEditorRegistration(content, replacesFields, before)
     }
 
-    fun unregister(id: ResourceLocation) {
+    fun unregister(id: Identifier) {
         registry.remove(id)
     }
 
-    internal fun of(id: ResourceLocation): ComponentEditorRegistration? = registry[id]
+    internal fun of(id: Identifier): ComponentEditorRegistration? = registry[id]
 }

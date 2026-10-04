@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
 import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL15
@@ -152,11 +152,11 @@ internal class UiAnalyticRectRenderer : UiSdfRenderer(
         /** First texture unit for glyph atlases, past the RecordBuffer/PaintBuffer/StopBuffer units (0-2). */
         const val GlyphAtlasUnit = 3
 
-        val VertexShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val VertexShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/rect_sdf.vsh",
         )
-        val FragmentShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val FragmentShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/rect_sdf.fsh",
         )

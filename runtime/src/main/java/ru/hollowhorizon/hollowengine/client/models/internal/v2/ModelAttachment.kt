@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.v2
 
 import kotlinx.coroutines.flow.StateFlow
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -26,14 +26,14 @@ import kotlin.math.min
  * The model at [model] or fallback.
  */
 fun ModelAttachment(model: String): ModelAttachment {
-    val location = ResourceLocation.tryParse(model) ?: run {
+    val location = Identifier.tryParse(model) ?: run {
         HollowEngine.LOGGER.warn("Model path '{}' is not a valid resource location, using the fallback", model)
         ModelLoader.FALLBACK_MODEL
     }
     return ModelAttachment(location)
 }
 
-fun ModelAttachment(location: ResourceLocation): ModelAttachment {
+fun ModelAttachment(location: Identifier): ModelAttachment {
     return ModelAttachment(HollowModelManager.getOrCreate(location), null, location = location)
 }
 
@@ -44,7 +44,7 @@ class ModelAttachment(
     val flow: StateFlow<Model>,
     parent: Attachment?,
     var entity: LivingEntity? = null,
-    val location: ResourceLocation? = null,
+    val location: Identifier? = null,
 ) : Attachment(parent) {
     private var builtFor: Model? = null
     private var runtimeNodes: List<RuntimeNode> = emptyList()

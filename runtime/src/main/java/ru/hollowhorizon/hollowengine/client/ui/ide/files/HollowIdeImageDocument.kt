@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.client.ui.ide.files
 import com.mojang.blaze3d.platform.NativeImage
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.DynamicTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import ru.hollowhorizon.hollowengine.client.ui.ide.HollowIdeFileDocument
 import java.awt.image.BufferedImage
@@ -27,7 +27,7 @@ internal class HollowIdeImageDocument(
 
     val width: Int get() = image.width
     val height: Int get() = image.height
-    val textureLocation: ResourceLocation = Minecraft.getInstance().textureManager.register(
+    val textureLocation: Identifier = Minecraft.getInstance().textureManager.register(
         "hollowide-image-${NextTextureId.incrementAndGet()}",
         texture,
     )
