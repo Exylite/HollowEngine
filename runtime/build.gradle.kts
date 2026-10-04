@@ -343,13 +343,13 @@ kotlin {
 apply(from = rootProject.file("gradle/payload-remap.gradle.kts"))
 
 // Without remapping Loom has no named jar of its own, but dependents still ask for the Mojang-named
-// classes by this configuration.
+// classes by this configuration. It is offered as a runtime variant, which compile classpaths accept too.
 configurations.create("namedElements") {
     isCanBeConsumed = true
     isCanBeResolved = false
     configurations.findByName("api")?.let { extendsFrom(it) }
     attributes {
-        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
         attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
         attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
     }
