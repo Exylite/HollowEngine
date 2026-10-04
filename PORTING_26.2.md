@@ -94,7 +94,7 @@ Since the game now ships with its own names there is nothing to remap:
 ## Checked
 
 - Whole project compiles: runtime, bridge, both bootstraps, compiler, mcp, physics and video addons.
-- Unit tests: 1138 of 1139 pass. The one failure is a Windows-path clipboard test that cannot pass on Linux.
+- Unit tests: runtime 1138 of 1139 pass (the one failure is a Windows-path clipboard test that cannot pass on Linux), compiler addon 66 of 66 (they read Java 25 class files, so their classpath carries ASM 9.10), mcp addon 7 of 7.
 - Fabric and NeoForge dedicated servers start from the packaged universal jar with the compiler and mcp addons, and a `.node.kts` script compiles and runs on both.
 - Fabric client (singleplayer and multiplayer) and NeoForge client start in a dev environment; the in-game IDE opens; glTF models render on NPCs and the player; generated items work.
 - The packaged universal jar with all four addons loads on a Fabric client: the IDE opens, a client script compiles and draws a HUD, `/he model attach` puts a model on an NPC.
