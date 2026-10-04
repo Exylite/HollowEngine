@@ -48,6 +48,18 @@ Fix them in the merge commit:
 
 Because of this the engine **forces the OpenGL backend**; the new Vulkan backend is not supported.
 
+### Drawing into the level
+
+Hooks that draw into the level (VFX, particles, gizmos, debug renderers) get the same `RenderLevelStageEvent` as in 1.21, fed from Fabric's `LevelRenderEvents` by `LevelStageDispatcher`.
+`RuntimeBridgeEntrypoint.onRenderLevelStage` makes the event behave like it did before:
+
+- The camera rotation is the model view matrix of the legacy `RenderSystem`, and `event.poseStack` starts out empty, as in 1.21. Putting the rotation in both places turns everything twice, which only shows once the camera is not at the effect.
+- The level is drawn with a **reversed depth in the zero-to-one range** (near and far swapped, depth cleared to 0, `GEQUAL`). `RenderSystem.reverseDepth` is on inside the hook, so `RenderSystem.nearerDepthFunc` and `RenderSystem.farDepth` give the right function and value; use them instead of `LEQUAL` and `1f`. Shaders that read depth convert it with `hollowengine_view_depth` from `hollowengine_vfx.glsl`, which knows both conventions.
+- Vanilla binds a framebuffer only while one of its render passes runs, and a pass can leave its scissor on. The hook binds the engine's wrapper of the main target and switches scissor off while the event runs, then puts both back.
+- `Uniform.setSafe` writes only as many components as the uniform has, like the 1.21 `Uniform`, so engine shaders can keep passing four values.
+
+`-Dhollowengine.vfx.debug` makes the VFX renderers log what a frame holds, the GL state it is drawn in, GL errors they leave behind and how many fragments each draw let through; it is the quickest way to tell "not drawn" from "drawn but invisible".
+
 ## Packaging and the script compiler
 
 Packaging is unchanged: one universal jar for both loaders (`universalJar`, collected into `merged/` by `buildAndCollect`) and separate addon jars (`buildAddons`, in `build/addon-jars/`).
@@ -71,10 +83,12 @@ Since the game now ships with its own names there is nothing to remap:
 - Unit tests: 1138 of 1139 pass. The one failure is a Windows-path clipboard test that cannot pass on Linux.
 - Fabric and NeoForge dedicated servers start from the packaged universal jar with the compiler and mcp addons, and a `.node.kts` script compiles and runs on both.
 - Fabric client (singleplayer and multiplayer) and NeoForge client start in a dev environment; the in-game IDE opens; glTF models render on NPCs and the player; generated items work.
+- The packaged universal jar with all four addons loads on a Fabric client: the IDE opens, a client script compiles and draws a HUD, `/he model attach` puts a model on an NPC.
+- VFX in the packaged Fabric client: post effects (`soul`, `explosion` dimming), world surfaces (the `magic_shield` bubble with its ground contact glow, ribbons, particles, smoke and sparks of `explosion`), sky nodes (`sky_strike`), seen from first and third person.
 
 ## Known gaps
 
-- Not exercised yet: VFX and particles, video playback and physics natives on a client, `.mixin.kts` scripts, NeoForge client in-world behaviour, the packaged jar on a client.
+- Not exercised yet: video playback and physics natives on a client, `.mixin.kts` scripts, NeoForge client in-world behaviour, the packaged jar on a NeoForge client. The VFX preview in the IDE still draws with the 1.21 depth convention (-1..1, not reversed) and has not been checked.
 - The vanilla model preview in the IDE is a stub.
 - The Iris integration is stubbed (Iris 1.11 changed its API); shader packs are not coordinated with the engine's rendering.
 - Vanilla items and tooltips inside engine UI are drawn in a second GUI pass, so their z-order against engine GL UI is approximate.
