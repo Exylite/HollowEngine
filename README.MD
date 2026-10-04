@@ -37,7 +37,8 @@ HollowEngine is a content creation engine for Minecraft. It combines Kotlin scri
 
 ## Current Platform Support
 
-- Minecraft `1.21.1`
+- Minecraft `26.2` (see [PORTING_26.2.md](PORTING_26.2.md))
+- Java `25`
 - Fabric
 - NeoForge
 - Kotlin `2.4.0`

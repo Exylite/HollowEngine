@@ -15,11 +15,11 @@ order: 2
 
 ```kotlin
 val RUBY by register("ruby") {
-    Item(Item.Properties())
+    Item(itemProperties(it))
 }
 ```
 
-`register` создаёт предмет с идентификатором `mypack:ruby` и сразу генерирует для него модель. Переменная `RUBY` пригодится, чтобы ссылаться на предмет из этого же скрипта, например при создании [вкладки творческого режима](/docs/hollowengine/scripting/startup/creative-tabs).
+`register` создаёт предмет с идентификатором `mypack:ruby` и сразу генерирует для него модель. Идентификатор передаётся в лямбду как `it`, а `itemProperties(it)` даёт свойства, в которых он уже указан: начиная с Minecraft 26.1 игра не принимает предмет без него. Переменная `RUBY` пригодится, чтобы ссылаться на предмет из этого же скрипта, например при создании [вкладки творческого режима](/docs/hollowengine/scripting/startup/creative-tabs).
 
 ## Текстура и название
 
@@ -69,7 +69,7 @@ hollowengine/
 
 ```kotlin
 val RUBY_SWORD by register("ruby_sword", AutoModelType.HANDHELD) {
-    Item(Item.Properties().stacksTo(1))
+    Item(itemProperties(it).stacksTo(1))
 }
 ```
 
@@ -83,7 +83,7 @@ import net.minecraft.world.item.Rarity
 
 val RUBY_APPLE by register("ruby_apple") {
     Item(
-        Item.Properties()
+        itemProperties(it)
             .stacksTo(16) // Размер стака
             .rarity(Rarity.RARE) // Цвет названия
             .fireResistant() // Не сгорает в лаве
@@ -98,17 +98,17 @@ val RUBY_APPLE by register("ruby_apple") {
 
 ```kotlin
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResultHolder
+import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
 
 val MAGIC_WAND by register("magic_wand", AutoModelType.HANDHELD) {
-    object : Item(Item.Properties().stacksTo(1)) {
-        override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+    object : Item(itemProperties(it).stacksTo(1)) {
+        override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
             if (!level.isClientSide) {
                 player.sendSystemMessage("Вжух!".literal)
             }
-            return InteractionResultHolder.success(player.getItemInHand(hand))
+            return InteractionResult.SUCCESS
         }
     }
 }
