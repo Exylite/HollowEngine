@@ -1,8 +1,6 @@
 package ru.hollowhorizon.hollowengine.neoforge;
 
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -42,7 +40,6 @@ public final class HollowCoreNeoForgeBootstrap {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     public static void onClientInitialize(FMLClientSetupEvent event) {
         BootstrapRuntimeManager.bridge().onClientInitialize();
     }

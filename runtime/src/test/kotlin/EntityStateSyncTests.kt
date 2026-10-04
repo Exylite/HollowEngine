@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import ru.hollowhorizon.hollowengine.common.attachments.sync.EntityStateSync
 import ru.hollowhorizon.hollowengine.common.attachments.sync.EntityStateSyncPacket
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

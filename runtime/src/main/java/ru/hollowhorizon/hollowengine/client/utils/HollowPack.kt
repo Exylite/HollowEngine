@@ -87,6 +87,11 @@ object HollowPack : PackResources {
     fun addCustomItemModel(location: Identifier, content: String) {
         val model = "${location.namespace}:models/item/${location.path}.json".rl
         addCustomJSON(model, content)
+        // since 26.1 an item is looked up by its client item definition, which points at the model
+        addCustomJSON(
+            "${location.namespace}:items/${location.path}.json".rl,
+            "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"${location.namespace}:item/${location.path}\"}}"
+        )
     }
 
     fun addCustomBlockstate(location: Identifier, content: String) {

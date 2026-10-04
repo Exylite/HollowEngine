@@ -1,7 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.slots
 
-import net.minecraft.SharedConstants
-import net.minecraft.server.Bootstrap
+import ru.hollowhorizon.hollowengine.testing.MinecraftTestBootstrap
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -21,8 +20,7 @@ import kotlin.test.assertTrue
 class SlotZonesTest {
     @BeforeTest
     fun bootstrapRegistries() {
-        SharedConstants.tryDetectVersion()
-        Bootstrap.bootStrap()
+        MinecraftTestBootstrap.init()
     }
 
     private fun build(block: SlotZonesBuilder.() -> Unit) = SlotZonesBuilder().apply(block).buildLayout()

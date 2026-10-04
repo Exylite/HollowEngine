@@ -71,9 +71,6 @@ configurations {
     named("compileClasspath") {
         extendsFrom(getByName("common"))
     }
-    named("runtimeClasspath") {
-        extendsFrom(getByName("common"))
-    }
     named("developmentNeoForge") {
         extendsFrom(getByName("common"))
     }

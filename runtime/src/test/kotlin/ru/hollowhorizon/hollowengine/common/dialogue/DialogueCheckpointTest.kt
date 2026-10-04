@@ -205,7 +205,7 @@ class DialogueCheckpointTest {
         val configure: StoryFunctionRegistry.() -> Unit = {
             add("count-to-three") {
                 attempts++
-                var counted = state.getInt("counted")
+                var counted = state.getIntOr("counted", 0)
                 while (counted < 3) {
                     counted++
                     state.putInt("counted", counted)

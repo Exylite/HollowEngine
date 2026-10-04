@@ -57,13 +57,13 @@ public class NeoForgeNetworkManager implements NetworkManager {
 
         public void register(PayloadRegistrar registrar) {
             if (clientHandler != null && serverHandler != null) {
-                registrar.playBidirectional(type, codec, (packet, context) -> {
-                    if (context.flow().isClientbound()) {
-                        clientHandler.accept(packet, context.player());
-                    } else {
-                        serverHandler.accept(packet, context.player());
-                    }
-                });
+                // since 26.1 the one-handler overload leaves the client side unregistered
+                registrar.playBidirectional(
+                        type,
+                        codec,
+                        (packet, context) -> serverHandler.accept(packet, context.player()),
+                        (packet, context) -> clientHandler.accept(packet, context.player())
+                );
             }
             else if (clientHandler != null) {
                 registrar.playToClient(type, codec, (packet, context) -> clientHandler.accept(packet, context.player()));
