@@ -90,11 +90,12 @@ Since the game now ships with its own names there is nothing to remap:
 - Physics addon: its 24 unit tests pass with the Jolt natives on Linux.
 - Mixin scripts: a `.mixin.kts` compiles on a Fabric dedicated server from the packaged jar, its injections apply, and a `LivingEntity.jumpFromGround` hook shows its overlay message on a client (the documented examples with `replaceCall`, `beforeCall`, `inject` at a call and `modifyReturnValue` compile and bind too).
 - NeoForge dev client joins a NeoForge dedicated server that runs the packaged jar, and the `magic_shield` VFX renders in the world there as well (with Sodium and Iris in the dev environment).
+- The IDE's VFX preview (a `.vfx` file opened from the project tree) renders `magic_shield` with its grid and gizmos.
 - VFX in the packaged Fabric client: post effects (`soul`, `explosion` dimming), world surfaces (the `magic_shield` bubble with its ground contact glow, ribbons, particles, smoke and sparks of `explosion`), sky nodes (`sky_strike`), seen from first and third person.
 
 ## Known gaps
 
-- Not exercised yet: physics in-game (ragdolls on a client), real audio output of the video addon, the packaged jar on a NeoForge client, NPC models and scripts on a NeoForge client. The VFX preview in the IDE still draws with the 1.21 depth convention (-1..1, not reversed) and has not been checked.
+- Not exercised yet: physics in-game (ragdolls on a client), real audio output of the video addon, the packaged jar on a NeoForge client, NPC models and scripts on a NeoForge client.
 - The vanilla model preview in the IDE is a stub.
 - The Iris integration is stubbed (Iris 1.11 changed its API); shader packs are not coordinated with the engine's rendering.
 - Vanilla items and tooltips inside engine UI are drawn in a second GUI pass, so their z-order against engine GL UI is approximate.
