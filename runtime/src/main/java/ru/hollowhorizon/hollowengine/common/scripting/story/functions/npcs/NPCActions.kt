@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.story.functions.npcs
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import com.mojang.brigadier.StringReader
 import kotlinx.coroutines.delay
 import net.minecraft.ChatFormatting

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import androidx.compose.runtime.*
 import net.minecraft.client.Minecraft
 import net.minecraft.world.entity.Entity

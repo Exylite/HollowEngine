@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.common.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.dayTime
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
 import net.minecraft.network.protocol.game.ClientboundSetTimePacket
 import net.minecraft.server.MinecraftServer

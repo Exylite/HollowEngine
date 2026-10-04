@@ -1,6 +1,7 @@
 package ru.hollowhorizon.hollowengine.fabric.internal
 
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import net.minecraft.core.Registry
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.Identifier

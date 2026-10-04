@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.ui.net
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer

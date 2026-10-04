@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.state
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job

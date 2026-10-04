@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.utils.nbt
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.PolymorphicKind

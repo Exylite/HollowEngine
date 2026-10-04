@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.asset
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf

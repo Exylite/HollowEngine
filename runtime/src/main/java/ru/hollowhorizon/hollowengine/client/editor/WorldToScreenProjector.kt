@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f

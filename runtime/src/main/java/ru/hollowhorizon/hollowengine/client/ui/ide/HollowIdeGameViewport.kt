@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.window
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.nodes
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import kotlinx.coroutines.*
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer

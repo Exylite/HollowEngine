@@ -2,6 +2,7 @@
 
 package ru.hollowhorizon.hollowengine.common.attachments.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers

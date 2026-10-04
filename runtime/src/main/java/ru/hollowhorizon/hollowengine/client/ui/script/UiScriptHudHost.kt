@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag

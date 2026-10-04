@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import com.mojang.blaze3d.platform.Lighting
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.data
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CollectionTag
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NumericTag

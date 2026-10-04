@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.dialogue
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

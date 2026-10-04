@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.sync
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer

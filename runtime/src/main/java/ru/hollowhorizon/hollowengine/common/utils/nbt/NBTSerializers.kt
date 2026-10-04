@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.utils.nbt
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import com.google.gson.JsonParser
 import com.mojang.serialization.JsonOps
 import io.netty.buffer.Unpooled

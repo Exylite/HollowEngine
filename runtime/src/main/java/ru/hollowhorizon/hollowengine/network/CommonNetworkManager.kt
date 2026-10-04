@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import net.minecraft.client.Minecraft

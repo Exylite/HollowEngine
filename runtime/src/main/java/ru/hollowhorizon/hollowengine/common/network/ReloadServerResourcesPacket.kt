@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.client.utils.lang

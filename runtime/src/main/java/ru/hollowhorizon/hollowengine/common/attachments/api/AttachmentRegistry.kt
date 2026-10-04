@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.api
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import net.minecraft.client.multiplayer.ClientLevel

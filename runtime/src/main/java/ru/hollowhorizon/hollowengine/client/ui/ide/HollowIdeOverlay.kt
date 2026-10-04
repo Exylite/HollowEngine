@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.window
 import androidx.compose.runtime.*
 import kotlinx.coroutines.delay
 import net.minecraft.client.Minecraft

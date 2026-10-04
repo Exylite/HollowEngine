@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.events.client.render
 
 import com.mojang.blaze3d.platform.Window
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
 import ru.hollowhorizon.hollowengine.common.events.factory.EventHandler
 
@@ -10,7 +10,7 @@ import ru.hollowhorizon.hollowengine.common.events.factory.EventHandler
  */
 class RenderHudEvent(
     val window: Window,
-    val guiGraphics: GuiGraphics,
+    val guiGraphics: GuiGraphicsExtractor,
     val partialTick: Float,
 ) : ClientEvent {
     companion object : EventHandler<RenderHudEvent>()

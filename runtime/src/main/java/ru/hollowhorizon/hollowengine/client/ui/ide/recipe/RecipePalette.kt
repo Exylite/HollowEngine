@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.recipe
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import androidx.compose.runtime.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

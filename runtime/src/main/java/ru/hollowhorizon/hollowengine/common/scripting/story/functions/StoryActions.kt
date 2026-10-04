@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.story.functions
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import ru.hollowhorizon.hollowengine.common.utils.currentServer

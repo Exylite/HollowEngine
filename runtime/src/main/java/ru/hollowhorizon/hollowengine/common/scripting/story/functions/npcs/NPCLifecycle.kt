@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.story.functions.npcs
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec2
 import net.minecraft.world.phys.Vec3

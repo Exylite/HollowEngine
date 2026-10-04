@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.scripting.nodes
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.job
 import kotlinx.serialization.json.JsonObject
 import net.minecraft.nbt.CompoundTag

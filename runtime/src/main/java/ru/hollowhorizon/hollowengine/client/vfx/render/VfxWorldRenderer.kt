@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f

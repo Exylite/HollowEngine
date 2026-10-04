@@ -1,6 +1,7 @@
 @file:UseSerializers(ForResourceLocation::class)
 package ru.hollowhorizon.hollowengine.common.tags
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.core.registries.Registries

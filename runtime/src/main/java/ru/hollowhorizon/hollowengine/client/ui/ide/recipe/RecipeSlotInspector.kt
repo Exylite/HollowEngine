@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.recipe
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import androidx.compose.runtime.Composable
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject

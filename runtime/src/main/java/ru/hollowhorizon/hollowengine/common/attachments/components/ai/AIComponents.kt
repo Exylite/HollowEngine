@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.components.ai
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.minecraft.core.registries.Registries

@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.attachments.binding
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable

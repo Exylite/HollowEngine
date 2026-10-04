@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.bootstrap
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
@@ -7,16 +9,22 @@ import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.datafixers.util.Either
 import net.minecraft.util.Util
+import net.minecraft.util.profiling.Profiler
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.model.object.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.client.particle.ParticleEngine
+import net.minecraft.client.particle.ParticleResources
+import net.minecraft.client.renderer.SubmitNodeCollector
+import net.minecraft.client.renderer.entity.player.AvatarRenderer
+import net.minecraft.core.ClientAsset
+import net.minecraft.world.entity.player.PlayerModelType
+import ru.hollowhorizon.hollowengine.client.render.legacy.RecordingBufferSource
 import net.minecraft.client.player.AbstractClientPlayer
 import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.client.player.KeyboardInput
@@ -183,7 +191,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         if (event.isCanceled) return null
 
         if (!player.level().isClientSide) {
-            player.commandSenderWorld.addFreshEntity(event.entity)
+            player.level().addFreshEntity(event.entity)
         }
 
         return event.entity
@@ -346,7 +354,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onScreenRenderPre(
         screen: Screen,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         mouseX: Int,
         mouseY: Int,
         partialTick: Float,
@@ -358,7 +366,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onScreenRenderPost(
         screen: Screen,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         mouseX: Int,
         mouseY: Int,
         partialTick: Float,
@@ -368,17 +376,22 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderArm(
         stack: PoseStack,
-        multiBufferSource: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
         player: AbstractClientPlayer,
         arm: HumanoidArm,
-    ): Boolean = RenderArmEvent.post(RenderArmEvent(stack, multiBufferSource, packedLight, player, arm)).isCanceled
+    ): Boolean {
+        val source = RecordingBufferSource(submitNodeCollector)
+        val event = RenderArmEvent.post(RenderArmEvent(stack, source, packedLight, player, arm))
+        source.endBatch()
+        return event.isCanceled
+    }
 
     override fun onRenderItemInHand(camera: Camera, partialTick: Float, projectionMatrix: Matrix4f): Boolean =
         RenderItemInHandEvent.post(RenderItemInHandEvent(camera, partialTick, projectionMatrix)).isCanceled
 
-    override fun onRegisterParticles(particleEngine: ParticleEngine) {
-        RegisterParticlesEvent.post(RegisterParticlesEvent(particleEngine))
+    override fun onRegisterParticles(particleResources: ParticleResources) {
+        RegisterParticlesEvent.post(RegisterParticlesEvent(particleResources))
     }
 
     override fun onClientUseItemOn(player: Player, hand: InteractionHand, hitResult: BlockHitResult): Boolean {
@@ -591,7 +604,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLevelTickBlockEntities(level: Level) {
-        val profiler = level.profiler
+        val profiler = Profiler.get()
         profiler.push("HollowEngine ECS")
         AttachmentRegistry.tick(level)
         profiler.pop()
@@ -634,8 +647,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onAddEntityRendererLayers(
-        renderers: MutableMap<EntityType<*>, EntityRenderer<*>>,
-        playerRenderers: MutableMap<String, EntityRenderer<out Player>>,
+        renderers: Map<EntityType<*>, EntityRenderer<*, *>>,
+        playerRenderers: Map<PlayerModelType, AvatarRenderer<AbstractClientPlayer>>,
         context: EntityRendererProvider.Context,
     ) {
         AddEntityRendererLayers.post(AddEntityRendererLayers(renderers, playerRenderers, context))
@@ -646,11 +659,13 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTick: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ): Boolean {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         val event = RenderEntityEvent.Pre(entity, entityYaw, partialTick, poseStack, buffer, packedLight)
         RenderEntityEvent.Pre.post(event)
+        buffer.endBatch()
         return event.isCanceled
     }
 
@@ -659,9 +674,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTick: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ) {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         RenderEntityEvent.Post.post(
             RenderEntityEvent.Post(
                 entity,
@@ -672,6 +688,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
                 packedLight
             )
         )
+        buffer.endBatch()
     }
 
     override fun extendEntityCullingBounds(entity: Entity, vanillaBounds: AABB): AABB =
@@ -765,11 +782,13 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTicks: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ): Boolean {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         val event = RenderPlayerEvent(player, entityYaw, partialTicks, poseStack, buffer, packedLight)
         RenderPlayerEvent.post(event)
+        buffer.endBatch()
         return event.isCanceled
     }
 
@@ -786,14 +805,15 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         val elytra = materials?.materials?.get(MaterialsComponent.ELYTRA)?.let(MaterialSources::resolve)
         if (skin == null && cape == null && elytra == null && arms == null) return null
 
+        // the texture is the file's own path; vanilla's resource assets would add the folder and extension again
+        fun asset(texture: Identifier) = ClientAsset.ResourceTexture(texture, texture)
         return PlayerSkin(
-            skin?.texture ?: vanilla.texture(),
-            vanilla.textureUrl(),
-            cape?.texture ?: vanilla.capeTexture(),
-            elytra?.texture ?: vanilla.elytraTexture(),
+            skin?.texture?.let(::asset) ?: vanilla.body(),
+            cape?.texture?.let(::asset) ?: vanilla.cape(),
+            elytra?.texture?.let(::asset) ?: vanilla.elytra(),
             when (arms ?: skinSource?.let(MaterialSources::armsOf)) {
-                PlayerArms.SLIM -> PlayerSkin.Model.SLIM
-                PlayerArms.WIDE -> PlayerSkin.Model.WIDE
+                PlayerArms.SLIM -> PlayerModelType.SLIM
+                PlayerArms.WIDE -> PlayerModelType.WIDE
                 null -> vanilla.model()
             },
             vanilla.secure(),
@@ -822,7 +842,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderOverlayPre(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layerId: String,
     ): Boolean {
@@ -840,7 +860,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderOverlayPost(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layerId: String,
     ) {
@@ -849,7 +869,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         UiScriptHudHost.render(layer, HudPlacement.AFTER, System.nanoTime())
     }
 
-    override fun onRenderHudPost(window: Window, guiGraphics: GuiGraphics, partialTick: Float) {
+    override fun onRenderHudPost(window: Window, guiGraphics: GuiGraphicsExtractor, partialTick: Float) {
         RenderHudEvent.post(RenderHudEvent(window, guiGraphics, partialTick))
     }
 

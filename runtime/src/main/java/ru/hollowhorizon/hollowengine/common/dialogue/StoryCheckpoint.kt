@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.dialogue
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
 import net.minecraft.nbt.Tag

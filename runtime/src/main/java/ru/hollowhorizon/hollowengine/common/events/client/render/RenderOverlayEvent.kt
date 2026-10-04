@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.events.client.render
 
 import com.mojang.blaze3d.platform.Window
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.events.Cancellable
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
@@ -15,13 +15,13 @@ import ru.hollowhorizon.hollowengine.common.events.factory.EventHandler
  */
 abstract class RenderOverlayEvent protected constructor(
     val window: Window,
-    val guiGraphics: GuiGraphics,
+    val guiGraphics: GuiGraphicsExtractor,
     val partialTick: Float,
     val layer: Identifier,
 ) : ClientEvent {
     class Pre(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layer: Identifier,
     ) : RenderOverlayEvent(window, guiGraphics, partialTick, layer), Cancellable {
@@ -32,7 +32,7 @@ abstract class RenderOverlayEvent protected constructor(
 
     class Post(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layer: Identifier,
     ) : RenderOverlayEvent(window, guiGraphics, partialTick, layer) {

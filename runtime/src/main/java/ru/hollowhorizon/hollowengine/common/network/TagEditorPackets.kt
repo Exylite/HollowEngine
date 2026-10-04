@@ -1,6 +1,7 @@
 @file:UseSerializers(ForResourceLocation::class)
 package ru.hollowhorizon.hollowengine.common.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.resources.Identifier
