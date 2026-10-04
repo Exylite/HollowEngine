@@ -132,24 +132,34 @@ class TextureTarget(width: Int, height: Int, useDepth: Boolean, onOsx: Boolean =
 /**
  * The target vanilla draws the frame into, seen as one of ours: its textures are wrapped in a
  * framebuffer of our own, since vanilla keeps its framebuffers in a cache that is not for use.
+ *
+ * Vanilla creates the textures anew whenever the frame changes size (a window resize, fullscreen, a mod
+ * that changes the size of the game view), and GL may hand the freed names out again: the colour and depth
+ * names trade places the first time and come back unchanged the next. Attaching "the new textures" by name
+ * then changes nothing, and the wrapper keeps drawing into the old, orphaned ones: whatever the engine
+ * draws through it (UI screens, level hooks) is lost, and GL reports no error. So the wrapper follows the
+ * texture objects and not their names, and gets a framebuffer of its own for every new pair.
  */
 object MainTarget {
     private val view = object : RenderTarget(true) {
-        private var wrappedColor = -1
-        private var wrappedDepth = -1
+        private var wrappedColor: GlTexture? = null
+        private var wrappedDepth: GlTexture? = null
 
         fun refresh() {
             val vanilla = Minecraft.getInstance().gameRenderer.mainRenderTarget()
-            val color = (vanilla.colorTexture as GlTexture).glId()
-            val depth = (vanilla.depthTexture as? GlTexture)?.glId() ?: -1
+            val colorTexture = vanilla.colorTexture as GlTexture
+            val depthTexture = vanilla.depthTexture as? GlTexture
+            val color = colorTexture.glId()
+            val depth = depthTexture?.glId() ?: -1
             width = vanilla.width
             height = vanilla.height
             viewWidth = width
             viewHeight = height
             colorTextureId = color
             depthTextureId = depth
-            if (frameBufferId < 0) frameBufferId = VanillaGl.glGenFramebuffers()
-            if (color != wrappedColor || depth != wrappedDepth) {
+            if (frameBufferId < 0 || colorTexture !== wrappedColor || depthTexture !== wrappedDepth) {
+                if (frameBufferId >= 0) VanillaGl._glDeleteFramebuffers(frameBufferId)
+                frameBufferId = VanillaGl.glGenFramebuffers()
                 val previous = VanillaGl.getFrameBuffer(GL30.GL_DRAW_FRAMEBUFFER)
                 VanillaGl._glBindFramebuffer(GL30.GL_FRAMEBUFFER, frameBufferId)
                 VanillaGl._glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0, GL11.GL_TEXTURE_2D, color, 0)
@@ -157,8 +167,8 @@ object MainTarget {
                     GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, GL11.GL_TEXTURE_2D, if (depth < 0) 0 else depth, 0
                 )
                 VanillaGl._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previous)
-                wrappedColor = color
-                wrappedDepth = depth
+                wrappedColor = colorTexture
+                wrappedDepth = depthTexture
             }
         }
 

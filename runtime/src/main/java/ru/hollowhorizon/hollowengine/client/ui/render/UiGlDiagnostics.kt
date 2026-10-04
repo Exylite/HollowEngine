@@ -12,24 +12,28 @@ import ru.hollowhorizon.hollowengine.HollowEngine
  * and says what state the frame ran in. The UI shares the context with vanilla and with other mods, so a
  * report like "the UI does not show" needs this to tell whose state it is.
  *
- * Only the first few reports are logged. `-Dhollowengine.ui.debug` also logs the state of the first frame.
+ * Only the first few reports are logged. `-Dhollowengine.ui.debug` also logs the state a frame runs in, once a second.
  */
 internal object UiGlDiagnostics {
     private const val MaxReports = 6
     private const val MaxErrorsPerDrain = 16
+    private const val SnapshotIntervalNanos = 1_000_000_000L
 
     private val verbose = System.getProperty("hollowengine.ui.debug") != null
     private var reports = 0
-    private var firstFrameLogged = false
+    private var lastSnapshotNanos = 0L
 
     fun beginFrame() {
         val stale = drain()
         if (stale.isNotEmpty()) {
             report("GL errors were already pending before the UI frame (vanilla or another mod left them): ${names(stale)}")
         }
-        if (verbose && !firstFrameLogged) {
-            firstFrameLogged = true
-            HollowEngine.LOGGER.info("UI frame GL state: {}", snapshot())
+        if (verbose) {
+            val now = System.nanoTime()
+            if (now - lastSnapshotNanos >= SnapshotIntervalNanos) {
+                lastSnapshotNanos = now
+                HollowEngine.LOGGER.info("UI frame GL state: {}", snapshot())
+            }
         }
     }
 
