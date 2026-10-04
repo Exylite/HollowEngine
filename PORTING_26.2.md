@@ -76,6 +76,7 @@ Since the game now ships with its own names there is nothing to remap:
 
 - Items and blocks must carry their registry id when they are built. In startup scripts `register("ruby") { Item(itemProperties(it)) }` replaces `Item(Item.Properties())`.
 - `block("id") { props -> Block(props.strength(5f, 6f)) }` receives properties that already carry the id, and item properties are tuned with `configureItem = { it.fireResistant() }` instead of `itemProperties = ...`.
+- Mixin scripts target the class that declares the method: `Player` no longer declares `jumpFromGround` (use `LivingEntity` and check `self is Player`), and `Player.displayClientMessage` is `sendOverlayMessage`. The examples in the mixin docs are updated and compile against 26.2.
 - Everything else scripts touch is plain 26.2 API: `Item.use` returns `InteractionResult`, NBT getters return `Optional`, and so on.
 
 ## Checked
@@ -87,15 +88,17 @@ Since the game now ships with its own names there is nothing to remap:
 - The packaged universal jar with all four addons loads on a Fabric client: the IDE opens, a client script compiles and draws a HUD, `/he model attach` puts a model on an NPC.
 - Video addon in the packaged Fabric client: an H.264/AAC file plays full screen with correct colours (the cloud container has no sound card, so audio ran against OpenAL Soft's `null` device: `ALSOFT_DRIVERS=null`; real audio output is not checked).
 - Physics addon: its 24 unit tests pass with the Jolt natives on Linux.
+- Mixin scripts: a `.mixin.kts` compiles on a Fabric dedicated server from the packaged jar, its injections apply, and a `LivingEntity.jumpFromGround` hook shows its overlay message on a client (the documented examples with `replaceCall`, `beforeCall`, `inject` at a call and `modifyReturnValue` compile and bind too).
+- NeoForge dev client joins a NeoForge dedicated server that runs the packaged jar, and the `magic_shield` VFX renders in the world there as well (with Sodium and Iris in the dev environment).
 - VFX in the packaged Fabric client: post effects (`soul`, `explosion` dimming), world surfaces (the `magic_shield` bubble with its ground contact glow, ribbons, particles, smoke and sparks of `explosion`), sky nodes (`sky_strike`), seen from first and third person.
 
 ## Known gaps
 
-- Not exercised yet: physics in-game (ragdolls on a client), real audio output of the video addon, `.mixin.kts` scripts, NeoForge client in-world behaviour, the packaged jar on a NeoForge client. The VFX preview in the IDE still draws with the 1.21 depth convention (-1..1, not reversed) and has not been checked.
+- Not exercised yet: physics in-game (ragdolls on a client), real audio output of the video addon, the packaged jar on a NeoForge client, NPC models and scripts on a NeoForge client. The VFX preview in the IDE still draws with the 1.21 depth convention (-1..1, not reversed) and has not been checked.
 - The vanilla model preview in the IDE is a stub.
 - The Iris integration is stubbed (Iris 1.11 changed its API); shader packs are not coordinated with the engine's rendering.
 - Vanilla items and tooltips inside engine UI are drawn in a second GUI pass, so their z-order against engine GL UI is approximate.
 - Fractional GUI scale is rounded to an integer.
 - The "fire tick" world rule no longer exists in 26.x; the IDE world menu maps it to the fire spread radius around players (0 means off), which is close but not identical.
-- Docs outside `scripting/startup` still show 1.21 APIs in their Kotlin examples.
+- Docs outside `scripting/startup` and `scripting/mixins` still show 1.21 APIs in their Kotlin examples.
 - On NeoForge servers netty logs a harmless-looking `kqueue` class initialisation error to the debug log at startup.
