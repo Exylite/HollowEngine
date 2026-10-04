@@ -14,7 +14,7 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.ParticleResources;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -143,7 +143,7 @@ public interface RuntimeBridge extends AutoCloseable {
 
     boolean onRenderItemInHand(Camera camera, float partialTick, Matrix4f projectionMatrix);
 
-    void onRegisterParticles(ParticleEngine particleEngine);
+    void onRegisterParticles(ParticleResources particleResources);
 
     boolean onClientUseItemOn(Player player, InteractionHand hand, BlockHitResult hitResult);
 

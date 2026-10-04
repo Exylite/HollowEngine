@@ -29,28 +29,6 @@ public class WindowMixin {
         }
     }
 
-    @Redirect(
-            method = "<init>",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lorg/lwjgl/glfw/GLFW;glfwWindowHint(II)V"
-            ),
-            remap = false
-    )
-    private void redirectGlfwWindowHint(int target, int value) {
-        if (target == GLFW.GLFW_CONTEXT_VERSION_MAJOR || target == GLFW.GLFW_CONTEXT_VERSION_MINOR) {
-            String versionText = BootstrapRuntimeManager.bridge().getOpenGlVersionOverride();
-            if (versionText != null && versionText.contains(".")) {
-                String[] version = versionText.split("\\.", 2);
-                if (target == GLFW.GLFW_CONTEXT_VERSION_MAJOR) {
-                    value = Integer.parseInt(version[0]);
-                } else {
-                    value = Integer.parseInt(version[1]);
-                }
-            }
-        }
-        GLFW.glfwWindowHint(target, value);
-    }
 
     @Inject(method = "getGuiScale", at = @At("HEAD"), cancellable = true)
     public void getGuiScale(CallbackInfoReturnable<Double> cir) {
@@ -60,7 +38,7 @@ public class WindowMixin {
             return;
         }
         Window window = (Window) (Object) this;
-        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().screen)) return;
+        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().gui.screen())) return;
         cir.setReturnValue((double) window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode()));
     }
 
@@ -72,7 +50,7 @@ public class WindowMixin {
             return;
         }
         Window window = (Window) (Object) this;
-        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().screen)) return;
+        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().gui.screen())) return;
 
         double scale = window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode());
         int height = (int) (window.getHeight() / scale);
@@ -87,7 +65,7 @@ public class WindowMixin {
             return;
         }
         Window window = (Window) (Object) this;
-        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().screen)) return;
+        if (!BootstrapRuntimeManager.bridge().shouldForceAutoGuiScale(Minecraft.getInstance().gui.screen())) return;
 
         double scale = window.calculateScale(0, Minecraft.getInstance().isEnforceUnicode());
         int width = (int) (window.getWidth() / scale);

@@ -1,7 +1,9 @@
 package ru.hollowhorizon.hollowengine.bootstrap.mixins.client;
 
+import com.mojang.blaze3d.opengl.GlBackend;
+import com.mojang.blaze3d.systems.GpuBackend;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.ReceivingLevelScreen;
+import net.minecraft.client.PreferredGraphicsApi;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.main.GameConfig;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -10,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 
@@ -22,31 +25,36 @@ public class MinecraftMixin {
         BootstrapRuntimeManager.bridge().onClientCreated((Minecraft) (Object) this);
     }
 
+    // The engine renders through raw OpenGL, so the Vulkan backend is never offered.
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/PreferredGraphicsApi;getBackendsToTry()[Lcom/mojang/blaze3d/systems/GpuBackend;"))
+    private GpuBackend[] hollowengine$forceOpenGl(PreferredGraphicsApi api) {
+        return new GpuBackend[]{new GlBackend()};
+    }
+
     @Inject(method = "runTick", at = @At("HEAD"))
     private void onRunTickHead(CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onClientTick((Minecraft) (Object) this);
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(Lnet/minecraft/client/DeltaTracker;Z)V"))
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(Lnet/minecraft/client/DeltaTracker;Z)V"))
     private void onRenderPre(CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onClientRenderTickPre((Minecraft) (Object) this);
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(Lnet/minecraft/client/DeltaTracker;Z)V", shift = At.Shift.AFTER))
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GameRenderer;render(Lnet/minecraft/client/DeltaTracker;Z)V", shift = At.Shift.AFTER))
     private void onRenderPost(CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onClientRenderTickPost((Minecraft) (Object) this);
     }
 
-    @Inject(method = "runTick", at = @At(
+    @Inject(method = "renderFrame", at = @At(
             value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;unbindWrite()V",
-            shift = At.Shift.AFTER
+            target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V"
     ))
     private void beforeBlit(CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onBeforeBlitScreen((Minecraft) (Object) this);
     }
 
-    @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/pipeline/RenderTarget;blitToScreen(II)V", shift = At.Shift.AFTER))
+    @Inject(method = "renderFrame", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/GpuSurface;blitFromTexture(Lcom/mojang/blaze3d/systems/CommandEncoder;Lcom/mojang/blaze3d/textures/GpuTextureView;)V", shift = At.Shift.AFTER))
     private void afterBlit(CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onBlitScreen((Minecraft) (Object) this);
     }
@@ -57,7 +65,7 @@ public class MinecraftMixin {
     }
 
     @Inject(method = "setLevel", at = @At("HEAD"))
-    private void onSetClientLevel(ClientLevel newLevel, ReceivingLevelScreen.Reason reason, CallbackInfo ci) {
+    private void onSetClientLevel(ClientLevel newLevel, CallbackInfo ci) {
         if (level != newLevel) hollowengine$releaseLevel();
     }
 
@@ -66,8 +74,8 @@ public class MinecraftMixin {
         hollowengine$releaseLevel();
     }
 
-    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V", at = @At("HEAD"))
-    private void onDisconnect(Screen screen, boolean keepResourcePacks, CallbackInfo ci) {
+    @Inject(method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;ZZ)V", at = @At("HEAD"))
+    private void onDisconnect(Screen screen, boolean keepResourcePacks, boolean stopSound, CallbackInfo ci) {
         hollowengine$releaseLevel();
     }
 

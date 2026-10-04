@@ -1,4 +1,4 @@
-package ru.hollowhorizon.hollowengine.bootstrap.mixins.client;
+package ru.hollowhorizon.hollowengine.fabric.mixins;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 
 @Mixin(Hud.class)
-public class GuiMixin {
-    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
-    public void hollowengine$hideScreen(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
-        if (BootstrapRuntimeManager.bridge().shouldHideGui(Minecraft.getInstance().gui.screen())) ci.cancel();
+public class HudMixin {
+    @Inject(method = "extractRenderState", at = @At("RETURN"))
+    private void onRenderHudPost(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        BootstrapRuntimeManager.bridge().onRenderHudPost(Minecraft.getInstance().getWindow(), graphics, deltaTracker.getGameTimeDeltaPartialTick(false));
     }
 }

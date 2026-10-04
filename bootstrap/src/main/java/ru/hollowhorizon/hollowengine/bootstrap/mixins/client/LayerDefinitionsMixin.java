@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 public class LayerDefinitionsMixin {
     @Inject(
         method = "createRoots",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/properties/WoodType;values()Ljava/util/stream/Stream;", ordinal = 1, shift = At.Shift.AFTER)
+        at = @At(value = "INVOKE", target = "Lcom/google/common/collect/ImmutableMap$Builder;build()Lcom/google/common/collect/ImmutableMap;")
     )
     private static void createRoots(CallbackInfoReturnable<Map<ModelLayerLocation, LayerDefinition>> cir, @Local ImmutableMap.Builder<ModelLayerLocation, LayerDefinition> builder) {
         hollowengine$loadLayerDefinitions(builder);

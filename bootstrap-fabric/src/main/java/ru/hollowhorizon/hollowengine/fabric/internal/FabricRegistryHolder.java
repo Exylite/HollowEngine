@@ -27,7 +27,7 @@ public class FabricRegistryHolder<T> implements RegistryHolder<T> {
         this.autoModel = autoModel;
 
         ResourceKey<? extends Registry<T>> key = registry != null ? registry.key() : registryHelper.registry(target);
-        Registry<T> builtRegistry = (Registry<T>) BuiltInRegistries.REGISTRY.get(key.location());
+        Registry<T> builtRegistry = (Registry<T>) BuiltInRegistries.REGISTRY.getValue(key.identifier());
         assert builtRegistry != null;
         this.result = Registry.register(builtRegistry, location, supplier.get());
         handleExtraRegistrations();

@@ -2,6 +2,7 @@ package ru.hollowhorizon.hollowengine.fabric.bootstap;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.item.ItemStack;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimePlatform;
 import ru.hollowhorizon.hollowengine.fabric.internal.FabricModList;
@@ -15,7 +16,10 @@ public final class HCFabricBootstrap {
         BootstrapRuntimeManager.bridge().setClient(FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT));
 
         BootstrapRuntimeManager.bridge().initFakePlayers(new FabricFakePlayerFactory());
-        BootstrapRuntimeManager.bridge().initStackHelper(item -> item.getRecipeRemainder());
+        BootstrapRuntimeManager.bridge().initStackHelper(item -> {
+            var remainder = item.getItem().getCraftingRemainder();
+            return remainder == null ? ItemStack.EMPTY : remainder.create();
+        });
         BootstrapRuntimeManager.bridge().initNetwork(new FabricNetworkManager());
         BootstrapRuntimeManager.bridge().initModList(new FabricModList());
         BootstrapRuntimeManager.bridge().initRegistryProvider(FabricRegistryHolder::new);

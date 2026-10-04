@@ -9,12 +9,8 @@
     "PlayerMixin"
   ],
   "client": [
-    "BossHealthOverlayMixin",
-    "ChatComponentMixin",
-    "DebugScreenOverlayMixin",
-    "GuiMixin",
-    "client.CameraMixin",
-    "client.LevelRendererStagesMixin"
+    "HudMixin",
+    "client.CameraMixin"
   ],
   "injectors": {
     "defaultRequire": 1
