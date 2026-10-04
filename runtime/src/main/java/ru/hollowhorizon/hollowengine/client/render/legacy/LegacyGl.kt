@@ -65,7 +65,8 @@ object LegacyGl {
     }
 
     /** The GL name behind a vanilla texture. */
-    fun textureId(texture: AbstractTexture): Int = (texture.texture as GlTexture).glId()
+    fun textureId(texture: AbstractTexture): Int =
+        if (texture is RawGlTexture) texture.glId else (texture.texture as GlTexture).glId()
 
     fun textureId(view: GpuTextureView): Int = (view.texture() as GlTexture).glId()
 
@@ -77,13 +78,18 @@ object LegacyGl {
 
     private val rawTextures = HashMap<Identifier, Int>()
 
-    /** Lets the engine's own GL textures be asked for by location like the game's: they are not the game's to own. */
+    /**
+     * Lets the engine's own GL textures be asked for by location like the game's, through the texture
+     * manager as well as through [textureId]: they are not the game's to own, so it never frees them.
+     */
     fun registerRawTexture(location: Identifier, glId: Int) {
         rawTextures[location] = glId
+        Minecraft.getInstance().textureManager.register(location, RawGlTexture(glId))
     }
 
     fun releaseRawTexture(location: Identifier) {
         rawTextures.remove(location)
+        Minecraft.getInstance().textureManager.release(location)
     }
 
     fun textureId(location: Identifier): Int =
@@ -98,6 +104,11 @@ object LegacyGl {
         VanillaGl._bindTexture(id)
         GL33.glBindSampler(unit, 0)
     }
+}
+
+/** A GL texture the engine created itself, carried by name so it can sit in the game's texture manager. */
+class RawGlTexture(val glId: Int) : AbstractTexture() {
+    override fun close() = Unit
 }
 
 /** What `AbstractTexture#getId` used to be. */

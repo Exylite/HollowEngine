@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.addons.video.api
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
 import net.minecraft.client.Minecraft

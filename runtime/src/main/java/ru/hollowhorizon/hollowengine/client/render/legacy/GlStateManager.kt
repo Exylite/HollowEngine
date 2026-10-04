@@ -78,6 +78,8 @@ object GlStateManager {
     fun _glFramebufferTexture2D(target: Int, attachment: Int, texTarget: Int, texture: Int, level: Int) =
         VanillaGl._glFramebufferTexture2D(target, attachment, texTarget, texture, level)
 
+    fun _enableScissorTest() = VanillaGl._enableScissorTest()
+    fun _disableScissorTest() = VanillaGl._disableScissorTest()
     fun _enableCull() = VanillaGl._enableCull()
     fun _disableCull() = VanillaGl._disableCull()
     fun _enableBlend() = VanillaGl._enableBlend(0)

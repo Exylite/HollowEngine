@@ -1,11 +1,9 @@
 package ru.hollowhorizon.hollowengine.addons.video.playback
 
-import com.mojang.blaze3d.platform.GlStateManager
-import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.texture.AbstractTexture
 import net.minecraft.resources.Identifier
-import net.minecraft.server.packs.resources.ResourceManager
 import org.lwjgl.opengl.*
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
 import ru.hollowhorizon.hollowengine.addons.video.decode.VideoPixelFormat
 import ru.hollowhorizon.hollowengine.addons.video.decode.YuvVideoFrame
 import java.nio.ByteBuffer
@@ -46,14 +44,14 @@ class VideoSurfaceTexture : AutoCloseable {
         uploadPlanes(frame)
         convert(frame)
         if (!registered) {
-            Minecraft.getInstance().textureManager.register(location, VideoOutputTexture(outputTexture))
+            LegacyGl.registerRawTexture(location, outputTexture)
             registered = true
         }
     }
 
     override fun close() {
         if (registered) {
-            Minecraft.getInstance().textureManager.release(location)
+            LegacyGl.releaseRawTexture(location)
             registered = false
         }
         if (framebuffer != 0) GL30.glDeleteFramebuffers(framebuffer)
@@ -122,7 +120,7 @@ class VideoSurfaceTexture : AutoCloseable {
         GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFramebuffer)
 
         if (registered) {
-            Minecraft.getInstance().textureManager.register(location, VideoOutputTexture(outputTexture))
+            LegacyGl.registerRawTexture(location, outputTexture)
         }
     }
 
@@ -360,18 +358,6 @@ class VideoSurfaceTexture : AutoCloseable {
         GlStateManager._bindTexture(texture)
         body()
         GlStateManager._bindTexture(previous)
-    }
-
-    private class VideoOutputTexture(textureId: Int) : AbstractTexture() {
-        init {
-            id = textureId
-        }
-
-        override fun load(resourceManager: ResourceManager) = Unit
-
-        override fun releaseId() = Unit
-
-        override fun close() = Unit
     }
 
     private class ColorUniforms(program: Int = 0) {
