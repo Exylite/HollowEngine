@@ -1,27 +1,28 @@
 package ru.hollowhorizon.hollowengine.bootstrap
 
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
 import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.datafixers.util.Either
-import net.minecraft.Util
+import net.minecraft.util.Util
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.model.SkullModelBase
+import net.minecraft.client.model.object.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.particle.ParticleEngine
 import net.minecraft.client.player.AbstractClientPlayer
-import net.minecraft.client.resources.PlayerSkin
+import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.client.player.KeyboardInput
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LevelRenderer
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import net.minecraft.client.renderer.culling.Frustum
 import net.minecraft.client.renderer.entity.EntityRenderer
 import net.minecraft.client.renderer.entity.EntityRendererProvider
@@ -502,6 +503,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onLevelFrameRendered(minecraft: Minecraft) {
         RenderTickEvent.LevelRendered.post(RenderTickEvent.LevelRendered(minecraft))
+    }
+
+    override fun onGuiFrameRendered(minecraft: Minecraft) {
+        GuiDeferred.flush()
     }
 
     override fun onBeforeBlitScreen(minecraft: Minecraft) {

@@ -41,13 +41,6 @@ import java.util.function.BiConsumer
 import java.util.function.Consumer
 
 object EventBridgeImpl : EventBridge {
-    override fun onRegisterShaders(shaders: EventBridge.ShaderRegistration) {
-        val event = RegisterShadersEvent.post(RegisterShadersEvent())
-        event.shaders.forEach {
-            shaders.register(it.key, it.value.first, it.value.second)
-        }
-    }
-
     override fun onRegisterEntityRenderers(consumer: BiConsumer<EntityType<out Entity>, EntityRendererProvider<Entity>>) {
         RegisterEntityRenderersEvent.post(RegisterEntityRenderersEvent { a, b -> consumer.accept(a, b) })
     }

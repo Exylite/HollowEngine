@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.dialogue
 
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.cutscene.CameraPose
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent

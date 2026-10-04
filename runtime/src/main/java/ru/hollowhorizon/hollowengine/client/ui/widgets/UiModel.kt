@@ -1,12 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.ui.widgets
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.util.Mth
 import org.joml.Quaternionf
@@ -251,7 +251,7 @@ class ModelViewerState(model: String) {
 
         val bufferSource = Minecraft.getInstance().renderBuffers().bufferSource()
         attachment.pipeline.render(
-            RenderContext(stack, bufferSource, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
+            RenderContext(stack, bufferSource, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY)
         )
         bufferSource.endBatch()
 

@@ -1,12 +1,11 @@
 package ru.hollowhorizon.hollowengine.client.render
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.blaze3d.vertex.VertexFormat
-import net.minecraft.client.renderer.MultiBufferSource
-import net.minecraft.client.renderer.RenderStateShard
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import ru.hollowhorizon.hollowengine.client.utils.color
 import ru.hollowhorizon.hollowengine.client.utils.normal
 import ru.hollowhorizon.hollowengine.client.utils.vertex
@@ -23,32 +22,9 @@ import kotlin.math.sin
  */
 @ClientOnly
 object DebugLines {
-    val OVERLAY: RenderType = overlayLines("hollowengine:debug_overlay_lines", RenderStateShard.ITEM_ENTITY_TARGET)
-    val PANEL: RenderType = overlayLines("hollowengine:debug_panel_lines", RenderStateShard.MAIN_TARGET)
-
-    val BOUND: RenderType = overlayLines(
-        "hollowengine:debug_bound_lines",
-        RenderStateShard.OutputStateShard("hollowengine:bound_target", {}, {}),
-    )
-
-    private fun overlayLines(name: String, target: RenderStateShard.OutputStateShard) = RenderType.create(
-        name,
-        DefaultVertexFormat.POSITION_COLOR_NORMAL,
-        VertexFormat.Mode.LINES,
-        1536,
-        false,
-        false,
-        RenderType.CompositeState.builder()
-            .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
-            .setLineState(RenderStateShard.LineStateShard(OptionalDouble.of(2.0)))
-            .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
-            .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-            .setOutputState(target)
-            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-            .setCullState(RenderStateShard.NO_CULL)
-            .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-            .createCompositeState(false),
-    )
+    val OVERLAY: RenderType = RenderType.lines("hollowengine:debug_overlay_lines")
+    val PANEL: RenderType = RenderType.lines("hollowengine:debug_panel_lines")
+    val BOUND: RenderType = RenderType.lines("hollowengine:debug_bound_lines")
 
     fun batch(buffers: MultiBufferSource, poseStack: PoseStack, type: RenderType = OVERLAY): Batch =
         Batch(buffers.getBuffer(type), poseStack.last())

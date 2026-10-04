@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.shadergraph.*

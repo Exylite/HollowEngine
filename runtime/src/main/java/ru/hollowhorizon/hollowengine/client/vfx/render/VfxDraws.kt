@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.util.Mth
 import org.joml.Matrix4f
@@ -94,7 +94,7 @@ object VfxFrameRenderer {
                     RenderContext(
                         stack = stack,
                         source = source,
-                        light = if (draw.spec.emissive) LightTexture.FULL_BRIGHT else particles.light[slot],
+                        light = if (draw.spec.emissive) LightCoordsUtil.FULL_BRIGHT else particles.light[slot],
                         overlay = OverlayTexture.NO_OVERLAY,
                         allowInstancing = true,
                     )

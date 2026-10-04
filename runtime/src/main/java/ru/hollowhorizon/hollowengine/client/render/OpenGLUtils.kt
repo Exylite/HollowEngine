@@ -1,12 +1,20 @@
 package ru.hollowhorizon.hollowengine.client.render
 
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
+
 import com.mojang.blaze3d.platform.Lighting
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferBuilder
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.LightTexture
-import net.minecraft.client.renderer.RenderType
+import net.minecraft.util.LightCoordsUtil
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.util.Mth
 import net.minecraft.world.item.ItemDisplayContext
@@ -37,7 +45,7 @@ object OpenGLUtils {
     fun renderGrid(stack: PoseStack, color: Color, size: Int = 10, step: Float = 1f) {
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         RenderSystem.lineWidth(1.0f)
 
         val tessellator = Tesselator.getInstance()
@@ -70,7 +78,7 @@ object OpenGLUtils {
     fun renderBoundingBox(stack: PoseStack, min: Vec3f, max: Vec3f, color: Color) {
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         RenderSystem.lineWidth(1.0f)
 
         val tessellator = Tesselator.getInstance()
@@ -155,7 +163,7 @@ fun ItemStack.render(
             this,
             ItemDisplayContext.GUI,
             false,
-            stack, src, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, model
+            stack, src, LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, model
         )
     } finally {
         src.endBatch()

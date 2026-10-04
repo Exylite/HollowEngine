@@ -26,4 +26,9 @@ public class GameRendererMixin {
     private void onLevelFrameRendered(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onLevelFrameRendered(Minecraft.getInstance());
     }
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/GuiRenderer;render()V", shift = At.Shift.AFTER))
+    private void onGuiFrameRendered(DeltaTracker deltaTracker, boolean renderLevel, CallbackInfo ci) {
+        BootstrapRuntimeManager.bridge().onGuiFrameRendered(Minecraft.getInstance());
+    }
 }

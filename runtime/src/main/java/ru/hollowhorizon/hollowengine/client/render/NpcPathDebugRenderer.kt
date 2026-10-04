@@ -1,8 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.render
 
-import net.minecraft.Util
+import net.minecraft.util.Util
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import net.minecraft.client.renderer.debug.DebugRenderer
 import net.minecraft.client.renderer.debug.PathfindingRenderer
 import net.minecraft.core.BlockPos

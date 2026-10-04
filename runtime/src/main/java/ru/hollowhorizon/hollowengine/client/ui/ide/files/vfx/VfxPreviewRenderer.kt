@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.vfx
 
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.joml.Vector3f

@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.registry
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import ru.hollowhorizon.hollowengine.HollowEngine.MODID
 import ru.hollowhorizon.hollowengine.client.vfx.render.VfxMeshRenderer
 import ru.hollowhorizon.hollowengine.client.vfx.render.VfxQuadRenderer
@@ -18,11 +18,23 @@ object ModShaders {
     var VFX_MESH: ShaderInstance? = null
     var VFX_RIBBON: ShaderInstance? = null
     var UI_EFFECT: ShaderInstance? = null
+
+    // what vanilla's GameRenderer used to hold: the plain programs the engine draws its own geometry with
+    var POSITION_COLOR: ShaderInstance? = null
+    var POSITION_TEX: ShaderInstance? = null
+    var POSITION_TEX_COLOR: ShaderInstance? = null
+    var PARTICLE: ShaderInstance? = null
     var UI_IMAGE_SHADOW: ShaderInstance? = null
     var MSDF_TEXT: ShaderInstance? = null
 
     @SubscribeEvent
     fun onShaderRegistry(event: RegisterShadersEvent) {
+        event.register("$MODID:legacy/position_color".rl, DefaultVertexFormat.POSITION_COLOR) { POSITION_COLOR = it }
+        event.register("$MODID:legacy/position_tex".rl, DefaultVertexFormat.POSITION_TEX) { POSITION_TEX = it }
+        event.register("$MODID:legacy/position_tex_color".rl, DefaultVertexFormat.POSITION_TEX_COLOR) {
+            POSITION_TEX_COLOR = it
+        }
+        event.register("$MODID:legacy/particle".rl, DefaultVertexFormat.PARTICLE) { PARTICLE = it }
         event.register(
             "$MODID:gltf_entity-1.21.1".rl,
             DefaultVertexFormat.NEW_ENTITY

@@ -1,14 +1,14 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.MeshData
-import com.mojang.blaze3d.vertex.VertexBuffer
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.MeshData
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexBuffer
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceProvider
 import org.lwjgl.opengl.GL33

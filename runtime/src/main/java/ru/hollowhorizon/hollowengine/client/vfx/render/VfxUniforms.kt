@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import ru.hollowhorizon.hollowengine.client.vfx.VfxColorSampler
 import ru.hollowhorizon.hollowengine.client.vfx.VfxEvalContext
 import ru.hollowhorizon.hollowengine.client.vfx.VfxFloatSampler

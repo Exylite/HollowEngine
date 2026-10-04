@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.vfx
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.lwjgl.glfw.GLFW

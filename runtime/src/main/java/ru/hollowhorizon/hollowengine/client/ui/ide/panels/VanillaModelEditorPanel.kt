@@ -1,17 +1,17 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.panels
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import kotlinx.coroutines.isActive
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.Sheets
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
 import net.minecraft.client.renderer.block.model.BlockModel
-import net.minecraft.client.renderer.block.model.ItemModelGenerator
+import net.minecraft.client.resources.model.cuboid.ItemModelGenerator
 import net.minecraft.client.resources.model.*
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
@@ -190,7 +190,7 @@ private class VanillaModelViewerState(
                 1f,
                 1f,
                 1f,
-                LightTexture.FULL_BRIGHT,
+                LightCoordsUtil.FULL_BRIGHT,
                 OverlayTexture.NO_OVERLAY,
             )
             buffers.endBatch()

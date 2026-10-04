@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.*
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager

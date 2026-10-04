@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.Identifier

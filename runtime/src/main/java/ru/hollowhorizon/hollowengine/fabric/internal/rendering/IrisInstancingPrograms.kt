@@ -8,7 +8,7 @@ import net.irisshaders.iris.shaderpack.loading.ProgramId
 import net.irisshaders.iris.shaderpack.programs.ProgramFallbackResolver
 import net.irisshaders.iris.shaderpack.programs.ProgramSource
 import net.irisshaders.iris.vertices.IrisVertexFormats
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import ru.hollowhorizon.hollowengine.LOGGER
 import ru.hollowhorizon.hollowengine.fabric.internal.IrisHelper
 import ru.hollowhorizon.hollowengine.fabric.internal.accessors.IrisRenderingPipelineAccessor

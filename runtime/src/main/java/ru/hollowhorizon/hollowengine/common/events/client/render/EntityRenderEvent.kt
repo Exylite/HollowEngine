@@ -3,12 +3,12 @@ package ru.hollowhorizon.hollowengine.common.events.client.render
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.model.EntityModel
-import net.minecraft.client.model.SkullModelBase
+import net.minecraft.client.model.object.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.player.AbstractClientPlayer
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import net.minecraft.client.renderer.entity.EntityRenderer
 import net.minecraft.client.renderer.entity.EntityRendererProvider
 import net.minecraft.client.renderer.entity.LivingEntityRenderer

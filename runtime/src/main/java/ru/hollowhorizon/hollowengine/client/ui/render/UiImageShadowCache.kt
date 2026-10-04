@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.AbstractTexture
 import net.minecraft.resources.Identifier

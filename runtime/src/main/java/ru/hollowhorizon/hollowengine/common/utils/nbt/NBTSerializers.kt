@@ -24,7 +24,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.resources.RegistryOps
 import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.monster.Zombie
+import net.minecraft.world.entity.monster.zombie.Zombie
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f

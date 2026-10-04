@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.manager
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.client.resources.DefaultPlayerSkin
-import net.minecraft.client.resources.PlayerSkin
+import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.resources.Identifier
 import net.minecraft.world.level.block.entity.SkullBlockEntity
 import ru.hollowhorizon.hollowengine.common.attachments.components.PlayerArms

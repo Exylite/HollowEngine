@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.common.utils
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import net.minecraft.ChatFormatting
-import net.minecraft.Util
+import net.minecraft.util.Util
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.RegistryAccess
 import net.minecraft.nbt.CompoundTag

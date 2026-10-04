@@ -5,7 +5,7 @@ import net.minecraft.core.Direction
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.tags.TagKey
-import net.minecraft.world.level.BlockAndTintGetter
+import net.minecraft.client.renderer.block.BlockAndTintGetter
 import net.minecraft.world.level.ColorResolver
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.LightLayer

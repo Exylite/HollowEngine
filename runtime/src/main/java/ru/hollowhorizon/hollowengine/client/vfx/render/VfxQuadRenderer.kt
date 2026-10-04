@@ -1,10 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.utils.VboWrapper

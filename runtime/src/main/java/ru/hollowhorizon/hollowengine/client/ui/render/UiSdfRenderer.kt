@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL

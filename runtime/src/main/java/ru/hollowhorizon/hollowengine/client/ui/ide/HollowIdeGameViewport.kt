@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge

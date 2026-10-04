@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.events.registry
 
-import com.mojang.blaze3d.vertex.VertexFormat
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
 import ru.hollowhorizon.hollowengine.common.events.factory.EventHandler

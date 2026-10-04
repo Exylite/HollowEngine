@@ -30,3 +30,8 @@ accessible field net/minecraft/server/level/ServerChunkCache chunkMap Lnet/minec
 accessible class net/minecraft/client/particle/ParticleResources$SpriteParticleRegistration
 accessible method net/minecraft/client/particle/ParticleResources register (Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/client/particle/ParticleProvider;)V
 accessible method net/minecraft/client/particle/ParticleResources register (Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/client/particle/ParticleResources$SpriteParticleRegistration;)V
+
+accessible class com/mojang/blaze3d/opengl/GlStateManager$TextureState
+accessible field com/mojang/blaze3d/opengl/GlStateManager TEXTURES [Lcom/mojang/blaze3d/opengl/GlStateManager$TextureState;
+accessible field com/mojang/blaze3d/opengl/GlStateManager activeTexture I
+accessible field com/mojang/blaze3d/opengl/GlStateManager$TextureState binding I

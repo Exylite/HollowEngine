@@ -1,9 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.joml.Matrix3f
 import org.joml.Matrix4f
 import org.joml.Vector3f

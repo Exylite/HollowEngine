@@ -7,7 +7,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.Difficulty
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.level.GameRules
+import net.minecraft.world.level.gamerules.GameRules
 import net.minecraft.world.level.GameType
 import ru.hollowhorizon.hollowengine.client.ui.ide.WorldControlClient
 import ru.hollowhorizon.hollowengine.common.utils.PlayerPermissions

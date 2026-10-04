@@ -317,6 +317,12 @@ public interface RuntimeBridge extends AutoCloseable {
 
     void onLevelFrameRendered(Minecraft minecraft);
 
+    /**
+     * Vanilla has drawn its GUI into the main target. The GUI is only collected while screens and
+     * HUD layers are extracted, so whatever the engine draws with plain GL for them is run from here.
+     */
+    void onGuiFrameRendered(Minecraft minecraft);
+
     void onBeforeBlitScreen(Minecraft minecraft);
 
     void onBlitScreen(Minecraft minecraft);

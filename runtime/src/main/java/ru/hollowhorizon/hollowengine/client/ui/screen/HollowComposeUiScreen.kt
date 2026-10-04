@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.screen
 
 import androidx.compose.runtime.Composable
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import org.lwjgl.glfw.GLFW

@@ -1,7 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import net.minecraft.client.renderer.ShaderInstance
-
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 /**
  * The appearance of the surface to be rendered.
  */

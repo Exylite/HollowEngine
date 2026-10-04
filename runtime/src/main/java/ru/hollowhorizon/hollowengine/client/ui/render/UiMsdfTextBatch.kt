@@ -1,13 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL15
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
-import ru.hollowhorizon.hollowengine.bridge.mixins.client.ShaderInstanceAccessor
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import ru.hollowhorizon.hollowengine.client.ui.UiVec3
 import ru.hollowhorizon.hollowengine.client.ui.text.GlyphEdgeSoftness
@@ -96,7 +95,7 @@ internal class UiMsdfTextBatch : AutoCloseable {
             )
             configureUiBlend()
             shader.apply()
-            (shader as ShaderInstanceAccessor).samplerLocations().forEachIndexed { texture, location ->
+            shader.samplerLocations.forEachIndexed { texture, location ->
                 RenderSystem.glUniform1i(location, texture)
             }
             GL30.glBindVertexArray(vertexArray)

@@ -1,13 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.shadergraph
 
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.Resource
 import net.minecraft.server.packs.resources.ResourceProvider

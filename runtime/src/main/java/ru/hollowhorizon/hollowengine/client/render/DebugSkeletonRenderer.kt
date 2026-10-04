@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.render
 
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import ru.hollowhorizon.hollowengine.client.models.internal.v2.ModelAttachment
 import ru.hollowhorizon.hollowengine.client.render.SkeletonLayout.axis
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly

@@ -1,11 +1,11 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.MultiBufferSource
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.drawWithShader
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager

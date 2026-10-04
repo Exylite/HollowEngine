@@ -1,7 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
+
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferBuilder
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
 import net.minecraft.client.renderer.GameRenderer
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.layout.UiRect
@@ -27,7 +33,7 @@ internal fun drawBatchedQuads(quads: List<UiBatchedQuad>) {
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
         quads.forEach { quad ->
@@ -445,7 +451,7 @@ private fun drawSampledQuad(
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
         val corners = localCorners(width, height, quadTransform)
@@ -480,7 +486,7 @@ internal fun drawSolid(rect: UiRect, color: UiColor, transform: UiMatrix4, radiu
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
         buffer.addColoredQuad(rect.corners(transform), color)
@@ -505,7 +511,7 @@ internal fun drawLocalPaint(
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR)
         buffer.addColoredQuad(localCorners(width, height, transform), filtered)
@@ -659,7 +665,7 @@ private fun drawRoundedFan(
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR)
         val centerX = width * 0.5f
@@ -699,7 +705,7 @@ private fun drawProjectedShadowGradient(
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR)
         val center = UiVec3(centerX + offsetX, centerY + offsetY, 0f)
@@ -769,7 +775,7 @@ private fun drawRoundedStroke(
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
         val buffer = tessellator.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR)
         for (index in 0 until outer.size) {

@@ -1,8 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.models.internal
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.HollowEngine.MODID

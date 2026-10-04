@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.fabric.internal
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.irisshaders.iris.Iris
 import net.irisshaders.iris.api.v0.IrisApi
 import net.irisshaders.iris.pipeline.IrisRenderingPipeline
