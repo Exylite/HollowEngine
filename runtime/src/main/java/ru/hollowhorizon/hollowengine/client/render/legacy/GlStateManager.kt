@@ -60,7 +60,13 @@ object GlStateManager {
     fun _getActiveTexture(): Int = GL33.GL_TEXTURE0 + VanillaGl.activeTexture
 
     fun _activeTexture(texture: Int) = VanillaGl._activeTexture(texture)
-    fun _bindTexture(id: Int) = VanillaGl._bindTexture(id)
+
+    /** Vanilla leaves sampler objects on the units, and their filters win over those of the texture. */
+    fun _bindTexture(id: Int) {
+        VanillaGl._bindTexture(id)
+        GL33.glBindSampler(VanillaGl.activeTexture, 0)
+    }
+
     fun _genTexture(): Int = VanillaGl._genTexture()
     fun _deleteTexture(id: Int) = VanillaGl._deleteTexture(id)
     fun _texParameter(target: Int, name: Int, value: Int) = VanillaGl._texParameter(target, name, value)
