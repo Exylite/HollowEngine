@@ -713,6 +713,11 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     ): EntityHitResult? =
         EntityColliders.pick(level, source, start, end, search, predicate, maxDistanceSquared, vanilla, colliderModes(projectile))
 
+    override fun pickEachCollider(
+        level: Level, source: Entity?, start: Vec3, end: Vec3, search: AABB, predicate: Predicate<Entity>,
+    ): Collection<EntityHitResult> =
+        EntityColliders.pickEach(level, source, start, end, search, predicate, colliderModes(projectile = true))
+
     override fun onPlayerAttack(player: Player, target: Entity, attack: Runnable) =
         ColliderCombat.attack(player, target, attack)
 

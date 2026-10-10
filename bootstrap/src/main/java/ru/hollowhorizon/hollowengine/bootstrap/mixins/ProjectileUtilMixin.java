@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
@@ -11,6 +12,8 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.function.Predicate;
 
 /**
@@ -33,5 +36,20 @@ public class ProjectileUtilMixin {
         var bridge = BootstrapRuntimeManager.bridge();
         var vanilla = original.call(level, projectile, start, end, search, filter.and(entity -> !bridge.hasColliderTargets(entity, true)), margin);
         return bridge.pickColliders(level, projectile, start, end, search, filter, start.distanceToSqr(end), vanilla, true);
+    }
+
+    /** Arrows, like spears, collect everything along their way at once instead of asking for the nearest hit. */
+    @WrapMethod(method = "getManyEntityHitResult(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;FLnet/minecraft/world/level/ClipContext$Block;Z)Ljava/util/Collection;")
+    private static Collection<EntityHitResult> hollowengine$many(Level level, Entity projectile, Vec3 start, Vec3 end, AABB search,
+                                                                 Predicate<Entity> filter, float margin, ClipContext.Block block,
+                                                                 boolean includeStart, Operation<Collection<EntityHitResult>> original) {
+        var bridge = BootstrapRuntimeManager.bridge();
+        var vanilla = original.call(level, projectile, start, end, search, filter.and(entity -> !bridge.hasColliderTargets(entity, true)), margin, block, includeStart);
+        var colliders = bridge.pickEachCollider(level, projectile, start, end, search, filter);
+        if (colliders.isEmpty()) return vanilla;
+        var all = new ArrayList<EntityHitResult>(vanilla.size() + colliders.size());
+        all.addAll(vanilla);
+        all.addAll(colliders);
+        return all;
     }
 }

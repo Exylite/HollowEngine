@@ -70,6 +70,7 @@ import ru.hollowhorizon.hollowengine.api.extensions.FakePlayerFactory;
 import ru.hollowhorizon.hollowengine.api.extensions.ItemStackHelper;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -245,6 +246,13 @@ public interface RuntimeBridge extends AutoCloseable {
     EntityHitResult pickColliders(
             Level level, @Nullable Entity source, Vec3 start, Vec3 end, AABB search,
             Predicate<Entity> predicate, double maxDistanceSquared, @Nullable EntityHitResult vanilla, boolean projectile);
+
+    /**
+     * The nearest collider of each entity along the segment, for a projectile that goes through everything it
+     * meets: arrows look for all of their hits at once.
+     */
+    Collection<EntityHitResult> pickEachCollider(
+            Level level, @Nullable Entity source, Vec3 start, Vec3 end, AABB search, Predicate<Entity> predicate);
 
     void onPlayerAttack(Player player, Entity target, Runnable attack);
 

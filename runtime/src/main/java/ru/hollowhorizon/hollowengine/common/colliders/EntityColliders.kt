@@ -85,6 +85,29 @@ object EntityColliders {
     }
 
     /**
+     * The nearest collider of each entity along the segment from [start] to [end], counting the colliders of
+     * the [modes]: what a projectile that passes through everything it meets hits, all at once. Entities that
+     * have such colliders are expected to be left out of the vanilla search.
+     */
+    fun pickEach(
+        level: Level,
+        source: Entity?,
+        start: Vec3,
+        end: Vec3,
+        search: AABB,
+        predicate: Predicate<Entity>,
+        modes: (ColliderModes) -> Boolean = ColliderModes::isTarget,
+    ): List<EntityHitResult> = candidates(level, source, search) { predicate.test(it) && hasTargets(it, modes) }
+        .mapNotNull { entity ->
+            if (source != null && entity.rootVehicle === source.rootVehicle) return@mapNotNull null
+            of(entity)
+                .filter { modes(it.spec.modes) }
+                .mapNotNull { collider -> collider.volume.clip(start, end)?.let { collider to it } }
+                .minByOrNull { (_, location) -> start.distanceToSqr(location) }
+                ?.let { (collider, location) -> ColliderHitResult(entity, location, collider) }
+        }
+
+    /**
      * The entities whose colliders may be in [search]: those whose colliders were around it on the last tick,
      * however big they are, and those whose boxes are in it, which covers an entity posed for the first time.
      */
