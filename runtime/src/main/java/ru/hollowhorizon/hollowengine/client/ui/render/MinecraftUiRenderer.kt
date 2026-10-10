@@ -2390,7 +2390,9 @@ class MinecraftUiRenderer {
     }
 
     /**
-     * Clears the depth buffer inside [rect].
+     * Clears the depth buffer inside [rect] to the far value of the engine's own depth, which is not
+     * what vanilla leaves as the clear value: it clears to 0 for the reversed depth of the level, and
+     * a canvas that draws with `LEQUAL` over that sees nothing pass.
      */
     private fun clearDepthOf(rect: UiRect) {
         if (rect.width <= 0f || rect.height <= 0f) return
@@ -2399,7 +2401,10 @@ class MinecraftUiRenderer {
         setScissor(rect)
         val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
         if (!depthMask) GL11.glDepthMask(true)
+        val clearDepth = GL11.glGetDouble(GL11.GL_DEPTH_CLEAR_VALUE)
+        GL11.glClearDepth(1.0)
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
+        GL11.glClearDepth(clearDepth)
         if (!depthMask) GL11.glDepthMask(false)
         scissorState = ScissorUnknown
         setScissor(previous as? UiRect)
@@ -2449,9 +2454,14 @@ class MinecraftUiRenderer {
         RenderSystem.viewport(target.x, target.y, target.width, target.height)
     }
 
+    /**
+     * Vanilla runs its context with a zero-to-one clip volume, so the depth range of the UI's projection has
+     * to be zero-to-one as well: with the usual minus-one-to-one mapping everything in front of `z = 0` is
+     * clipped away, which is the near half of any model or other 3D content a screen shows.
+     */
     private fun configureLayerProjection(width: Float, height: Float) {
         RenderSystem.setProjectionMatrix(
-            Matrix4f().setOrtho(0f, width, height, 0f, -1000f, 1000f),
+            Matrix4f().setOrtho(0f, width, height, 0f, -1000f, 1000f, true),
             VertexSorting.ORTHOGRAPHIC_Z,
         )
         val stack = RenderSystem.getModelViewStack()

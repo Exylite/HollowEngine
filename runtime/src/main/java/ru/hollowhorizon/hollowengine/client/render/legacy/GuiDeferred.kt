@@ -89,9 +89,10 @@ object GuiDeferred {
             RenderSystem.disableCull()
             RenderSystem.enableDepthTest()
             RenderSystem.setProjectionMatrix(
+                // zero-to-one, like the clip volume vanilla sets up: what is in front of z = 0 would be clipped otherwise
                 Matrix4f().setOrtho(
                     0f, (window.width / window.guiScale).toFloat(), (window.height / window.guiScale).toFloat(), 0f,
-                    1000f, 21000f,
+                    1000f, 21000f, true,
                 ),
                 VertexSorting.ORTHOGRAPHIC_Z,
             )

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.renderer.SubmitNodeCollector
 import net.minecraft.client.renderer.rendertype.RenderTypes
 import net.minecraft.resources.Identifier
+import org.joml.Matrix3f
 import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 import net.minecraft.client.renderer.rendertype.RenderType as VanillaRenderType
 /**
@@ -111,10 +112,11 @@ interface MultiBufferSource {
 }
 
 /**
- * Draws what the engine writes the moment it is asked to, with the plain programs the engine ships:
- * for the places that already run inside a frame the engine is drawing by hand, such as the UI and
- * the world stages. Only plain colored types (lines and solid shapes) are drawn here; entity geometry
- * belongs to the model pipeline.
+ * Draws what the engine writes the moment it is asked to, with the programs the engine ships: for the
+ * places that already run inside a frame the engine is drawing by hand, such as the UI and the world
+ * stages. Lines and solid shapes go through the plain program. Entity geometry, which the batched path of
+ * a model writes, goes through the glTF entity program: a model shown in the UI has nowhere else to be
+ * drawn, since vanilla only takes it after the frame has been submitted.
  */
 object ImmediateBufferSource : MultiBufferSource.BufferSource {
     private val builders = LinkedHashMap<RenderType, BufferBuilder>()
@@ -134,7 +136,7 @@ object ImmediateBufferSource : MultiBufferSource.BufferSource {
 
     private fun draw(type: RenderType, builder: BufferBuilder) {
         val mesh = builder.build() ?: return
-        val shader = if (type.isPlainColor) ModShaders.POSITION_COLOR else null
+        val shader = if (type.isPlainColor) ModShaders.POSITION_COLOR else ModShaders.gltfEntityOrNull
         if (shader == null) {
             mesh.close()
             return
@@ -142,6 +144,9 @@ object ImmediateBufferSource : MultiBufferSource.BufferSource {
         LegacyGl.scope {
             type.setupRenderState()
             RenderSystem.setShader(shader)
+            // what is written here is in the space it is drawn in, normals too, and the program is shared with
+            // the draws that bring a normal matrix of their own
+            shader.getUniform("NormalMat")?.set(Matrix3f())
             BufferUploader.drawWithShader(mesh)
             type.clearRenderState()
         }

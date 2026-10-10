@@ -14,6 +14,9 @@ import ru.hollowhorizon.hollowengine.common.utils.rl
 object ModShaders {
     lateinit var GLTF_ENTITY: ShaderInstance
     lateinit var GLTF_ENTITY_INSTANCED: ShaderInstance
+
+    /** The entity program, or none while the shaders are not registered yet. */
+    val gltfEntityOrNull: ShaderInstance? get() = if (::GLTF_ENTITY.isInitialized) GLTF_ENTITY else null
     var VFX_PARTICLE: ShaderInstance? = null
     var VFX_MESH: ShaderInstance? = null
     var VFX_RIBBON: ShaderInstance? = null
