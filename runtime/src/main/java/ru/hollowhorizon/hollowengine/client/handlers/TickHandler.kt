@@ -17,10 +17,10 @@ object TickHandler {
 
     val currentFrame get() = if (isLogicalClient) clientFrame else serverTick
     val partialTick
-        get() = Minecraft.getInstance().timer.getGameTimeDeltaPartialTick(false)
+        get() = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
 
     val deltaFrameTime
-        get() = Minecraft.getInstance().timer.realtimeDeltaTicks / 20f
+        get() = Minecraft.getInstance().deltaTracker.realtimeDeltaTicks / 20f
     val gameTime get() = currentFrame + partialTick
 
     var renderFrame: Long = 0L

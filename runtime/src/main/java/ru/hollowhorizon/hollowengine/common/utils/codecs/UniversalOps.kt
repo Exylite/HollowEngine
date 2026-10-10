@@ -49,6 +49,12 @@ object UniversalOps : DynamicOps<DynamicValue> {
         DynamicValue.Null -> outOps.empty()
     }
 
+    override fun getBooleanValue(input: DynamicValue?): DataResult<Boolean> =
+        ((input as? DynamicValue.Prim)?.value as? Boolean)
+            ?.let { DataResult.success(it) } ?: DataResult.error { "Not a boolean" }
+
+    override fun createBoolean(value: Boolean): DynamicValue = DynamicValue.Prim(value)
+
     override fun getNumberValue(input: DynamicValue?): DataResult<Number> {
         val number = (input as? DynamicValue.Prim)?.value as? Number
         return number?.let { DataResult.success(it) } ?: DataResult.error { "Not a number" }

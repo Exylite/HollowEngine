@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.fabric.mixins;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BowItem;
@@ -29,11 +29,12 @@ public class BowItemMixin {
     }
 
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
-    private void hollowengine$onArrowNock(Level level, Player player, InteractionHand usedHand, CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir) {
+    private void hollowengine$onArrowNock(Level level, Player player, InteractionHand usedHand, CallbackInfoReturnable<InteractionResult> cir) {
         ItemStack itemStack = player.getItemInHand(usedHand);
         ItemStack replacement = BootstrapRuntimeManager.bridge().onArrowNock(itemStack, level, player, usedHand);
         if (replacement != null) {
-            cir.setReturnValue(InteractionResultHolder.pass(replacement));
+            // 26.2 results only carry a replacement stack on success; CONSUME keeps the hand from swinging.
+            cir.setReturnValue(InteractionResult.CONSUME.heldItemTransformedTo(replacement));
         }
     }
 }

@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionHandle
@@ -24,7 +24,7 @@ typealias RecipeEditorContent = @Composable (RecipeEditing) -> Unit
  * one, a change of type only rewrites `type` and leaves every other field as it was.
  */
 class RecipeEditorType(
-    val type: ResourceLocation,
+    val type: Identifier,
     val title: String? = null,
     val shape: RecipeShape? = null,
     val content: RecipeEditorContent,
@@ -65,7 +65,7 @@ object RecipeEditors {
     fun register(editor: RecipeEditorType): ExtensionHandle = point.register(editor.type, editor)
 
     /** The editor for a recipe whose `type` is [type]; a bare path means the `minecraft` namespace. */
-    fun of(type: String): RecipeEditorType? = ResourceLocation.tryParse(type)?.let(point::find)
+    fun of(type: String): RecipeEditorType? = Identifier.tryParse(type)?.let(point::find)
 
     /**
      * [recipe] as a recipe of type [to]. Ingredients and the result move over when both types have

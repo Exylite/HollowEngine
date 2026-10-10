@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.story.functions.npcs
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import com.mojang.brigadier.StringReader
 import kotlinx.coroutines.delay
 import net.minecraft.ChatFormatting
@@ -87,9 +88,40 @@ fun NpcEntity.startMove(pos: Vec3, options: MoveOptions = MoveOptions()): NpcAct
  */
 suspend infix fun NpcEntity.move(position: Vec3): MoveResult = move(pos = position)
 
+/**
+ * Moves the NPC through [points] in turn without stopping at any but the last: each one before it counts as
+ * passed within [MoveOptions.passDistance], and [MoveOptions.arrivalDistance] is for the last.
+ */
+suspend fun NpcEntity.move(points: List<Vec3>, options: MoveOptions = MoveOptions()): MoveResult =
+    startMove(points, options).await()
+
+fun NpcEntity.startMove(points: List<Vec3>, options: MoveOptions = MoveOptions()): NpcAction<MoveResult> {
+    require(points.isNotEmpty()) { "A move needs at least one point" }
+    return actions.start(NpcActionKeys.MOVEMENT) { moveThrough(points.map { point -> { point } }, options) }
+}
+
 fun NpcEntity.stopMoving() {
     actions.cancel(NpcActionKeys.MOVEMENT)
     navigation.stop()
+}
+
+/**
+ * Keeps the NPC out of [zone] on every way it walks, its moves and its goals alike, until [stopAvoiding]. It is
+ * not saved with the NPC: a script that needs it after a reload adds it again.
+ */
+fun NpcEntity.avoid(zone: Zone) {
+    npcNavigation.avoidedZones += zone
+    navigation.recomputePath()
+}
+
+fun NpcEntity.stopAvoiding(zone: Zone) {
+    if (npcNavigation.avoidedZones.remove(zone)) navigation.recomputePath()
+}
+
+fun NpcEntity.stopAvoidingAll() {
+    if (npcNavigation.avoidedZones.isEmpty()) return
+    npcNavigation.avoidedZones.clear()
+    navigation.recomputePath()
 }
 
 /**
@@ -235,7 +267,7 @@ fun NpcEntity.startDestroyBlock(
         if (requireCorrectTool && !fakePlayer.hasCorrectToolForDrops(initialState)) return@start false
 
         val face = interactionFace(target)
-        fakePlayer.gameMode.handleBlockBreakAction(blockPos, START_DESTROY_BLOCK, face, level().maxBuildHeight, 0)
+        fakePlayer.gameMode.handleBlockBreakAction(blockPos, START_DESTROY_BLOCK, face, level().maxY, 0)
         try {
             var elapsedTicks = 0
             while (level().getBlockState(blockPos) == initialState) {
@@ -249,7 +281,7 @@ fun NpcEntity.startDestroyBlock(
                         blockPos,
                         STOP_DESTROY_BLOCK,
                         face,
-                        level().maxBuildHeight,
+                        level().maxY,
                         0,
                     )
                     break
@@ -263,7 +295,7 @@ fun NpcEntity.startDestroyBlock(
                     blockPos,
                     ABORT_DESTROY_BLOCK,
                     face,
-                    level().maxBuildHeight,
+                    level().maxY,
                     0,
                 )
             }
@@ -275,7 +307,7 @@ fun NpcEntity.startDestroyBlock(
     }
 }
 
-private fun NpcEntity.interactionFace(target: Vec3): Direction = Direction.getNearest(eyePosition.subtract(target))
+private fun NpcEntity.interactionFace(target: Vec3): Direction = Direction.getApproximateNearest(eyePosition.subtract(target))
 
 fun NpcEntity.interactNow(
     target: Entity,
@@ -284,7 +316,7 @@ fun NpcEntity.interactNow(
 ): InteractionResult {
     if (target.level() !== level() || distanceToSqr(target) > reach * reach) return InteractionResult.FAIL
     syncFakePlayer()
-    val result = fakePlayer.interactOn(target, hand)
+    val result = fakePlayer.interactOn(target, hand, target.position())
     setItemInHand(hand, fakePlayer.getItemInHand(hand).copy())
     swing(hand)
     return result
@@ -315,7 +347,7 @@ suspend fun NpcEntity.interact(
 private fun NpcEntity.syncFakePlayer() {
     val level = level() as ServerLevel
     fakePlayer.gameMode.setLevel(level)
-    fakePlayer.moveTo(x, y, z, yRot, xRot)
+    fakePlayer.snapTo(x, y, z, yRot, xRot)
     InteractionHand.entries.forEach { currentHand ->
         fakePlayer.setItemInHand(currentHand, getItemInHand(currentHand).copy())
     }
@@ -330,9 +362,9 @@ fun NpcEntity.dropItem(item: ItemStack) {
     val p = position()
     val entityStack = ItemEntity(level(), p.x, p.y + eyeHeight, p.z, item)
     entityStack.setDefaultPickUpDelay()
-    val f8 = Mth.sin(xRot * Mth.PI / 180f)
-    val f3 = Mth.sin(yHeadRot * Mth.PI / 180f)
-    val f4 = Mth.cos(yHeadRot * Mth.PI / 180f)
+    val f8 = Mth.sin((xRot * Mth.PI / 180f).toDouble())
+    val f3 = Mth.sin((yHeadRot * Mth.PI / 180f).toDouble())
+    val f4 = Mth.cos((yHeadRot * Mth.PI / 180f).toDouble())
     entityStack.setDeltaMovement(-f3 * 0.3, -f8 * 0.3 + 0.1, f4 * 0.3)
     level().addFreshEntity(entityStack)
 }

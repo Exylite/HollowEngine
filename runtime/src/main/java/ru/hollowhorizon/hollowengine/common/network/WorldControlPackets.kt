@@ -1,13 +1,15 @@
 package ru.hollowhorizon.hollowengine.common.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.dayTime
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
-import net.minecraft.network.protocol.game.ClientboundSetTimePacket
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.Difficulty
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.level.GameRules
+import net.minecraft.world.level.gamerules.GameRules
 import net.minecraft.world.level.GameType
 import ru.hollowhorizon.hollowengine.client.ui.ide.WorldControlClient
 import ru.hollowhorizon.hollowengine.common.utils.PlayerPermissions
@@ -24,15 +26,41 @@ enum class WorldRule {
     KEEP_INVENTORY,
     FIRE_TICK;
 
-    val key: GameRules.Key<GameRules.BooleanValue>
+    /** The translation key vanilla gives the rule behind this switch. */
+    val descriptionId: String
         get() = when (this) {
-            DAYLIGHT_CYCLE -> GameRules.RULE_DAYLIGHT
-            WEATHER_CYCLE -> GameRules.RULE_WEATHER_CYCLE
-            MOB_SPAWNING -> GameRules.RULE_DOMOBSPAWNING
-            MOB_GRIEFING -> GameRules.RULE_MOBGRIEFING
-            KEEP_INVENTORY -> GameRules.RULE_KEEPINVENTORY
-            FIRE_TICK -> GameRules.RULE_DOFIRETICK
+            DAYLIGHT_CYCLE -> GameRules.ADVANCE_TIME.descriptionId
+            WEATHER_CYCLE -> GameRules.ADVANCE_WEATHER.descriptionId
+            MOB_SPAWNING -> GameRules.SPAWN_MOBS.descriptionId
+            MOB_GRIEFING -> GameRules.MOB_GRIEFING.descriptionId
+            KEEP_INVENTORY -> GameRules.KEEP_INVENTORY.descriptionId
+            FIRE_TICK -> GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER.descriptionId
         }
+
+    fun get(rules: GameRules): Boolean = when (this) {
+        DAYLIGHT_CYCLE -> rules.get(GameRules.ADVANCE_TIME)
+        WEATHER_CYCLE -> rules.get(GameRules.ADVANCE_WEATHER)
+        MOB_SPAWNING -> rules.get(GameRules.SPAWN_MOBS)
+        MOB_GRIEFING -> rules.get(GameRules.MOB_GRIEFING)
+        KEEP_INVENTORY -> rules.get(GameRules.KEEP_INVENTORY)
+        // fire has no switch of its own any more, only how far from a player it spreads
+        FIRE_TICK -> rules.get(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER) != 0
+    }
+
+    fun set(rules: GameRules, value: Boolean, server: MinecraftServer) {
+        when (this) {
+            DAYLIGHT_CYCLE -> rules.set(GameRules.ADVANCE_TIME, value, server)
+            WEATHER_CYCLE -> rules.set(GameRules.ADVANCE_WEATHER, value, server)
+            MOB_SPAWNING -> rules.set(GameRules.SPAWN_MOBS, value, server)
+            MOB_GRIEFING -> rules.set(GameRules.MOB_GRIEFING, value, server)
+            KEEP_INVENTORY -> rules.set(GameRules.KEEP_INVENTORY, value, server)
+            FIRE_TICK -> rules.set(GameRules.FIRE_SPREAD_RADIUS_AROUND_PLAYER, if (value) FIRE_SPREAD_DEFAULT else 0, server)
+        }
+    }
+
+    private companion object {
+        const val FIRE_SPREAD_DEFAULT = 128
+    }
 }
 
 @Serializable
@@ -90,18 +118,18 @@ internal object WorldControl {
     fun snapshot(player: ServerPlayer): WorldControlState {
         val server = player.server
         val overworld = server.overworld()
-        val levelData = server.worldData.overworldData()
+        val weather = overworld.weatherData
         return WorldControlState(
             dayTime = overworld.dayTime,
             weather = when {
-                levelData.isThundering -> WorldWeather.THUNDER
-                levelData.isRaining -> WorldWeather.RAIN
+                weather.isThundering -> WorldWeather.THUNDER
+                weather.isRaining -> WorldWeather.RAIN
                 else -> WorldWeather.CLEAR
             },
             difficulty = server.worldData.difficulty.id,
             difficultyLocked = server.worldData.isDifficultyLocked,
             gameMode = player.gameMode.gameModeForPlayer.id,
-            rules = WorldRule.entries.associateWith { server.gameRules.getBoolean(it.key) },
+            rules = WorldRule.entries.associateWith { it.get(server.gameRules) },
         )
     }
 
@@ -113,29 +141,33 @@ internal object WorldControl {
             if (!server.worldData.isDifficultyLocked) server.setDifficulty(Difficulty.byId(id), true)
         }
         change.gameMode?.let { id -> player.setGameMode(GameType.byId(id)) }
-        change.rule?.let { rule -> server.gameRules.getRule(rule.key).set(change.ruleValue, server) }
+        change.rule?.let { rule -> rule.set(server.gameRules, change.ruleValue, server) }
     }
 
-    /** Moves every level to [timeOfDay] within the current day, so the day counter and moon phase stay. */
+    /** Moves the overworld clock to [timeOfDay] within the current day, so the day counter and moon phase stay. */
     fun setTimeOfDay(server: MinecraftServer, timeOfDay: Long) {
         val target = timeOfDay.mod(DAY_TICKS)
-        val daylight = server.gameRules.getBoolean(GameRules.RULE_DAYLIGHT)
-        for (level in server.allLevels) {
-            level.dayTime = level.dayTime - level.dayTime.mod(DAY_TICKS) + target
-            server.playerList.broadcastAll(
-                ClientboundSetTimePacket(level.gameTime, level.dayTime, daylight),
-                level.dimension(),
-            )
-        }
+        val overworld = server.overworld()
+        // the clock tells every player by itself
+        overworld.dayTime = overworld.dayTime - overworld.dayTime.mod(DAY_TICKS) + target
     }
 
     private fun setWeather(level: ServerLevel, weather: WorldWeather) {
         val random = level.random
         when (weather) {
-            WorldWeather.CLEAR -> level.setWeatherParameters(ServerLevel.RAIN_DELAY.sample(random), 0, false, false)
-            WorldWeather.RAIN -> level.setWeatherParameters(0, ServerLevel.RAIN_DURATION.sample(random), true, false)
+            WorldWeather.CLEAR -> setWeatherParameters(level, ServerLevel.RAIN_DELAY.sample(random), 0, false, false)
+            WorldWeather.RAIN -> setWeatherParameters(level, 0, ServerLevel.RAIN_DURATION.sample(random), true, false)
             WorldWeather.THUNDER ->
-                level.setWeatherParameters(0, ServerLevel.THUNDER_DURATION.sample(random), true, true)
+                setWeatherParameters(level, 0, ServerLevel.THUNDER_DURATION.sample(random), true, true)
         }
+    }
+
+    private fun setWeatherParameters(level: ServerLevel, clearTime: Int, weatherTime: Int, raining: Boolean, thundering: Boolean) {
+        val data = level.weatherData
+        data.clearWeatherTime = clearTime
+        data.rainTime = weatherTime
+        data.thunderTime = weatherTime
+        data.isRaining = raining
+        data.isThundering = thundering
     }
 }

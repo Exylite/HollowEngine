@@ -19,7 +19,7 @@ import kotlin.random.Random
 
 tailrec fun Player.findRandomPos(radius: Int): Vec3 {
     val distance = Random.nextDouble(1.0, radius.toDouble())
-    val rotation = Random.nextDouble(0.0, 2.0 * Math.PI).toFloat()
+    val rotation = Random.nextDouble(0.0, 2.0 * Math.PI)
 
     val pos = position().add(
         distance * Mth.cos(rotation),
@@ -204,7 +204,7 @@ private fun rayTraceBlocks(
 }
 
 fun canSeeThrough(blockState: BlockState, world: Level, pos: BlockPos): Boolean {
-    if (!blockState.canOcclude() || !blockState.isSolidRender(world, pos)) return true
+    if (!blockState.canOcclude() || !blockState.isSolidRender) return true
 
     val block = blockState.block
 

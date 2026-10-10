@@ -49,9 +49,11 @@
     text-overflow: dots;
 }
 
+/* The scrollbar lies over the panel, so the fields keep clear of it on the right. */
 .insp-body {
     size: 100% fit;
     gap: 3px;
+    padding: 0 8px 0 0;
 }
 
 .insp-empty-state {
@@ -190,6 +192,10 @@
     size: 100% fit;
     foreground: $text-faint;
     font-size: $font-size-small;
+}
+
+.insp-hint.warning {
+    foreground: $warning;
 }
 
 .insp-readonly {
@@ -382,13 +388,19 @@
 .insp-vector-cell {
     grow: 1;
     size: 0px fit;
-    gap: 2px;
+    gap: 4px;
+    align-items: start center;
 }
 
 .insp-vector-label {
     size: fit fit;
     foreground: $text-faint;
     font-size: $font-size-small;
+}
+
+.insp-vector-cell .insp-input {
+    size: 0px fit;
+    grow: 1;
 }
 
 .insp-nested {

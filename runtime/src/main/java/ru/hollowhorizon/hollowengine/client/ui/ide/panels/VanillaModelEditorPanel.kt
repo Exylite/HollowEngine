@@ -1,35 +1,17 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.panels
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.VertexSorting
 import kotlinx.coroutines.isActive
+import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
-import net.minecraft.client.renderer.Sheets
-import net.minecraft.client.renderer.texture.OverlayTexture
-import net.minecraft.client.renderer.texture.TextureAtlasSprite
-import net.minecraft.client.renderer.block.model.BlockModel
-import net.minecraft.client.renderer.block.model.ItemModelGenerator
-import net.minecraft.client.resources.model.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
-import net.minecraft.util.Mth
-import org.joml.Quaternionf
-import org.joml.Matrix4f
-import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.handlers.TickHandler
-import ru.hollowhorizon.hollowengine.client.render.CUSTOM_IMGUI_LIGHT_0
-import ru.hollowhorizon.hollowengine.client.render.CUSTOM_IMGUI_LIGHT_1
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.layout.UiRect
 import ru.hollowhorizon.hollowengine.client.ui.style.UiPaint
 import ru.hollowhorizon.hollowengine.client.ui.widgets.tooltipOnHover
 import ru.hollowhorizon.hollowengine.client.utils.lang
-import java.util.function.Function
-import kotlin.math.abs
-import kotlin.math.min
 
 private const val GridIcon = "hollowengine:textures/gui/icons/graph.svg"
 private const val AutoRotateIcon = "hollowengine:textures/gui/icons/reload.svg"
@@ -114,7 +96,7 @@ private fun VanillaModelPreview(state: VanillaModelViewerState, modifier: Modifi
 
 @Stable
 private class VanillaModelViewerState(
-    private val resource: ResourceLocation,
+    private val resource: Identifier,
     private val resourceManager: ResourceManager,
 ) {
     var yaw by mutableStateOf(35f)
@@ -128,141 +110,33 @@ private class VanillaModelViewerState(
     var error by mutableStateOf<String?>(null)
         private set
 
-    private var bakedModel by mutableStateOf<BakedModel?>(null)
-
     init {
         reload()
     }
 
+    /**
+     * The preview needs vanilla's model baking, which 26.x rebuilt around block state models and quad
+     * collections; until the engine drives that, the viewer checks the file and says what is missing.
+     */
     fun reload() {
-        runCatching {
-            VanillaModelBaker(resourceManager).bakeResource(resource)
-        }.onSuccess { model ->
-            bakedModel = model
-            error = if (model.isCustomRenderer) VanillaModelLang.BUILTIN_RENDERER.lang else null
-        }.onFailure { failure ->
-            bakedModel = null
-            error = failure.message ?: VanillaModelLang.LOAD_FAILED.lang(resource)
+        error = when {
+            !(resource.path.startsWith("models/") && resource.path.endsWith(".json")) ->
+                VanillaModelLang.NOT_JSON_MODEL.lang(resource)
+
+            resourceManager.getResource(resource).isEmpty -> VanillaModelLang.MISSING_MODEL.lang(resource)
+            else -> VanillaModelLang.PREVIEW_UNAVAILABLE.lang
         }
     }
 
     fun render(rect: UiRect, stack: PoseStack) {
-        val model = bakedModel ?: return
         if (autoRotate) yaw = (yaw + AutoRotateDegreesPerSecond * TickHandler.deltaFrameTime) % 360f
-
-        val previousProjection = Matrix4f(RenderSystem.getProjectionMatrix())
-        val previousSorting = RenderSystem.getVertexSorting()
-        val logicalWidth = (2f / abs(previousProjection.m00())).coerceAtLeast(1f)
-        val logicalHeight = (2f / abs(previousProjection.m11())).coerceAtLeast(1f)
-        val scale = min(rect.width, rect.height) * zoom
-        val projectionDepth = maxOf(MinimumOrthographicDepth, scale)
-        RenderSystem.setProjectionMatrix(
-            Matrix4f().setOrtho(
-                0f,
-                logicalWidth,
-                logicalHeight,
-                0f,
-                -projectionDepth,
-                projectionDepth,
-            ),
-            VertexSorting.ORTHOGRAPHIC_Z,
-        )
-
-        GL33.glDepthFunc(GL33.GL_LEQUAL)
-        val centerX = rect.x + rect.width / 2f
-        val centerY = rect.y + rect.height / 2f
-        stack.translate(centerX + offsetX * zoom, centerY + offsetY * zoom, 0f)
-        stack.scale(scale, -scale, scale)
-        stack.mulPose(Quaternionf().rotateX(pitch * Mth.DEG_TO_RAD))
-        stack.mulPose(Quaternionf().rotateY(yaw * Mth.DEG_TO_RAD))
-        stack.translate(-0.5f, -0.5f, -0.5f)
-
-        try {
-            RenderSystem.setShaderLights(CUSTOM_IMGUI_LIGHT_0, CUSTOM_IMGUI_LIGHT_1)
-            val minecraft = Minecraft.getInstance()
-            val buffers = minecraft.renderBuffers().bufferSource()
-            val consumer = buffers.getBuffer(Sheets.cutoutBlockSheet())
-            minecraft.blockRenderer.modelRenderer.renderModel(
-                stack.last(),
-                consumer,
-                null,
-                model,
-                1f,
-                1f,
-                1f,
-                LightTexture.FULL_BRIGHT,
-                OverlayTexture.NO_OVERLAY,
-            )
-            buffers.endBatch()
-        } finally {
-            RenderSystem.setProjectionMatrix(previousProjection, previousSorting)
-        }
     }
 }
 
-private class VanillaModelBaker(
-    private val resourceManager: ResourceManager,
-) : ModelBaker {
-    private val unbakedModels = mutableMapOf<ResourceLocation, UnbakedModel>()
-    private val bakedModels = mutableMapOf<ResourceLocation, BakedModel>()
-    private val itemModelGenerator = ItemModelGenerator()
-    private val spriteGetter = Function<Material, TextureAtlasSprite> { material ->
-        Minecraft.getInstance().modelManager.getAtlas(material.atlasLocation()).getSprite(material.texture())
-    }
-
-    fun bakeResource(resource: ResourceLocation): BakedModel {
-        require(resource.path.startsWith("models/") && resource.path.endsWith(".json")) {
-            VanillaModelLang.NOT_JSON_MODEL.lang(resource)
-        }
-        val modelId = ResourceLocation.fromNamespaceAndPath(
-            resource.namespace,
-            resource.path.removePrefix("models/").removeSuffix(".json"),
-        )
-        getModel(modelId).resolveParents(::getModel)
-        return requireNotNull(bake(modelId, BlockModelRotation.X0_Y0)) {
-            VanillaModelLang.LOAD_FAILED.lang(resource)
-        }
-    }
-
-    override fun getModel(location: ResourceLocation): UnbakedModel = unbakedModels.getOrPut(location) {
-        when (location.path) {
-            "builtin/generated" -> ModelBakery.GENERATION_MARKER
-            "builtin/entity" -> ModelBakery.BLOCK_ENTITY_MARKER
-            "builtin/missing" -> missingModel()
-            else -> loadModel(location)
-        }
-    }
-
-    override fun bake(location: ResourceLocation, state: ModelState): BakedModel = bakedModels.getOrPut(location) {
-        val model = getModel(location)
-        model.resolveParents(::getModel)
-        if (model is BlockModel && model.rootModel === ModelBakery.GENERATION_MARKER) {
-            itemModelGenerator.generateBlockModel(spriteGetter, model)
-                .bake(this, model, spriteGetter, state, false)
-        } else {
-            requireNotNull(model.bake(this, spriteGetter, state)) {
-                VanillaModelLang.EMPTY_BAKED_MODEL.lang(location)
-            }
-        }
-    }
-
-    private fun loadModel(location: ResourceLocation): BlockModel {
-        val resource = ResourceLocation.fromNamespaceAndPath(location.namespace, "models/${location.path}.json")
-        val source = resourceManager.getResource(resource).orElseThrow {
-            IllegalArgumentException(VanillaModelLang.MISSING_MODEL.lang(resource))
-        }
-        return source.openAsReader().use(BlockModel::fromStream).also { it.name = location.toString() }
-    }
-
-    private fun missingModel(): BlockModel = BlockModel.fromString(ModelBakery.MISSING_MODEL_MESH).also {
-        it.name = ModelBakery.MISSING_MODEL_LOCATION.toString()
-    }
-}
-
-private fun String.toAssetResourceLocation(): ResourceLocation {
+private fun String.toAssetResourceLocation(): Identifier {
     val relative = substringAfter("assets/", missingDelimiterValue = "")
     require(relative.isNotEmpty() && '/' in relative) { VanillaModelLang.INVALID_ASSET_PATH.lang(this) }
-    return ResourceLocation.fromNamespaceAndPath(relative.substringBefore('/'), relative.substringAfter('/'))
+    return Identifier.fromNamespaceAndPath(relative.substringBefore('/'), relative.substringAfter('/'))
 }
 
 private fun UiCanvasDrawScope.drawVanillaModelGrid(state: VanillaModelViewerState) {
@@ -298,5 +172,6 @@ private object VanillaModelLang {
     const val NOT_JSON_MODEL = ROOT + "error.not_json_model"
     const val EMPTY_BAKED_MODEL = ROOT + "error.empty_baked_model"
     const val MISSING_MODEL = ROOT + "error.missing_model"
+    const val PREVIEW_UNAVAILABLE = ROOT + "error.preview_unavailable"
     const val INVALID_ASSET_PATH = ROOT + "error.invalid_asset_path"
 }

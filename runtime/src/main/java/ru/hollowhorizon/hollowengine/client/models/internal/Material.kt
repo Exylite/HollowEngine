@@ -1,9 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.models.internal
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.HollowEngine.MODID
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.MaterialBindContext
@@ -22,9 +23,9 @@ import ru.hollowhorizon.hollowengine.common.utils.rl
 data class Material(
     var name: String = "",
     var color: Color = Color(1f, 1f, 1f, 1f),
-    var texture: ResourceLocation = MISSING_TEXTURE,
-    var normalTexture: ResourceLocation = MISSING_NORMAL,
-    var specularTexture: ResourceLocation = MISSING_SPECULAR,
+    var texture: Identifier = MISSING_TEXTURE,
+    var normalTexture: Identifier = MISSING_NORMAL,
+    var specularTexture: Identifier = MISSING_SPECULAR,
     var doubleSided: Boolean = false,
     var blend: Blend = Blend.OPAQUE,
     var emissive: Boolean = false,
@@ -60,7 +61,7 @@ data class Material(
 
     override fun clear(context: MaterialBindContext) = Unit
 
-    private fun bindExtraMap(shader: ShaderInstance, uniform: String, map: ResourceLocation) {
+    private fun bindExtraMap(shader: ShaderInstance, uniform: String, map: Identifier) {
         val location = GL33.glGetUniformLocation(shader.id, uniform)
         if (location == -1) return
 

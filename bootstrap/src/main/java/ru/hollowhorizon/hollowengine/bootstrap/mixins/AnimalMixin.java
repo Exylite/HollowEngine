@@ -46,7 +46,7 @@ public abstract class AnimalMixin extends net.minecraft.world.entity.AgeableMob 
 
         if (child != null) {
             child.setBaby(true);
-            child.moveTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
+            child.snapTo(this.getX(), this.getY(), this.getZ(), 0.0F, 0.0F);
             this.finalizeSpawnChildFromBreeding(level, mate, child);
             level.addFreshEntityWithPassengers(child);
             ci.cancel();

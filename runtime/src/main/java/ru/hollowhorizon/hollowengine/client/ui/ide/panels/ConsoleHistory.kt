@@ -24,12 +24,12 @@ internal interface ConsoleHistoryStore {
  */
 internal object VanillaCommandHistory : ConsoleHistoryStore {
     override val entries: List<String>
-        get() = Minecraft.getInstance().gui.chat.recentChat
+        get() = Minecraft.getInstance().gui.hud.chat.recentChat
             .filter { it.startsWith("/") }
             .map { it.removePrefix("/") }
 
     override fun add(entry: String) {
-        Minecraft.getInstance().gui.chat.addRecentChat("/" + entry.removePrefix("/"))
+        Minecraft.getInstance().gui.hud.chat.addRecentChat("/" + entry.removePrefix("/"))
     }
 }
 

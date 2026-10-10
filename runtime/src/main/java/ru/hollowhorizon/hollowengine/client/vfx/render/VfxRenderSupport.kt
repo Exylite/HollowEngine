@@ -1,15 +1,19 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.MeshData
-import com.mojang.blaze3d.vertex.VertexBuffer
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.depthInternalFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.MeshData
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexBuffer
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceProvider
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -62,7 +66,7 @@ internal object VfxMaterialStates {
     /** Binds what every shader of a surface may sample besides its texture: light and the scene. */
     fun bindCommonSamplers(shader: ShaderInstance, texture: Int) {
         shader.setSampler("Sampler0", texture)
-        shader.setSampler("Sampler2", HollowModelManager.lightTexture.id)
+        shader.setSampler("Sampler2", LegacyGl.lightmapTextureId())
         VfxSceneTextures.bind(shader)
     }
 
@@ -123,6 +127,10 @@ object VfxShaders {
     fun surface(location: String, surface: VfxSurface): ShaderInstance? =
         if (VfxGraphMaterials.isGraph(location)) VfxGraphMaterials.program(location, surface) else get(location, surface.format)
 
+    /** What a post effect naming [location] draws the frame with: a core shader, or a post effect graph. */
+    fun post(location: String): ShaderInstance? =
+        if (VfxGraphMaterials.isGraph(location)) VfxGraphMaterials.postProgram(location) else get(location, DefaultVertexFormat.POSITION_TEX)
+
     /** Resource packs changed: every shader is read again the next time it is drawn. */
     fun clear() {
         loaded.values.filterNotNull().forEach(ShaderInstance::close)
@@ -134,17 +142,17 @@ object VfxShaders {
     }
 
     private fun load(location: String, format: VertexFormat): ShaderInstance? {
-        val id = ResourceLocation.tryParse(location) ?: return null
+        val id = Identifier.tryParse(location) ?: return null
         val alias = "$ALIAS_FOLDER/${id.namespace}/${id.path}"
         val resources = Minecraft.getInstance().resourceManager
         val provider = ResourceProvider { wanted ->
             val path = wanted.path
             val prefix = "shaders/core/$ALIAS_FOLDER/"
-            if (wanted.namespace == ResourceLocation.DEFAULT_NAMESPACE && path.startsWith(prefix)) {
+            if (wanted.namespace == Identifier.DEFAULT_NAMESPACE && path.startsWith(prefix)) {
                 val rest = path.removePrefix(prefix)
                 val namespace = rest.substringBefore('/')
                 val file = "shaders/core/${rest.substringAfter('/')}"
-                resources.getResource(ResourceLocation.fromNamespaceAndPath(namespace, file))
+                resources.getResource(Identifier.fromNamespaceAndPath(namespace, file))
             } else {
                 resources.getResource(wanted)
             }
@@ -171,8 +179,9 @@ object VfxSceneTextures {
     fun capture(source: RenderTarget) {
         val width = source.width
         val height = source.height
-        val target = copy?.takeIf { it.width == width && it.height == height }
-            ?: TextureTarget(width, height, true, Minecraft.ON_OSX).also {
+        val depthFormat = source.depthInternalFormat()
+        val target = copy?.takeIf { it.width == width && it.height == height && it.depthFormat == depthFormat }
+            ?: TextureTarget(width, height, true, depthFormat = depthFormat).also {
                 copy?.destroyBuffers()
                 copy = it
             }
@@ -199,6 +208,15 @@ object VfxSceneTextures {
 }
 
 /**
+ * What the render system sets on every program, but with the matrices and the clock of this view
+ * rather than the ones it holds, which in the editor preview are the panel's and the paused world's.
+ */
+internal fun VfxView.setDefaultUniforms(shader: ShaderInstance, mode: VertexFormat.Mode) {
+    shader.setDefaultUniforms(mode, modelView, projection, Minecraft.getInstance().window)
+    shader.safeGetUniform("ShaderTime").set(time)
+}
+
+/**
  * Draws a finished buffer with [shader] and the matrices of [view], rather than whatever the render
  * system holds, which in the editor preview is the matrices of the panel.
  */
@@ -206,7 +224,7 @@ internal fun VfxView.drawImmediate(mesh: MeshData, shader: ShaderInstance, prepa
     val buffer = mesh.drawState().format().immediateDrawVertexBuffer
     buffer.bind()
     buffer.upload(mesh)
-    shader.setDefaultUniforms(mesh.drawState().mode(), modelView, projection, Minecraft.getInstance().window)
+    setDefaultUniforms(shader, mesh.drawState().mode())
     prepare(shader)
     shader.apply()
     buffer.draw()

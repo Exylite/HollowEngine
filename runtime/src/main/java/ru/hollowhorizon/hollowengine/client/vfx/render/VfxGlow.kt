@@ -1,12 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL33
@@ -177,7 +177,7 @@ object VfxGlow {
 
 /** A quad over the whole target, for the passes that work on a picture rather than on geometry. */
 internal object VfxScreenQuad {
-    private val SCREEN = VfxView(Matrix4f(), Matrix4f(), Vector3f(1f, 0f, 0f), Vector3f(0f, 1f, 0f), Vector3f())
+    private val SCREEN = VfxView(Matrix4f(), Matrix4f(), Vector3f(1f, 0f, 0f), Vector3f(0f, 1f, 0f), Vector3f(), 0f)
 
     fun draw(shader: ShaderInstance, prepare: (ShaderInstance) -> Unit) {
         val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX)

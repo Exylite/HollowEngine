@@ -3,11 +3,20 @@ package ru.hollowhorizon.hollowengine.client.shadergraph
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** What a graph shades, which decides its output node and what the engine hands it. */
+/** What a graph shades, which decides its output node and the engine [inputs] it can read. */
 @Serializable
-enum class ShaderTarget {
+enum class ShaderTarget(val inputs: Set<ShaderInput>) {
     /** The surface of a particle, a mesh or a ribbon of an effect. */
-    SURFACE,
+    SURFACE(ShaderInput.entries.toSet() - ShaderInput.NODE_POSITION - ShaderInput.SCREEN_PROJECTION),
+
+    POST(
+        setOf(
+            ShaderInput.UV, ShaderInput.TEXTURE_UV, ShaderInput.FRAME_UV, ShaderInput.SCREEN_UV, ShaderInput.TIME,
+            ShaderInput.POSITION, ShaderInput.VIEW_DIRECTION, ShaderInput.MAIN_TEXTURE, ShaderInput.SCENE_DEPTH,
+            ShaderInput.FRAGMENT_DEPTH, ShaderInput.SCENE_COLOR, ShaderInput.NODE_POSITION,
+            ShaderInput.SCREEN_PROJECTION,
+        )
+    ),
 }
 
 /**
@@ -41,9 +50,15 @@ data class ShaderGraphPreview(
     val mesh: ShaderPreviewMesh = ShaderPreviewMesh.SPHERE,
     val rotate: Boolean = true,
     val texture: String = DEFAULT_TEXTURE,
+    val scene: String = DEFAULT_SCENE,
+    val sceneDepth: String = DEFAULT_SCENE_DEPTH,
 ) {
     companion object {
         const val DEFAULT_TEXTURE = "hollowengine:textures/particle/circle.png"
+        const val DEFAULT_SCENE = "hollowengine:textures/gui/preview/sampler_preview.png"
+        const val DEFAULT_SCENE_DEPTH = "hollowengine:textures/gui/preview/depth_preview.png"
+
+        const val SCREEN_ASPECT = 0.8f
     }
 }
 
@@ -54,6 +69,18 @@ data class ShaderGraphLink(
     val output: String,
     val to: String,
     val input: String,
+)
+
+/**
+ * Nodes put together under a title, for the author to find their way to organize the graph.
+ */
+@Serializable
+data class ShaderGraphGroup(
+    val id: String,
+    val title: String = "",
+    val nodes: List<String> = emptyList(),
+    val collapsed: Boolean = false,
+    val color: String = "",
 )
 
 /**
@@ -81,8 +108,13 @@ data class ShaderGraph(
     val links: List<ShaderGraphLink> = emptyList(),
     val properties: List<ShaderGraphProperty> = emptyList(),
     val preview: ShaderGraphPreview = ShaderGraphPreview(),
+    val groups: List<ShaderGraphGroup> = emptyList(),
 ) {
     fun node(id: String): ShaderGraphNode? = nodes.firstOrNull { it.id == id }
+
+    fun group(id: String): ShaderGraphGroup? = groups.firstOrNull { it.id == id }
+
+    fun groupOf(node: String): ShaderGraphGroup? = groups.firstOrNull { node in it.nodes }
 
     fun linkInto(node: String, input: String): ShaderGraphLink? = links.lastOrNull { it.to == node && it.input == input }
 

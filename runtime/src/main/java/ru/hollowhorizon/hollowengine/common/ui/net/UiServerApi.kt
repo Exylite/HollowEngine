@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.ui.net
 
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import ru.hollowhorizon.hollowengine.common.ui.hud.ServerHudLayers
 
@@ -12,12 +12,12 @@ import ru.hollowhorizon.hollowengine.common.ui.hud.ServerHudLayers
  * ```kotlin
  * val session = player.openUi("mypack:quest_log") {
  *     put(Title, "The Missing Cargo")
- *     onEvent { payload -> if (payload.getString("action") == "accept") acceptQuest() }
+ *     onEvent { payload -> if (payload.getStringOr("action", "") == "accept") acceptQuest() }
  * }
  * ```
  */
 fun ServerPlayer.openUi(
-    screen: ResourceLocation,
+    screen: Identifier,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
 ): UiSession = UiSessionManager.open(this, screen, UiSurfaceKind.SCREEN, initialState, body)
@@ -26,11 +26,11 @@ fun ServerPlayer.openUi(
     screen: String,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
-): UiSession = openUi(ResourceLocation.parse(screen), initialState, body)
+): UiSession = openUi(Identifier.parse(screen), initialState, body)
 
 /** Shows a scripted HUD overlay for this player and returns the session that drives it. */
 fun ServerPlayer.showOverlay(
-    overlay: ResourceLocation,
+    overlay: Identifier,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
 ): UiSession = UiSessionManager.open(this, overlay, UiSurfaceKind.OVERLAY, initialState, body)
@@ -41,7 +41,7 @@ fun ServerPlayer.showOverlay(
  * next; the server side is identical to [openUi] either way.
  */
 fun ServerPlayer.openSurface(
-    surface: ResourceLocation,
+    surface: Identifier,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
 ): UiSession = UiSessionManager.open(this, surface, UiSurfaceKind.ADAPTIVE, initialState, body)
@@ -50,13 +50,13 @@ fun ServerPlayer.openSurface(
     surface: String,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
-): UiSession = openSurface(ResourceLocation.parse(surface), initialState, body)
+): UiSession = openSurface(Identifier.parse(surface), initialState, body)
 
 fun ServerPlayer.showOverlay(
     overlay: String,
     initialState: CompoundTag = CompoundTag(),
     body: UiSession.() -> Unit = {},
-): UiSession = showOverlay(ResourceLocation.parse(overlay), initialState, body)
+): UiSession = showOverlay(Identifier.parse(overlay), initialState, body)
 
 /** Closes every UI this player has open through the engine. */
 fun ServerPlayer.closeUi() = UiSessionManager.closeAll(this)
@@ -66,7 +66,7 @@ fun ServerPlayer.closeUi() = UiSessionManager.closeAll(this)
  * [ru.hollowhorizon.hollowengine.common.ui.hud.VanillaHudLayers], e.g.
  * `player.hideHudLayers(VanillaHudLayers.CROSSHAIR, VanillaHudLayers.HOTBAR)`.
  */
-fun ServerPlayer.hideHudLayers(vararg layers: ResourceLocation) {
+fun ServerPlayer.hideHudLayers(vararg layers: Identifier) {
     ServerHudLayers[uuid] = layers.toSet()
     SetHiddenHudLayersPacket(layers.toList()).send(this)
 }
@@ -78,7 +78,7 @@ fun ServerPlayer.showAllHudLayers() {
 }
 
 /** The layers currently hidden for this player, as the server believes them to be. */
-fun ServerPlayer.hiddenHudLayers(): Set<ResourceLocation> = ServerHudLayers[uuid]
+fun ServerPlayer.hiddenHudLayers(): Set<Identifier> = ServerHudLayers[uuid]
 
 /** Re-sends the player's hidden layers, e.g. after a respawn resets client state. */
 fun ServerPlayer.resendHiddenHudLayers() {

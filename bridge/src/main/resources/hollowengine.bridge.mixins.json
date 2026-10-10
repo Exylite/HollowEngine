@@ -2,12 +2,10 @@
   "required": true,
   "minVersion": "0.8",
   "package": "ru.hollowhorizon.hollowengine.bridge.mixins",
-  "refmap": "${refmap}",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "ArgumentTypeInfosMixin",
     "ListTagAccessor",
-    "RecipeManagerAccessor",
     "registry.HolderReferenceAccessor",
     "tags.TagEntryAccessor",
     "worldgen.ChunkGeneratorMixin",
@@ -15,9 +13,7 @@
     "worldgen.ChunkMapMixin"
   ],
   "client": [
-    "client.CameraInvoker",
-    "client.LevelRendererInvoker",
-    "client.ShaderInstanceAccessor"
+    "client.CameraInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

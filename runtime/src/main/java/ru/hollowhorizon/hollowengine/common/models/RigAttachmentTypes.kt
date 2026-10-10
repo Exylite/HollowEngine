@@ -4,9 +4,10 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.polymorphic
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionHandle
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionPoints
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderAttachmentSpec
 import ru.hollowhorizon.hollowengine.common.utils.nbt.TagModuleRevision
 import ru.hollowhorizon.hollowengine.common.utils.rl
 import ru.hollowhorizon.hollowengine.common.vfx.VfxBoneAttachmentSpec
@@ -21,8 +22,11 @@ class RigAttachmentType<S : RigAttachmentSpec>(
     val serializer: KSerializer<S>,
     val titleKey: String,
     val createDefault: ((id: String) -> S)? = null,
+    val allowedOnModel: Boolean = false,
+    val namedAcrossRig: Boolean = false,
+    val editorColor: Int? = null,
 ) {
-    val key: ResourceLocation = id.rl
+    val key: Identifier = id.rl
 }
 
 object RigAttachmentTypes {
@@ -38,6 +42,7 @@ object RigAttachmentTypes {
                 serializer = ItemSlotAttachmentSpec.serializer(),
                 titleKey = "hollowengine.gui.rig_editor.kind_item",
                 createDefault = { id -> ItemSlotAttachmentSpec(id = id) },
+                editorColor = 0xE8C547,
             )
         )
         register(
@@ -47,8 +52,24 @@ object RigAttachmentTypes {
                 serializer = VfxBoneAttachmentSpec.serializer(),
                 titleKey = "hollowengine.gui.rig_editor.kind_vfx",
                 createDefault = { id -> VfxBoneAttachmentSpec(id = id) },
+                editorColor = 0xFF8A3D,
+                allowedOnModel = true,
             )
         )
+        register(
+            RigAttachmentType(
+                id = "hollowengine:rig/model",
+                specClass = ModelAttachmentSpec::class,
+                serializer = ModelAttachmentSpec.serializer(),
+                titleKey = "hollowengine.gui.rig_editor.kind_model",
+                createDefault = { id -> ModelAttachmentSpec(id = id) },
+                editorColor = 0x6FBF8A,
+                allowedOnModel = true,
+            )
+        )
+        register(ColliderAttachmentSpec.TYPE)
+        register(IkTargetSpec.TYPE)
+        register(IkChainSpec.TYPE)
     }
 
     fun register(type: RigAttachmentType<*>): ExtensionHandle = point.register(type.key, type)

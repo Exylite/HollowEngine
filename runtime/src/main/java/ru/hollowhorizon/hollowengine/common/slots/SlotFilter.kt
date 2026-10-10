@@ -5,10 +5,10 @@ package ru.hollowhorizon.hollowengine.common.slots
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
+import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.Registries
 import net.minecraft.tags.TagKey
 import net.minecraft.world.entity.EquipmentSlot
-import net.minecraft.world.item.Equipable
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.common.npcs.items.ItemFilter
@@ -68,7 +68,7 @@ class SlotFilter internal constructor(
         SlotFilterKind.TAG -> stack.`is`(resolvedTag())
         // Reads only item data, so the client evaluates it exactly as the server does and an armor slot
         // never accepts something optimistically that the server is about to refuse.
-        SlotFilterKind.EQUIPMENT -> Equipable.get(stack)?.equipmentSlot?.getName() == equipment
+        SlotFilterKind.EQUIPMENT -> stack.get(DataComponents.EQUIPPABLE)?.slot()?.getName() == equipment
         SlotFilterKind.ANY_OF -> children.any { it.matches(stack) }
         SlotFilterKind.ALL_OF -> children.all { it.matches(stack) }
         SlotFilterKind.NOT -> children.none { it.matches(stack) }

@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.neoforge.internal;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -19,12 +19,12 @@ import java.util.function.Supplier;
 public class NeoForgeRegistryHolder<T> implements RegistryHolder<T> {
     private static final RegistryHelper registryHelper = BootstrapRuntimeManager.bridge().getRegistryHelper();
     private final IEventBus modBus;
-    private final ResourceLocation location;
+    private final Identifier location;
     private final AutoModelType autoModel;
     private final Class<T> target;
     private final DeferredHolder<T, T> result;
 
-    public NeoForgeRegistryHolder(IEventBus modBus, ResourceLocation location, Registry<T> registry, AutoModelType autoModel, Supplier<T> supplier, Class<T> target) {
+    public NeoForgeRegistryHolder(IEventBus modBus, Identifier location, Registry<T> registry, AutoModelType autoModel, Supplier<T> supplier, Class<T> target) {
         this.modBus = modBus;
         this.location = location;
         this.autoModel = autoModel;

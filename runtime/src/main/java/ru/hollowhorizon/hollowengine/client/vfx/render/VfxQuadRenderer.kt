@@ -1,10 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
-import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.utils.VboWrapper
@@ -61,7 +60,7 @@ object VfxQuadRenderer {
         val glowing = packer.batches.filter { it.glows }
         if (glowing.isEmpty()) return
         withInstanceState(upload = 0) {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
             glowing.forEach { batch ->
                 val shader = VfxMaterialStates.glowShader(batch.key.shader, engine, VfxSurface.PLANE)
                     ?: return@forEach
@@ -77,7 +76,7 @@ object VfxQuadRenderer {
     private fun draw(total: Int, view: VfxView) {
         val engine = ModShaders.VFX_PARTICLE ?: return
         withInstanceState(upload = total) {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
 
             packer.batches.forEach { batch ->
                 val shader = batch.key.shader?.let { VfxShaders.surface(it, VfxSurface.PLANE) } ?: engine
@@ -88,9 +87,7 @@ object VfxQuadRenderer {
 
     private fun drawBatch(shader: ShaderInstance, engine: ShaderInstance, batch: VfxQuadBatch, view: VfxView, glow: Boolean) {
         RenderSystem.setShader { shader }
-        shader.setDefaultUniforms(
-            VertexFormat.Mode.TRIANGLES, view.modelView, view.projection, Minecraft.getInstance().window
-        )
+        view.setDefaultUniforms(shader, VertexFormat.Mode.TRIANGLES)
         VfxMaterialStates.bindCommonSamplers(shader, VfxMaterialStates.texture(batch.key.texture))
         if (shader !== engine) batch.uniforms?.apply(shader)
         shader.safeGetUniform("GlowPass").set(if (glow) 1f else 0f)
@@ -107,7 +104,7 @@ object VfxQuadRenderer {
     /** Runs [body] with the quad buffers bound, after uploading [upload] instances when there are any. */
     private inline fun withInstanceState(upload: Int, body: () -> Unit) {
         val previousVao = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
-        val previousBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val previousBuffer = GL33.glGetInteger(GL33.GL_ARRAY_BUFFER_BINDING)
         val previousTexture = GL33.glGetInteger(GL33.GL_ACTIVE_TEXTURE)
 
         ensureBuffers()
@@ -119,7 +116,7 @@ object VfxQuadRenderer {
             GlStateManager._glUseProgram(0)
             RenderSystem.activeTexture(previousTexture)
             RenderSystem.glBindVertexArray(previousVao)
-            RenderSystem.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, previousBuffer)
+            RenderSystem.glBindBuffer(GL33.GL_ARRAY_BUFFER, previousBuffer)
         }
     }
 
@@ -127,7 +124,9 @@ object VfxQuadRenderer {
         RenderSystem.glBindVertexArray(vaoFor(shader))
         instanceBuffer?.bind()
         pointInstances(shader, batch.first.toLong() * STRIDE_BYTES)
-        GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+        VfxDebug.counted("quad") {
+            GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, 6, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+        }
     }
 
     private fun uploadInstances(total: Int) {
@@ -162,7 +161,7 @@ object VfxQuadRenderer {
             val indices = BufferUtils.createIntBuffer(6)
             indices.put(0).put(1).put(2).put(0).put(2).put(3)
             indices.flip()
-            uploadData(indices)
+            uploadData(indices, bindingTarget = GL33.GL_ARRAY_BUFFER)
         }
         instanceBuffer = VboWrapper.createArrayBuffer()
         instanceCapacity = 0

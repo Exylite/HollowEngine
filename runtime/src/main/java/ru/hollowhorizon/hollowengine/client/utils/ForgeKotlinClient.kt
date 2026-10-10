@@ -1,11 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.utils
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.renderer.texture.AbstractTexture
 import net.minecraft.core.RegistryAccess
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.ModelInstancingBackend
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.VanillaInstancingBackend
 import ru.hollowhorizon.hollowengine.common.utils.HollowJavaUtils
@@ -40,7 +41,7 @@ val clientRegistryAccess: RegistryAccess?
     get() = mc.connection?.registryAccess()
 
 
-fun ResourceLocation.exists(): Boolean {
+fun Identifier.exists(): Boolean {
     return try {
         mc.resourceManager.getResource(this).isPresent
     } catch (e: Exception) {
@@ -48,14 +49,14 @@ fun ResourceLocation.exists(): Boolean {
     }
 }
 
-val ResourceLocation.stream: InputStream
+val Identifier.stream: InputStream
     get() = HollowJavaUtils.getResource(this)
 
 fun Screen.open() {
     mc.setScreen(this)
 }
 
-fun ResourceLocation.toTexture(): AbstractTexture = mc.textureManager.getTexture(this)
+fun Identifier.toTexture(): AbstractTexture = mc.textureManager.getTexture(this)
 
 
 inline fun PoseStack.use(usable: PoseStack.() -> Unit) {

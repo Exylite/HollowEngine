@@ -12,10 +12,9 @@ val fabricRelocation = rootProject.property("fabricRelocation") as String
 
 val generatePayloadRemapTable = tasks.register<JavaExec>("generatePayloadRemapTable") {
     group = "build"
-    description = "Generates Fabric remap table for runtime payload and verifies it against remapJar."
+    description = "Generates Fabric remap table for runtime payload."
 
     val payloadJar = tasks.named<AbstractArchiveTask>("shadowJar").flatMap { it.archiveFile }
-    val referenceJar = tasks.named<AbstractArchiveTask>("remapJar").flatMap { it.archiveFile }
     val mainSources = sourceSets.named("main")
 
     mainClass.set("ru.hollowhorizon.hollowengine.runtime.remap.PayloadRemapTool")
@@ -23,7 +22,6 @@ val generatePayloadRemapTable = tasks.register<JavaExec>("generatePayloadRemapTa
     maxHeapSize = "4g"
 
     inputs.file(payloadJar).withPathSensitivity(PathSensitivity.NONE)
-    inputs.file(referenceJar).withPathSensitivity(PathSensitivity.NONE)
     inputs.file(payloadMappings).withPathSensitivity(PathSensitivity.NONE)
     inputs.property("relocation", fabricRelocation)
     outputs.file(remapTableFile)
@@ -38,7 +36,6 @@ val generatePayloadRemapTable = tasks.register<JavaExec>("generatePayloadRemapTa
             "--output", remapTableFile.get().asFile.absolutePath,
             "--work", remapWorkDirectory.get().asFile.resolve("work").absolutePath,
             "--relocate", fabricRelocation,
-            "--reference", referenceJar.get().asFile.absolutePath,
         )
     })
 }

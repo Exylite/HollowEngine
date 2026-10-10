@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.window
 import com.sun.jna.Platform
 import com.sun.jna.Pointer
 import net.minecraft.client.Minecraft

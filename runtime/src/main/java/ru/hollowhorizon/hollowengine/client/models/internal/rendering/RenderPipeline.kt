@@ -1,11 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.MultiBufferSource
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.drawWithShader
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
@@ -73,9 +75,9 @@ class ListRenderPipeline : RenderPipeline {
     fun renderVAO(context: RenderContext) {
         val activeTexture = GlStateManager._getActiveTexture()
 
-        //Получение текущих VAO и IBO
+        // Binding the saved VAO also restores its element buffer.
         val currentVAO = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
-        val currentElementArrayBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val currentArrayBuffer = GL33.glGetInteger(GL33.GL_ARRAY_BUFFER_BINDING)
 
         transformSkinning()
 
@@ -84,12 +86,10 @@ class ListRenderPipeline : RenderPipeline {
 
         RenderSystem.activeTexture(GL33.GL_TEXTURE2)
         val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
+        RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE1)
         val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-        RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-        Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+        RenderSystem.bindTexture(LegacyGl.overlayTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE0)
 
         val texture = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
@@ -110,7 +110,7 @@ class ListRenderPipeline : RenderPipeline {
         RenderSystem.activeTexture(activeTexture)
 
         RenderSystem.glBindVertexArray(currentVAO)
-        RenderSystem.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, currentElementArrayBuffer)
+        RenderSystem.glBindBuffer(GL33.GL_ARRAY_BUFFER, currentArrayBuffer)
 
         GlStateManager._glUseProgram(0)
     }
@@ -118,19 +118,17 @@ class ListRenderPipeline : RenderPipeline {
     fun renderInstanced(context: RenderContext) {
         val activeTexture = GlStateManager._getActiveTexture()
         val currentVAO = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
-        val currentElementArrayBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val currentArrayBuffer = GL33.glGetInteger(GL33.GL_ARRAY_BUFFER_BINDING)
 
         GL33.glVertexAttribI2i(3, context.overlay and FFFF, context.overlay shr 16 and FFFF)
         GL33.glVertexAttribI2i(4, context.light and FFFF, context.light shr 16 and FFFF)
 
         RenderSystem.activeTexture(GL33.GL_TEXTURE2)
         val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
+        RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE1)
         val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-        Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-        RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-        Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+        RenderSystem.bindTexture(LegacyGl.overlayTextureId())
         RenderSystem.activeTexture(GL33.GL_TEXTURE0)
 
         val texture = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
@@ -148,7 +146,7 @@ class ListRenderPipeline : RenderPipeline {
         RenderSystem.activeTexture(activeTexture)
 
         RenderSystem.glBindVertexArray(currentVAO)
-        RenderSystem.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, currentElementArrayBuffer)
+        RenderSystem.glBindBuffer(GL33.GL_ARRAY_BUFFER, currentArrayBuffer)
 
         GlStateManager._glUseProgram(0)
     }

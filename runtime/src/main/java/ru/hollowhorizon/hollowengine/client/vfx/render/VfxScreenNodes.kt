@@ -1,10 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.lwjgl.opengl.GL33
@@ -24,7 +24,12 @@ class VfxPostEffectNode(private val spec: VfxPostEffectSpec, private val node: V
 
     override fun collect(into: VfxDrawList, placement: Matrix4f) {
         if (!node.isActive || spec.shader.isBlank()) return
-        into.posts += VfxPostDraw(spec.shader, uniforms.evaluate(node.context))
+        val origin = node.frame.position
+        into.posts += VfxPostDraw(
+            shader = spec.shader,
+            uniforms = uniforms.evaluate(node.context),
+            position = placement.transformPosition(Vector3f(origin.x, origin.y, origin.z)),
+        )
     }
 }
 
@@ -91,10 +96,20 @@ class VfxCameraShake(private val spec: VfxCameraShakeSpec, private val node: Vfx
 object VfxSkyRenderer {
     fun render(skies: List<VfxSkyDraw>, view: VfxView) {
         if (skies.isEmpty()) return
-        val toView = Matrix4f(view.projection).mul(view.modelView).invert()
+        // the shader unprojects with -1..1 depth, which a reversed zero-to-one projection has to be turned into first
+        val projection = if (RenderSystem.reverseDepth) {
+            Matrix4f(view.projection).apply {
+                val reversed = Matrix4f(this)
+                m02(reversed.m03() - 2f * reversed.m02())
+                m12(reversed.m13() - 2f * reversed.m12())
+                m22(reversed.m23() - 2f * reversed.m22())
+                m32(reversed.m33() - 2f * reversed.m32())
+            }
+        } else view.projection
+        val toView = Matrix4f(projection).mul(view.modelView).invert()
 
         RenderSystem.enableDepthTest()
-        RenderSystem.depthFunc(GL33.GL_LEQUAL)
+        RenderSystem.depthFunc(RenderSystem.nearerDepthFunc)
         RenderSystem.depthMask(false)
         RenderSystem.enableBlend()
         RenderSystem.defaultBlendFunc()
@@ -103,10 +118,11 @@ object VfxSkyRenderer {
             skies.forEach { sky ->
                 val shader = VfxShaders.get(sky.shader, DefaultVertexFormat.POSITION) ?: return@forEach
                 val builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION)
-                builder.addVertex(-1f, -1f, 1f)
-                builder.addVertex(1f, -1f, 1f)
-                builder.addVertex(1f, 1f, 1f)
-                builder.addVertex(-1f, 1f, 1f)
+                val farZ = RenderSystem.farDepth
+                builder.addVertex(-1f, -1f, farZ)
+                builder.addVertex(1f, -1f, farZ)
+                builder.addVertex(1f, 1f, farZ)
+                builder.addVertex(-1f, 1f, farZ)
                 val mesh = builder.build() ?: return@forEach
 
                 val offset = Vector3f(sky.position).sub(view.eye)
@@ -126,11 +142,14 @@ object VfxSkyRenderer {
 }
 
 /**
- * Draws the full-screen passes of the frame, each over the result of the one before it.
+ * Draws the full-screen passes of the frame, each over the result of the one before it. [view] is the
+ * one the frame was drawn with, which a post effect graph needs to read positions back from the depth.
  */
 object VfxPostProcessor {
-    fun apply(posts: List<VfxPostDraw>, target: RenderTarget) {
+    fun apply(posts: List<VfxPostDraw>, target: RenderTarget, view: VfxView) {
         if (posts.isEmpty()) return
+        val toScreen = Matrix4f(view.projection).mul(view.modelView)
+        val toView = Matrix4f(toScreen).invert()
 
         RenderSystem.disableDepthTest()
         RenderSystem.depthMask(false)
@@ -138,12 +157,19 @@ object VfxPostProcessor {
         RenderSystem.disableCull()
         try {
             posts.forEach { post ->
-                val shader = VfxShaders.get(post.shader, DefaultVertexFormat.POSITION_TEX) ?: return@forEach
+                val shader = VfxShaders.post(post.shader) ?: return@forEach
                 VfxSceneTextures.capture(target)
 
                 VfxScreenQuad.draw(shader) { bound ->
                     VfxSceneTextures.bind(bound)
                     bound.safeGetUniform("ScreenSize").set(target.width.toFloat(), target.height.toFloat())
+                    bound.safeGetUniform("SceneProjMat").set(view.projection)
+                    bound.safeGetUniform("InvViewProjMat").set(toView)
+                    bound.safeGetUniform("ViewProjMat").set(toScreen)
+                    bound.safeGetUniform("ViewEye").set(view.eye.x, view.eye.y, view.eye.z)
+                    val offset = Vector3f(post.position).sub(view.eye)
+                    bound.safeGetUniform("NodeOffset").set(offset.x, offset.y, offset.z)
+                    bound.safeGetUniform("ShaderTime").set(view.time)
                     post.uniforms.apply(bound)
                 }
             }

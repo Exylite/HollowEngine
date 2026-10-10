@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.style
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.ui.HollowUiResourceAccess
 import ru.hollowhorizon.hollowengine.client.ui.StyleImportModifier
@@ -54,7 +54,7 @@ sealed interface UiStylesheetReference {
 }
 
 object MinecraftHssResourceLoader : HssResourceLoader {
-    private val locations = ConcurrentHashMap<String, ResourceLocation>()
+    private val locations = ConcurrentHashMap<String, Identifier>()
     private val stylesheets = ConcurrentHashMap<String, UiStylesheetReference.Resource>()
 
     /** What each stylesheet imported when it was last compiled, so editing an import reloads it too. */
@@ -83,8 +83,8 @@ object MinecraftHssResourceLoader : HssResourceLoader {
         return version
     }
 
-    private fun resourceLocation(location: String): ResourceLocation =
-        locations.computeIfAbsent(location, ResourceLocation::parse)
+    private fun resourceLocation(location: String): Identifier =
+        locations.computeIfAbsent(location, Identifier::parse)
 }
 
 fun UiNode.stylesheetRevision(): Long {

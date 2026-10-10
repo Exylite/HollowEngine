@@ -1,10 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexFormat
-import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import net.minecraft.util.Mth
 import org.joml.Matrix4f
 import org.joml.Quaternionf
@@ -193,9 +192,9 @@ object VfxMeshRenderer {
     private fun drawInstanced(order: List<Batch>, view: VfxView, glow: Boolean) {
         val engine = ModShaders.VFX_MESH ?: return
         val previousVao = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
-        val previousBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+        val previousBuffer = GL33.glGetInteger(GL33.GL_ARRAY_BUFFER_BINDING)
         try {
-            GL33.glDepthFunc(GL33.GL_LEQUAL)
+            GL33.glDepthFunc(RenderSystem.nearerDepthFunc)
             order.forEach { batch ->
                 val shader = if (glow) {
                     VfxMaterialStates.glowShader(batch.key.shader, engine, VfxSurface.MESH) ?: return@forEach
@@ -203,9 +202,7 @@ object VfxMeshRenderer {
                     batch.key.shader?.let { VfxShaders.surface(it, VfxSurface.MESH) } ?: engine
                 }
                 val mesh = gpuMesh(batch.primitive)
-                shader.setDefaultUniforms(
-                    VertexFormat.Mode.TRIANGLES, view.modelView, view.projection, Minecraft.getInstance().window
-                )
+                view.setDefaultUniforms(shader, VertexFormat.Mode.TRIANGLES)
                 VfxMaterialStates.bindCommonSamplers(shader, VfxMaterialStates.texture(batch.key.texture))
                 shader.safeGetUniform("Shaded").set(if (batch.shaded) 1f else 0f)
                 shader.safeGetUniform("BlendMode").set(VfxQuadPacker.blendMode(batch.draws.first().spec.material.blend))
@@ -219,14 +216,16 @@ object VfxMeshRenderer {
                 RenderSystem.glBindVertexArray(vaoFor(shader, batch.primitive, mesh))
                 instanceBuffer?.bind()
                 pointInstances(shader, batch.first.toLong() * STRIDE_BYTES)
-                GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, mesh.indexCount, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+                VfxDebug.counted("mesh") {
+                    GL33.glDrawElementsInstanced(GL33.GL_TRIANGLES, mesh.indexCount, GL33.GL_UNSIGNED_INT, 0L, batch.count)
+                }
                 shader.clear()
             }
         } finally {
             VfxMaterialStates.restore()
             GlStateManager._glUseProgram(0)
             RenderSystem.glBindVertexArray(previousVao)
-            RenderSystem.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, previousBuffer)
+            RenderSystem.glBindBuffer(GL33.GL_ARRAY_BUFFER, previousBuffer)
         }
     }
 
@@ -257,7 +256,7 @@ object VfxMeshRenderer {
         val indices = VboWrapper.createElementBuffer().apply {
             val data = BufferUtils.createIntBuffer(geometry.indices.size)
             data.put(geometry.indices).flip()
-            uploadData(data)
+            uploadData(data, bindingTarget = GL33.GL_ARRAY_BUFFER)
         }
         GpuMesh(vertices, indices, geometry.indices.size)
     }

@@ -4,7 +4,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.polymorphic
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import kotlin.reflect.KClass
@@ -14,7 +14,7 @@ import kotlin.reflect.KClass
  * straight back into it, and nothing of it is stored in the entity's [ru.hollowhorizon.hollowengine.common.attachments.api.ComponentStore] or saved to NBT.
  */
 class VirtualComponentDescriptor<T : Any>(
-    val id: ResourceLocation,
+    val id: Identifier,
     val type: KClass<T>,
     val serializer: KSerializer<T>,
     val supports: (Entity) -> Boolean,
@@ -31,7 +31,7 @@ class VirtualComponentDescriptor<T : Any>(
 }
 
 object VirtualComponentRegistry {
-    private val descriptors = LinkedHashMap<ResourceLocation, VirtualComponentDescriptor<*>>()
+    private val descriptors = LinkedHashMap<Identifier, VirtualComponentDescriptor<*>>()
 
     fun register(descriptor: VirtualComponentDescriptor<*>): VirtualComponentDescriptor<*> {
         descriptors[descriptor.id] = descriptor
@@ -39,7 +39,7 @@ object VirtualComponentRegistry {
     }
 
     fun <T : Any> register(
-        id: ResourceLocation,
+        id: Identifier,
         type: KClass<T>,
         serializer: KSerializer<T>,
         supports: (Entity) -> Boolean = { true },
@@ -53,11 +53,11 @@ object VirtualComponentRegistry {
 
     fun all(): List<VirtualComponentDescriptor<*>> = descriptors.values.toList()
 
-    fun descriptor(id: ResourceLocation): VirtualComponentDescriptor<*>? = descriptors[id]
+    fun descriptor(id: Identifier): VirtualComponentDescriptor<*>? = descriptors[id]
 
     fun descriptor(type: KClass<*>): VirtualComponentDescriptor<*>? = descriptors.values.firstOrNull { it.type == type }
 
-    fun isVirtual(id: ResourceLocation): Boolean = id in descriptors
+    fun isVirtual(id: Identifier): Boolean = id in descriptors
 
     fun isVirtual(component: Component): Boolean = descriptor(component::class) != null
 

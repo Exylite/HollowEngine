@@ -1,7 +1,8 @@
 package ru.hollowhorizon.hollowengine.common.attachments.sync
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
@@ -36,6 +37,13 @@ object EntityStateSync {
 
     private val dirty = Collections.synchronizedSet(LinkedHashSet<Entity>())
     private val deferred = LinkedHashMap<Int, DeferredBatches>()
+
+    private val receivedListeners = ArrayList<(Entity) -> Unit>()
+
+    /** Calls [listener] on the client with every entity a batch from the server was just applied to. */
+    fun onReceived(listener: (Entity) -> Unit) {
+        receivedListeners += listener
+    }
 
     /** Marks [entity]'s synced state as needing a batch. Called for every component and data write. */
     fun markDirty(entity: Entity) {
@@ -161,6 +169,7 @@ object EntityStateSync {
         }
 
         applyData(entity, packet)
+        receivedListeners.forEach { it(entity) }
     }
 
     /** Creates the client store only when there is actually something to put in it. */
@@ -229,7 +238,7 @@ object EntityStateSync {
         fun drain(): List<EntityStateSyncPacket> = packets.toList().also { packets.clear() }
     }
 
-    private fun syncableOf(entity: Entity): Map<ResourceLocation, Component> =
+    private fun syncableOf(entity: Entity): Map<Identifier, Component> =
         AttachmentRegistry.syncableComponents(entity)
 
     private fun storeOf(entity: Entity): NbtDataStore? = AttachmentRegistry.entityDataOrNull(entity)
@@ -244,8 +253,8 @@ object EntityStateSync {
 
     /** What a delta has to carry to turn [previous] into [current] on the client. */
     internal fun batchOf(
-        current: Map<ResourceLocation, Component>,
-        previous: Map<ResourceLocation, Component>,
+        current: Map<Identifier, Component>,
+        previous: Map<Identifier, Component>,
     ): ComponentBatch = ComponentBatch(
         changed = current.filter { (id, component) -> previous[id] != component },
         removed = previous.keys.filterNot { it in current },
@@ -271,8 +280,8 @@ object EntityStateSync {
         if (full) version >= applied else version > applied
 
     internal data class ComponentBatch(
-        val changed: Map<ResourceLocation, Component>,
-        val removed: List<ResourceLocation>,
+        val changed: Map<Identifier, Component>,
+        val removed: List<Identifier>,
     ) {
         val isEmpty: Boolean get() = changed.isEmpty() && removed.isEmpty()
     }
@@ -284,7 +293,7 @@ object EntityStateSync {
         val isEmpty: Boolean get() = changed.isEmpty && removed.isEmpty()
     }
 
-    private fun idOf(component: Component): ResourceLocation =
+    private fun idOf(component: Component): Identifier =
         ComponentDescriptorRegistry.idFor(component::class)
             ?: error("Component descriptor not found for ${component::class.qualifiedName}")
 

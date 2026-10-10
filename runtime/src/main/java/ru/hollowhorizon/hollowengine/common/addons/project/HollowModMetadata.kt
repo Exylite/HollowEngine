@@ -84,15 +84,20 @@ internal object HollowModMetadata {
 
     private fun pack(properties: ProjectProperties): String {
         val version = SharedConstants.getCurrentVersion()
-        val resources = version.getPackVersion(PackType.CLIENT_RESOURCES)
-        val data = version.getPackVersion(PackType.SERVER_DATA)
+        val resources = version.packVersion(PackType.CLIENT_RESOURCES)
+        val data = version.packVersion(PackType.SERVER_DATA)
+        val lowest = minOf(resources, data)
+        val highest = maxOf(resources, data)
         val json = JsonObject().apply {
             add("pack", JsonObject().apply {
                 addProperty("description", properties.displayName)
-                addProperty("pack_format", resources)
-                add("supported_formats", JsonArray().apply {
-                    add(minOf(resources, data))
-                    add(maxOf(resources, data))
+                add("min_format", JsonArray().apply {
+                    add(lowest.major())
+                    add(lowest.minor())
+                })
+                add("max_format", JsonArray().apply {
+                    add(highest.major())
+                    add(highest.minor())
                 })
             })
         }

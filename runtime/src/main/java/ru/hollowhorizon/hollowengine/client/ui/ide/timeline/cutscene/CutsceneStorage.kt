@@ -55,7 +55,7 @@ object CutsceneStorage {
             ?: error("Cutscene file is not a compound NBT tag: $readablePath")
         val payload = tag.get(DATA_KEY)
             ?: error("Cutscene file has no `$DATA_KEY` payload: $readablePath")
-        return CutsceneMigrations.read(payload, tag.getInt(VERSION_KEY))
+        return CutsceneMigrations.read(payload, tag.getIntOr(VERSION_KEY, 0))
     }
 
     fun listFiles(): List<String> {

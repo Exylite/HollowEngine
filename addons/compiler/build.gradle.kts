@@ -71,7 +71,8 @@ dependencies {
     api(project(path = runtimeProjectPath, configuration = "namedElements"))
     compileOnly("org.ow2.asm:asm-tree:9.7.1")
     testImplementation(project(":bridge")) { isTransitive = false }
-    testImplementation("org.ow2.asm:asm-tree:9.7.1")
+    // reads classes of the game and the JDK, which are Java 25 files now; 9.7 stops at Java 23
+    testImplementation("org.ow2.asm:asm-tree:9.10.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.4") { isTransitive = false }
 

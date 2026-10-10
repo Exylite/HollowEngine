@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.handlers
 
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.locale.Language
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
@@ -16,6 +17,6 @@ object HollowEventHandler {
 
         if (lang.has(desc)) event.toolTip.add(desc.mcTranslate)
 
-        if (Screen.hasShiftDown() && lang.has(shiftDesc)) event.toolTip.add(desc.mcTranslate)
+        if (Minecraft.getInstance().hasShiftDown() && lang.has(shiftDesc)) event.toolTip.add(desc.mcTranslate)
     }
 }

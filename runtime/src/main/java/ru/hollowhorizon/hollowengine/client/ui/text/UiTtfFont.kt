@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.utils.font.BakedGlyphCell
 import ru.hollowhorizon.hollowengine.client.utils.font.DynamicGlyphAtlas
@@ -220,7 +220,7 @@ object UiTtfFont {
 
 internal class UiTtfFontRequest(
     val source: String,
-    private val location: ResourceLocation?,
+    private val location: Identifier?,
     private val filePath: String?,
     private val pixelSize: Float,
     private val pixelRange: Float,
@@ -259,7 +259,7 @@ internal class UiTtfFontRequest(
                 .toMap()
 
             val isFile = source.startsWith(FilePrefix)
-            val location = if (isFile) null else ResourceLocation.tryParse(source) ?: return null
+            val location = if (isFile) null else Identifier.tryParse(source) ?: return null
             return UiTtfFontRequest(
                 source = source,
                 location = location,

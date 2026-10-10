@@ -5,7 +5,7 @@ package ru.hollowhorizon.hollowengine.common.attachments.sync
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.common.attachments.snapshot.EntitySnapshot
 import ru.hollowhorizon.hollowengine.common.network.HollowPacket
@@ -20,7 +20,7 @@ data class EntityStateSyncPacket(
     val version: Long,
     val full: Boolean = false,
     val changed: EntitySnapshot = EntitySnapshot(),
-    val removed: List<ResourceLocation> = emptyList(),
+    val removed: List<Identifier> = emptyList(),
     val dataChanged: CompoundTag = CompoundTag(),
     val dataRemoved: List<String> = emptyList(),
 ) : HollowPacket {

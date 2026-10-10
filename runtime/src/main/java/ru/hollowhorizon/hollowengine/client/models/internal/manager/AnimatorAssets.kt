@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.manager
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.models.Animator
@@ -12,13 +12,13 @@ import java.util.concurrent.ConcurrentHashMap
  * The animators models can wear, by id.
  */
 object AnimatorAssets {
-    private val assets = ConcurrentHashMap<ResourceLocation, Animator>()
+    private val assets = ConcurrentHashMap<Identifier, Animator>()
 
-    fun register(id: ResourceLocation, animator: Animator) {
+    fun register(id: Identifier, animator: Animator) {
         assets[id] = animator
     }
 
-    fun get(id: ResourceLocation?): Animator? = assets[id]
+    fun get(id: Identifier?): Animator? = assets[id]
 
     /**
      * Re-reads every `.animator` in the pack; code-registered animators are left alone.

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.binding
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity

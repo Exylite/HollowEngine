@@ -7,23 +7,20 @@ import net.minecraft.core.particles.ParticleType
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.stats.StatType
-import net.minecraft.util.valueproviders.FloatProviderType
-import net.minecraft.util.valueproviders.IntProviderType
 import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.ai.attributes.Attribute
 import net.minecraft.world.entity.ai.memory.MemoryModuleType
 import net.minecraft.world.entity.ai.sensing.SensorType
 import net.minecraft.world.entity.ai.village.poi.PoiType
-import net.minecraft.world.entity.animal.CatVariant
-import net.minecraft.world.entity.animal.FrogVariant
-import net.minecraft.world.entity.npc.VillagerProfession
-import net.minecraft.world.entity.npc.VillagerType
+import net.minecraft.world.entity.animal.feline.CatVariant
+import net.minecraft.world.entity.animal.frog.FrogVariant
+import net.minecraft.world.entity.npc.villager.VillagerProfession
+import net.minecraft.world.entity.npc.villager.VillagerType
 import net.minecraft.world.entity.schedule.Activity
-import net.minecraft.world.entity.schedule.Schedule
 import net.minecraft.world.inventory.MenuType
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Instrument
@@ -55,12 +52,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.RuleTestType
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType
 import net.minecraft.world.level.levelgen.structure.templatesystem.rule.blockentity.RuleBlockEntityModifierType
 import net.minecraft.world.level.material.Fluid
-import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType
-import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType
-import net.minecraft.world.level.storage.loot.providers.nbt.LootNbtProviderType
-import net.minecraft.world.level.storage.loot.providers.number.LootNumberProviderType
-import net.minecraft.world.level.storage.loot.providers.score.LootScoreProviderType
 import ru.hollowhorizon.hollowengine.api.AutoModelType
 import ru.hollowhorizon.hollowengine.api.RegistryHelper
 import ru.hollowhorizon.hollowengine.client.utils.HollowPack
@@ -95,16 +86,7 @@ object CommonRegistryHelper : RegistryHelper {
         register(PoiType::class.java, BuiltInRegistries.POINT_OF_INTEREST_TYPE.key())
         register(MemoryModuleType::class.java, BuiltInRegistries.MEMORY_MODULE_TYPE.key())
         register(SensorType::class.java, BuiltInRegistries.SENSOR_TYPE.key())
-        register(Schedule::class.java, BuiltInRegistries.SCHEDULE.key())
         register(Activity::class.java, BuiltInRegistries.ACTIVITY.key())
-        register(LootPoolEntryType::class.java, Registries.LOOT_POOL_ENTRY_TYPE)
-        register(LootItemFunctionType::class.java, Registries.LOOT_FUNCTION_TYPE)
-        register(LootItemConditionType::class.java, Registries.LOOT_CONDITION_TYPE)
-        register(LootNumberProviderType::class.java, Registries.LOOT_NUMBER_PROVIDER_TYPE)
-        register(LootNbtProviderType::class.java, Registries.LOOT_NBT_PROVIDER_TYPE)
-        register(LootScoreProviderType::class.java, Registries.LOOT_SCORE_PROVIDER_TYPE)
-        register(FloatProviderType::class.java, Registries.FLOAT_PROVIDER_TYPE)
-        register(IntProviderType::class.java, Registries.INT_PROVIDER_TYPE)
         register(HeightProviderType::class.java, Registries.HEIGHT_PROVIDER_TYPE)
         register(BlockPredicateType::class.java, Registries.BLOCK_PREDICATE_TYPE)
         register(WorldCarver::class.java, BuiltInRegistries.CARVER.key())
@@ -136,7 +118,7 @@ object CommonRegistryHelper : RegistryHelper {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> registry(type: Class<T>): ResourceKey<out Registry<T>> {
+    override fun <T : Any> registry(type: Class<T>): ResourceKey<out Registry<T>> {
         var type: Class<*>? = type
         do {
             REGISTRY_MAP[type!!]?.let { return it as ResourceKey<out Registry<T>> }
@@ -146,14 +128,14 @@ object CommonRegistryHelper : RegistryHelper {
     }
 
     override fun addBlockModel(
-        location: ResourceLocation,
+        location: Identifier,
         model: AutoModelType,
     ) {
         HollowPack.addBlockModel(location, model)
     }
 
     override fun addItemModel(
-        location: ResourceLocation,
+        location: Identifier,
         model: AutoModelType,
     ) {
         HollowPack.addItemModel(location, model)

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.ui
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import androidx.compose.runtime.mutableStateMapOf
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.Tag

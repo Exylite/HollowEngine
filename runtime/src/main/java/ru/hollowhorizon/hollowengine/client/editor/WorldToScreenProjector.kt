@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import net.minecraft.client.Minecraft
 import net.minecraft.world.phys.Vec3
 import org.joml.Matrix4f
@@ -110,7 +111,7 @@ open class GizmoProjector {
         )
     }
 
-    fun worldPerPixel(world: Vec3): Float {
+    open fun worldPerPixel(world: Vec3): Float {
         if (logicalHeight <= 0f) return 0.05f
         val distance = world.distanceTo(cameraPosition).toFloat()
         val worldHeightAtDepth = 2f * tan(fovYRadians * 0.5f) * distance

@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.addons.mcp.tools
 
+import net.minecraft.server.players.NameAndId
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
 import ru.hollowhorizon.hollowengine.common.utils.currentServerOrNull
@@ -19,7 +21,7 @@ internal object ServerAccess {
 
     /** The player hosting a singleplayer or LAN world. Call on the server thread. */
     fun host(server: MinecraftServer): ServerPlayer? =
-        server.playerList.players.firstOrNull { server.isSingleplayerOwner(it.gameProfile) }
+        server.playerList.players.firstOrNull { server.isSingleplayerOwner(NameAndId(it.gameProfile)) }
 
     /** Whether server snippets may run on [server]. Call on the server thread. */
     fun mayRunCode(server: MinecraftServer): Boolean =

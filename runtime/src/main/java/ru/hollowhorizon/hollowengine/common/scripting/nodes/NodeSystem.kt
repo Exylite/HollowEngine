@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.nodes
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import kotlinx.coroutines.*
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.MinecraftServer
@@ -38,13 +39,13 @@ class NodeManager(val server: MinecraftServer) {
     fun deserialize(tag: CompoundTag) {
         tag.allKeys.forEach { key ->
             runCatching {
-                val nodeTag = tag.getCompound(key)
+                val nodeTag = tag.getCompoundOrEmpty(key)
                 if (!isAvailable(key)) {
                     dormant[key] = nodeTag
                     HollowEngine.LOGGER.info("Node '{}' is kept dormant: its namespace is not installed", key)
                     return@runCatching
                 }
-                val extras = nodeTag.getCompound("extras")
+                val extras = nodeTag.getCompoundOrEmpty("extras")
                 val context = (nodeTag.get("states") as? CompoundTag)
                     ?.let { StateContext.deserialize(it) }
                 server.addNode(key, extras, context)
@@ -92,7 +93,7 @@ class NodeManager(val server: MinecraftServer) {
                 dormant.remove(path)
                 runCatching {
                     val context = (nodeTag.get("states") as? CompoundTag)?.let { StateContext.deserialize(it) }
-                    server.addNode(path, nodeTag.getCompound("extras"), context)
+                    server.addNode(path, nodeTag.getCompoundOrEmpty("extras"), context)
                 }.onFailure { HollowEngine.LOGGER.error("Error while resuming node '$path'", it) }
             }
     }

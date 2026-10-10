@@ -1,8 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.platform.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL11
 import ru.hollowhorizon.hollowengine.client.ui.style.UiImageFit
 import ru.hollowhorizon.hollowengine.client.ui.style.UiImageUv
@@ -37,7 +38,7 @@ internal fun imagePlacement(
     width: Float,
     height: Float,
     fit: UiImageFit,
-    texture: ResourceLocation?,
+    texture: Identifier?,
     uv: UiImageUv = UiImageUv.Full,
 ): ImagePlacement {
     return imagePlacement(width, height, fit, texture?.let(::textureSize), uv)
@@ -104,7 +105,7 @@ private fun coverPlacement(width: Float, height: Float, sourceAspect: Float, tar
     return ImagePlacement(0f, 0f, width, height, cropX, cropY, 1f - cropX, 1f - cropY)
 }
 
-internal fun textureSize(location: ResourceLocation): Pair<Float, Float>? {
+internal fun textureSize(location: Identifier): Pair<Float, Float>? {
     val texture = Minecraft.getInstance().textureManager.getTexture(location)
     val id = texture.id
     GlStateManager._bindTexture(id)

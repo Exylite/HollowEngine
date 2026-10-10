@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.story.functions.npcs
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec2
 import net.minecraft.world.phys.Vec3
@@ -7,7 +8,6 @@ import ru.hollowhorizon.hollowengine.common.attachments.api.set
 import ru.hollowhorizon.hollowengine.common.attachments.components.*
 import ru.hollowhorizon.hollowengine.common.entities.NpcEntity
 import ru.hollowhorizon.hollowengine.common.entities.setNameplate
-import ru.hollowhorizon.hollowengine.common.npcs.HitboxMode
 import ru.hollowhorizon.hollowengine.common.npcs.inventory.NpcInventory
 import ru.hollowhorizon.hollowengine.common.utils.currentServer
 import ru.hollowhorizon.hollowengine.common.utils.isValidRL
@@ -65,10 +65,9 @@ fun npc(
     return NpcEntity(level).apply {
         inventory.resize(inventorySize)
         setPos(pos.x, pos.y, pos.z)
-        moveTo(pos.x, pos.y, pos.z, rotation.x, rotation.y)
+        snapTo(pos.x, pos.y, pos.z, rotation.x, rotation.y)
 
         set(Model(model))
-        set(HitboxComponent(HitboxMode.PULLING))
         set(TransformComponent(transform))
 
         if (attributes.isNotEmpty()) {

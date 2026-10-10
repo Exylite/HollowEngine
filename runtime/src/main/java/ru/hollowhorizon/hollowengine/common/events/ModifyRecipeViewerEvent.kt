@@ -7,7 +7,9 @@ import mezz.jei.api.registration.*
 import mezz.jei.api.runtime.IJeiRuntime
 import mezz.jei.api.runtime.config.IJeiConfigManager
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceKey
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.LOGGER
 import ru.hollowhorizon.hollowengine.common.compat.util.hide
@@ -94,7 +96,7 @@ open class ModifyRecipeViewerEvent : ClientEvent {
     }
 
     class RegisterOnRuntimeAvailable(val jeiRuntime: IJeiRuntime) : ModifyRecipeViewerEvent() {
-        fun hideRecipe(categoryId: ResourceLocation, recipeId: ResourceLocation) {
+        fun hideRecipe(categoryId: Identifier, recipeId: Identifier) {
             val manager = jeiRuntime.recipeManager
             manager.createRecipeCategoryLookup()
                 .includeHidden()
@@ -104,7 +106,7 @@ open class ModifyRecipeViewerEvent : ClientEvent {
                 .ifPresent { this.hide(recipeId, categoryId, manager, it) }
         }
 
-        fun hideCategory(categoryId: ResourceLocation) {
+        fun hideCategory(categoryId: Identifier) {
             val manager = jeiRuntime.recipeManager
             manager.createRecipeCategoryLookup()
                 .includeHidden()
@@ -114,18 +116,18 @@ open class ModifyRecipeViewerEvent : ClientEvent {
                 .ifPresent { it.hide(manager) }
         }
 
-        private fun <T> hide(
-            recipeId: ResourceLocation,
-            categoryId: ResourceLocation,
+        private fun <T : Any> hide(
+            recipeId: Identifier,
+            categoryId: Identifier,
             manager: IRecipeManager,
             category: IRecipeCategory<T>,
         ) {
-            recipeManager.byKey(recipeId).ifPresent { this.hide(recipeId, categoryId, manager, category, it) }
+            recipeManager.byKey(ResourceKey.create(Registries.RECIPE, recipeId)).ifPresent { this.hide(recipeId, categoryId, manager, category, it) }
         }
 
-        private fun <T, U> hide(
-            recipeId: ResourceLocation,
-            categoryId: ResourceLocation,
+        private fun <T : Any, U> hide(
+            recipeId: Identifier,
+            categoryId: Identifier,
             manager: IRecipeManager,
             category: IRecipeCategory<T>,
             recipe: U,

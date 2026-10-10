@@ -1,6 +1,9 @@
 package ru.hollowhorizon.hollowengine.common.network
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
+import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.client.utils.lang
 import ru.hollowhorizon.hollowengine.common.utils.literal
@@ -14,6 +17,6 @@ class ReloadServerResourcesPacket : HollowPacket {
             return
         }
         val server = player.server ?: return
-        server.commands.performPrefixedCommand(player.createCommandSourceStack(), "reload")
+        server.commands.performPrefixedCommand((player as? ServerPlayer ?: return).createCommandSourceStack(), "reload")
     }
 }

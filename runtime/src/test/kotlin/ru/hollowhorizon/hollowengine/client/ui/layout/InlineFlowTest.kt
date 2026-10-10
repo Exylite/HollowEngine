@@ -94,7 +94,7 @@ class InlineFlowTest {
     @Test
     fun `a max constrained fit flow hugs wrapped lines and measures their full height`() {
         val signature = span(
-            "(screen: ResourceLocation, kind: UiSurfaceKind, charDelay: Int, choiceRevealDelay: Long)",
+            "(screen: Identifier, kind: UiSurfaceKind, charDelay: Int, choiceRevealDelay: Long)",
         )
         val container = BoxNode(
             id = "signature",

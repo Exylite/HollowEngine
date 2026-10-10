@@ -1,7 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.slots.ClientSlots
 import ru.hollowhorizon.hollowengine.client.utils.mc
@@ -23,7 +25,7 @@ object UiScriptClient {
     private var screenSessionId: Int? = null
     private var wasInLevel = false
 
-    fun openScreen(sessionId: Int, screen: ResourceLocation, state: CompoundTag) {
+    fun openScreen(sessionId: Int, screen: Identifier, state: CompoundTag) {
         val definition = UiDefinitionRegistry.screen(screen) ?: run {
             HollowEngine.LOGGER.warn("Server opened unknown UI screen {}", screen)
             return
@@ -32,12 +34,12 @@ object UiScriptClient {
         mc.setScreen(UiScriptScreen(definition, UiData(state), sessionId))
     }
 
-    fun showOverlay(sessionId: Int, overlay: ResourceLocation, state: CompoundTag) {
+    fun showOverlay(sessionId: Int, overlay: Identifier, state: CompoundTag) {
         UiScriptHudHost.show(overlay, sessionId, state)
     }
 
     /** Opens a surface that picks its own host; see [UiAdaptiveSurfaces]. */
-    fun openSurface(sessionId: Int, surface: ResourceLocation, state: CompoundTag) {
+    fun openSurface(sessionId: Int, surface: Identifier, state: CompoundTag) {
         UiAdaptiveSurfaces.open(sessionId, surface, state)
     }
 
@@ -61,7 +63,7 @@ object UiScriptClient {
         ClientSlots.close(sessionId)
     }
 
-    fun setHiddenLayers(layers: List<ResourceLocation>) {
+    fun setHiddenLayers(layers: List<Identifier>) {
         HudLayerRegistry.setHidden(layers, HudLayerRegistry.ServerOwner)
     }
 

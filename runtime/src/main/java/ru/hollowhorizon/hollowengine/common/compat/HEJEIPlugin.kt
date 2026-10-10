@@ -6,7 +6,7 @@ import mezz.jei.api.helpers.IPlatformFluidHelper
 import mezz.jei.api.registration.*
 import mezz.jei.api.runtime.IJeiRuntime
 import mezz.jei.api.runtime.config.IJeiConfigManager
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.events.ModifyRecipeViewerEvent
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -17,7 +17,7 @@ class HEJEIPlugin : IModPlugin {
         ModifyRecipeViewerEvent.RegisterItemSubtypes.post(ModifyRecipeViewerEvent.RegisterItemSubtypes(registration))
     }
 
-    override fun <T : Any?> registerFluidSubtypes(
+    override fun <T : Any> registerFluidSubtypes(
         registration: ISubtypeRegistration,
         platformFluidHelper: IPlatformFluidHelper<T>,
     ) {
@@ -107,5 +107,5 @@ class HEJEIPlugin : IModPlugin {
         )
     }
 
-    override fun getPluginUid(): ResourceLocation = "${HollowEngine.MODID}:he_plugin".rl
+    override fun getPluginUid(): Identifier = "${HollowEngine.MODID}:he_plugin".rl
 }

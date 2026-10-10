@@ -14,18 +14,23 @@ object NeoForgeEnvironmentSetup : EnvironmentSetup {
     override fun setup(mappings: Mappings, outputDir: File): List<File> {
         val classpath = runtimeClasspath()
 
-        return if (RuntimeFlags.production && !HollowEngineBuild.MINECRAFT_VERSION.startsWith("1.21")) {
-            val remapped = remapJars(
+        val minecraft = if (RuntimeFlags.production && !HollowEngineBuild.MINECRAFT_VERSION.startsWith("1.21")) {
+            remapJars(
                 mappings = mappings,
                 inputs = listOf(ModList.getFile("minecraft")),
                 outputDir = outputDir,
                 from = "official",
                 to = "named",
             )
-            classpath + remapped
         } else {
-            classpath + ModList.getFile("minecraft")
-        }.distinctBy { it.absoluteFile.normalize() }
+            listOf(ModList.getFile("minecraft"))
+        }
+
+        // the extension interfaces NeoForge adds to game classes live in its own jar, which the game layer holds
+        // and the class path does not
+        val neoForge = runCatching { ModList.getFile("neoforge") }.getOrNull()
+
+        return (classpath + minecraft + listOfNotNull(neoForge)).distinctBy { it.absoluteFile.normalize() }
     }
 
     private fun runtimeClasspath(): List<File> {

@@ -1,6 +1,5 @@
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import net.fabricmc.loom.task.RemapJarTask
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.jar.JarFile
@@ -10,7 +9,7 @@ plugins {
     java
     `maven-publish`
     id("architectury-plugin")
-    id("dev.architectury.loom")
+    id("dev.architectury.loom-no-remap")
     id("com.gradleup.shadow")
     kotlin("jvm")
     kotlin("plugin.serialization")
@@ -25,7 +24,6 @@ val minecraftVersion: String by rootProject.properties
 val enabledPlatforms = (rootProject.property("enabledPlatforms") as String).split(',').map(String::trim).toTypedArray()
 val fabricLoaderVersion: String by rootProject.properties
 val architecturyApiVersion: String by rootProject.properties
-val parchmentVersion: String by rootProject.properties
 val kotlinVersion: String by rootProject.properties
 val composeRuntimeVersion: String by rootProject.properties
 val serializationVersion: String by rootProject.properties
@@ -83,11 +81,13 @@ repositories {
     mavenCentral()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.architectury.dev/")
-    maven("https://maven.parchmentmc.org")
     maven("https://maven.blamejared.com/")
     maven("https://jitpack.io")
     maven("https://maven.google.com/")
     flatDir { dirs(rootProject.file("libs")) }
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
 
 }
 
@@ -106,14 +106,10 @@ loom {
 
 dependencies {
     "minecraft"("com.mojang:minecraft:$minecraftVersion")
-    "mappings"(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentVersion")
-    })
 
-    modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
-    modImplementation("lib:iris-fabric:1.8.14-beta.1+mc1.21.1-devpatch")
-    modImplementation("lib:sodium-fabric:0.8.13+mc1.21.1")
+    implementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+    implementation("maven.modrinth:iris:1.11.4+26.2-fabric")
+    implementation("maven.modrinth:sodium:mc26.2-0.9.2-fabric")
 
     implementation(project(":bridge"))
 
@@ -142,8 +138,8 @@ dependencies {
     addShadow("org.jetbrains.kotlinx:kotlinx-io-core:0.9.0")
     addShadow("org.jetbrains.kotlinx:kotlinx-io-bytestring:0.9.0")
 
-    val jeiVersion = "19.25.1.332"
-    add("modCompileOnly", "mezz.jei:jei-$minecraftVersion-fabric-api:$jeiVersion")
+    val jeiVersion = "30.39.0.232"
+    add("compileOnly", "mezz.jei:jei-$minecraftVersion-fabric-api:$jeiVersion")
 
     compileOnly("org.jetbrains:annotations:26.1.0")
 
@@ -292,11 +288,6 @@ tasks.named("build") {
     dependsOn(verifySerializationRuntimePackaging)
 }
 
-tasks.named<RemapJarTask>("remapJar") {
-    inputFile.set(tasks.named<ShadowJar>("shadowJar").flatMap { it.archiveFile })
-    archiveClassifier.set("fabric")
-}
-
 tasks.matching { it.name == "transformProductionFabric" || it.name == "transformProductionNeoForge" }.configureEach {
     enabled = false
 }
@@ -330,7 +321,8 @@ val embeddedFabricRuntimeElements = configurations.create("embeddedFabricRuntime
         attribute(runtimeMappingAttribute, "fabric")
     }
 
-    outgoing.artifact(tasks.named<RemapJarTask>("remapJar"))
+    // Fabric runs on Mojang names since 26.1, so it gets the same payload.
+    outgoing.artifact(tasks.named<ShadowJar>("shadowJar"))
 }
 
 tasks.withType<Test>().configureEach {
@@ -349,3 +341,17 @@ kotlin {
 }
 
 apply(from = rootProject.file("gradle/payload-remap.gradle.kts"))
+
+// Without remapping Loom has no named jar of its own, but dependents still ask for the Mojang-named
+// classes by this configuration. It is offered as a runtime variant, which compile classpaths accept too.
+configurations.create("namedElements") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    configurations.findByName("api")?.let { extendsFrom(it) }
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+    }
+    outgoing.artifact(tasks.named<Jar>("jar"))
+}

@@ -139,8 +139,8 @@ public final class SingleSurfaceStructurePlacement extends StructurePlacement im
         Optional<ChunkPos> position = ((StructurePlacementStateExtension) state)
                 .hollowengine$getSurfacePosition(this);
         return position.isPresent()
-                && position.get().x == chunkX
-                && position.get().z == chunkZ;
+                && position.get().x() == chunkX
+                && position.get().z() == chunkZ;
     }
 
     @Override

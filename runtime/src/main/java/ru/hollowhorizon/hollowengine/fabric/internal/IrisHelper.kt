@@ -1,82 +1,40 @@
 package ru.hollowhorizon.hollowengine.fabric.internal
 
-import com.mojang.blaze3d.systems.RenderSystem
-import net.irisshaders.iris.Iris
-import net.irisshaders.iris.api.v0.IrisApi
-import net.irisshaders.iris.pipeline.IrisRenderingPipeline
-import net.irisshaders.iris.pipeline.ShaderRenderingPipeline
-import net.irisshaders.iris.pipeline.WorldRenderingPipeline
-import net.irisshaders.iris.shaderpack.loading.ProgramId
-import net.irisshaders.iris.shaderpack.properties.ShaderProperties
-import net.irisshaders.iris.uniforms.CapturedRenderingState
 import org.joml.Matrix4f
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.ModelInstancingBackend
 import ru.hollowhorizon.hollowengine.client.models.internal.rendering.PipelineRenderer
+import ru.hollowhorizon.hollowengine.client.models.internal.rendering.VanillaInstancingBackend
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.client.utils.InstancingEntityInfo
-import ru.hollowhorizon.hollowengine.common.utils.ModList
-import ru.hollowhorizon.hollowengine.fabric.internal.accessors.IrisRenderingPipelineAccessor
-import ru.hollowhorizon.hollowengine.fabric.internal.accessors.ProgramSourceAccessor
-import ru.hollowhorizon.hollowengine.fabric.internal.rendering.IrisInstancingBackend
-import ru.hollowhorizon.hollowengine.fabric.internal.rendering.IrisInstancingPrograms
 
+/**
+ * The seam to Iris. There is no Iris for 26.2 that the engine can compile against and run beside
+ * its own GL drawing yet, so the shader pack is never in charge: the engine draws with its own
+ * programs and the vanilla instancing backend. Everything that used to ask Iris asks here instead,
+ * so the integration can come back in one place.
+ */
 object IrisHelper {
+    val hasIris = false
+
     @JvmStatic
-    fun shouldOverrideShaders() =
-        hasIris && (Iris.getPipelineManager().pipelineNullable as? ShaderRenderingPipeline)?.shouldOverrideShaders() == true
+    fun shouldOverrideShaders() = false
 
-    val hasIris = ModList.isLoaded("iris") || ModList.isLoaded("oculus")
+    fun areShadersEnabled() = false
 
-    fun areShadersEnabled() = hasIris && IrisApi.getInstance().config.areShadersEnabled()
+    fun isShadowRendering() = false
 
-    fun isShadowRendering() = hasIris && IrisApi.getInstance().isRenderingShadowPass
+    fun isShaderPackInUse() = false
 
-    fun isShaderPackInUse() = hasIris && IrisApi.getInstance().isShaderPackInUse
+    fun currentGbufferModelViewMatrix(): Matrix4f = Matrix4f(RenderSystem.getModelViewMatrix())
 
-    fun currentPipeline(): WorldRenderingPipeline? = if (hasIris) Iris.getPipelineManager().pipelineNullable else null
+    fun currentGbufferProjectionMatrix(fallback: Matrix4f): Matrix4f = Matrix4f(fallback)
 
-    fun currentShaderProperties(): ShaderProperties? {
-        val pipeline = currentPipeline() as? IrisRenderingPipeline ?: return null
-        val accessor = pipeline as? IrisRenderingPipelineAccessor ?: return null
-        val programSet = accessor.programSet
-        val candidatePrograms = arrayOf(
-            ProgramId.Entities,
-            ProgramId.Terrain,
-            ProgramId.Textured,
-            ProgramId.Basic,
-        )
+    fun instancingBackend(): ModelInstancingBackend = VanillaInstancingBackend
 
-        for (programId in candidatePrograms) {
-            val source = programSet.get(programId).orElse(null) ?: continue
-            val properties = (source as? ProgramSourceAccessor)?.shaderPropertiesValue ?: continue
-            return properties
-        }
-
-        return null
-    }
-
-    fun currentGbufferModelViewMatrix(): Matrix4f = if (isShaderPackInUse()) {
-        Matrix4f(CapturedRenderingState.INSTANCE.gbufferModelView)
-    } else {
-        Matrix4f(RenderSystem.getModelViewMatrix())
-    }
-
-    fun currentGbufferProjectionMatrix(fallback: Matrix4f): Matrix4f = if (isShaderPackInUse()) {
-        Matrix4f(CapturedRenderingState.INSTANCE.gbufferProjection)
-    } else {
-        Matrix4f(fallback)
-    }
-
-    fun instancingBackend(): ModelInstancingBackend = IrisInstancingBackend
-
-    fun capturedEntityInfo(): InstancingEntityInfo = InstancingEntityInfo(
-        entity = CapturedRenderingState.INSTANCE.currentRenderedEntity,
-        blockEntity = CapturedRenderingState.INSTANCE.currentRenderedBlockEntity,
-        item = CapturedRenderingState.INSTANCE.currentRenderedItem
-    )
+    fun capturedEntityInfo(): InstancingEntityInfo = InstancingEntityInfo()
 
     @JvmStatic
     fun invalidateInstancingPrograms() {
-        IrisInstancingPrograms.invalidate()
         PipelineRenderer.invalidateRuntimeInstancedBindings()
     }
 }

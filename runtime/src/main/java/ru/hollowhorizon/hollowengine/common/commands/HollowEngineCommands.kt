@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.commands
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermission
 import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.FloatArgumentType
 import com.mojang.brigadier.arguments.IntegerArgumentType

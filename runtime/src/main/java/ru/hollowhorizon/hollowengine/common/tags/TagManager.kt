@@ -1,12 +1,11 @@
 package ru.hollowhorizon.hollowengine.common.tags
 
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.Tier
-import net.minecraft.world.item.Tiers
+import net.minecraft.world.item.ToolMaterial
 import net.minecraft.world.level.block.Block
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
 import ru.hollowhorizon.hollowengine.common.events.registry.RegisterTagsEvent
@@ -31,22 +30,23 @@ object TagManager {
     }
 }
 
-fun Block.addTag(tag: ResourceLocation) = addTag(TagKey.create(Registries.BLOCK, tag))
+fun Block.addTag(tag: Identifier) = addTag(TagKey.create(Registries.BLOCK, tag))
 fun Block.addTag(tag: TagKey<Block>) = TagManager.BLOCK_TAGS.getOrPut(tag, ::HashSet).add(this)
 
-fun Item.addTag(tag: ResourceLocation) {
+fun Item.addTag(tag: Identifier) {
     val tagKey = TagKey.create(Registries.ITEM, tag)
     TagManager.ITEM_TAGS.getOrPut(tagKey, ::HashSet).add(this)
 }
 
-fun Block.addTool(type: ToolType, tier: Tier) {
+fun Block.addTool(type: ToolType, tier: ToolMaterial) {
     val tag = when (tier) {
-        Tiers.WOOD -> TagKey.create(Registries.BLOCK, "needs_wood_tool".rl) // Only forge?
-        Tiers.GOLD -> TagKey.create(Registries.BLOCK, "needs_gold_tool".rl) // Only forge?
-        Tiers.STONE -> BlockTags.NEEDS_STONE_TOOL
-        Tiers.IRON -> BlockTags.NEEDS_IRON_TOOL
-        Tiers.DIAMOND -> BlockTags.NEEDS_DIAMOND_TOOL
-        Tiers.NETHERITE -> TagKey.create(Registries.BLOCK, "needs_netherite_tool".rl) // Only forge?
+        ToolMaterial.WOOD -> TagKey.create(Registries.BLOCK, "needs_wood_tool".rl) // Only forge?
+        ToolMaterial.GOLD -> TagKey.create(Registries.BLOCK, "needs_gold_tool".rl) // Only forge?
+        ToolMaterial.STONE -> BlockTags.NEEDS_STONE_TOOL
+        ToolMaterial.IRON -> BlockTags.NEEDS_IRON_TOOL
+        ToolMaterial.DIAMOND -> BlockTags.NEEDS_DIAMOND_TOOL
+        ToolMaterial.NETHERITE -> TagKey.create(Registries.BLOCK, "needs_netherite_tool".rl) // Only forge?
+        ToolMaterial.COPPER -> TagKey.create(Registries.BLOCK, "needs_copper_tool".rl) // Only forge?
         else -> error("Unknown tier: $tier")
     }
     addTag(tag)

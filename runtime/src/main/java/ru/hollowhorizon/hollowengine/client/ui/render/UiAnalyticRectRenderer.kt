@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.resources.ResourceLocation
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL13
 import org.lwjgl.opengl.GL15
@@ -110,6 +110,8 @@ internal class UiAnalyticRectRenderer : UiSdfRenderer(
         for (page in 0 until batch.glyphPageCount) {
             GL13.glActiveTexture(GL13.GL_TEXTURE0 + GlyphAtlasUnit + page)
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, batch.glyphPageTexture(page))
+            // vanilla and shader mods leave sampler objects on texture units; one would override the atlas's own filtering
+            GL33.glBindSampler(GlyphAtlasUnit + page, 0)
         }
         GL20.glUniform1fv(glyphDistanceRangeLocation, batch.glyphPageDistanceRanges())
         GL20.glUniform2fv(glyphAtlasSizeLocation, batch.glyphPageSizes())
@@ -152,11 +154,11 @@ internal class UiAnalyticRectRenderer : UiSdfRenderer(
         /** First texture unit for glyph atlases, past the RecordBuffer/PaintBuffer/StopBuffer units (0-2). */
         const val GlyphAtlasUnit = 3
 
-        val VertexShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val VertexShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/rect_sdf.vsh",
         )
-        val FragmentShaderPath = ResourceLocation.fromNamespaceAndPath(
+        val FragmentShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/rect_sdf.fsh",
         )

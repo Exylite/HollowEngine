@@ -1,8 +1,9 @@
 import java.security.MessageDigest
+import org.gradle.jvm.tasks.Jar
 
 plugins {
     id("architectury-plugin")
-    id("dev.architectury.loom")
+    id("dev.architectury.loom-no-remap")
     id("com.gradleup.shadow")
 }
 
@@ -13,7 +14,6 @@ val modAuthor: String by rootProject.properties
 val license: String by properties
 val modGroup: String by properties
 val minecraftVersion: String by rootProject.properties
-val parchmentVersion: String by rootProject.properties
 val neoForgeVersion: String by rootProject.properties
 
 group = modGroup
@@ -49,6 +49,10 @@ loom {
         accessWidenerPath.set(accessWidener)
     }
 
+    neoForge {
+        convertAccessWideners(tasks.named<Jar>("jar"), "$modId.accesswidener")
+    }
+
     runs {
         configureEach {
             runDirectory.set(rootProject.layout.projectDirectory.dir("run"))
@@ -65,9 +69,6 @@ configurations {
         isCanBeConsumed = false
     }
     named("compileClasspath") {
-        extendsFrom(getByName("common"))
-    }
-    named("runtimeClasspath") {
         extendsFrom(getByName("common"))
     }
     named("developmentNeoForge") {
@@ -95,27 +96,26 @@ repositories {
     maven("https://repo.spongepowered.org/repository/maven-public/")
     mavenLocal()
     flatDir { dirs(rootProject.file("libs")) }
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentVersion")
-    })
 
     neoForge("net.neoforged:neoforge:$neoForgeVersion")
 
-    implementation("lib:iris-neoforge:1.8.14-beta.1+mc1.21.1")
-    runtimeOnly("lib:iris-neoforge:1.8.14-beta.1+mc1.21.1")
+    implementation("maven.modrinth:iris:1.11.4+26.2-neoforge")
+    runtimeOnly("maven.modrinth:iris:1.11.4+26.2-neoforge")
 
-    implementation("lib:sodium-neoforge:0.8.13+mc1.21.1")
-    runtimeOnly("lib:sodium-neoforge:0.8.13+mc1.21.1")
+    implementation("maven.modrinth:sodium:mc26.2-0.9.2-neoforge")
+    runtimeOnly("maven.modrinth:sodium:mc26.2-0.9.2-neoforge")
 
     implementation("org.anarres:jcpp:1.4.14")
     implementation("io.github.douira:glsl-transformer:3.0.0-pre3")
 
-    val mixinExtras = "io.github.llamalad7:mixinextras-neoforge:0.4.1"
+    val mixinExtras = "io.github.llamalad7:mixinextras-neoforge:0.5.5"
     implementation(mixinExtras)
     include(mixinExtras)
 
@@ -252,9 +252,19 @@ val bootstrapDevJar = tasks.register<Jar>("bootstrapDevJar") {
     }
 }
 
-tasks.named<net.fabricmc.loom.task.RemapJarTask>("remapJar") {
-    inputFile.set(bootstrapDevJar.flatMap { it.archiveFile })
-    atAccessWideners.set(listOf("$modId.accesswidener"))
+// Minecraft ships unobfuscated since 26.1, so the plain jar is the production jar. Loom converts the
+// access widener into an access transformer for it.
+tasks.named<Jar>("jar") {
+    dependsOn(":bridge:transformProductionNeoForge")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveClassifier.set("")
+
+    from({
+        project.configurations.getByName("shadowBundle")
+            .map { zipTree(it) }
+    }) {
+        exclude("hollowengine.bridge.mixins.json", "hollowengine.bridge.refmap.json")
+    }
 }
 
 tasks.named<JavaCompile>("compileJava") {

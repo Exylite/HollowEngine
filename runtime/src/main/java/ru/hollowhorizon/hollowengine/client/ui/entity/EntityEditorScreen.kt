@@ -2,7 +2,8 @@ package ru.hollowhorizon.hollowengine.client.ui.entity
 
 import androidx.compose.runtime.*
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.input.KeyEvent
 import net.minecraft.world.entity.LivingEntity
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.client.slots.SlotTooltips
@@ -57,14 +58,14 @@ internal class EntityEditorScreen(
         }
     }
 
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
-        val control = modifiers and GLFW.GLFW_MOD_CONTROL != 0
-        if (control && keyCode == GLFW.GLFW_KEY_F) {
+    override fun keyPressed(event: KeyEvent): Boolean {
+        val control = event.modifiers and GLFW.GLFW_MOD_CONTROL != 0
+        if (control && event.key == GLFW.GLFW_KEY_F) {
             session.searchOpen = true
             Minecraft.getInstance().execute { focusInput(EntityEditorSearchInput) }
             return true
         }
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key == GLFW.GLFW_KEY_ESCAPE) {
             if (session.pendingPicker != null) {
                 session.pendingPicker = null
                 return true
@@ -78,7 +79,7 @@ internal class EntityEditorScreen(
                 return true
             }
         }
-        return super.keyPressed(keyCode, scanCode, modifiers)
+        return super.keyPressed(event)
     }
 
     override fun removed() {
@@ -86,7 +87,7 @@ internal class EntityEditorScreen(
         super.removed()
     }
 
-    override fun renderAfterUi(graphics: GuiGraphics, mouseX: Int, mouseY: Int) {
+    override fun renderAfterUi(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
         if (session.slotSessionId != null) SlotTooltips.render(graphics, mouseX, mouseY)
     }
 

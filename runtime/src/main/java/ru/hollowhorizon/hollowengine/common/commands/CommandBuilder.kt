@@ -97,7 +97,7 @@ fun <T, V : SharedSuggestionProvider> arg(
     }
 
 @JvmName("argInt")
-fun <T> arg(
+fun <T : Any> arg(
     name: String,
     type: ArgumentType<T>,
     suggests: Collection<Int>,

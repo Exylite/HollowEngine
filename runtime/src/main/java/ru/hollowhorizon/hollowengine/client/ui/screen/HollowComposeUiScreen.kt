@@ -1,8 +1,14 @@
 package ru.hollowhorizon.hollowengine.client.ui.screen
 
 import androidx.compose.runtime.Composable
-import com.mojang.blaze3d.systems.RenderSystem
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent
+import net.minecraft.client.input.MouseButtonEvent
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.window
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.client.ui.*
@@ -49,13 +55,14 @@ abstract class HollowComposeUiScreen(
     protected open fun pipelineFrames(): Boolean = false
 
     /**
-     * Draws on top of the finished UI frame with a vanilla [GuiGraphics].
+     * Hands vanilla something to draw with a [GuiGraphicsExtractor] alongside the UI frame.
      *
-     * The engine's own screen-render events are posted from a mixin on `Screen.render`, which this class
-     * overrides without calling through, so they never fire here. Content that needs vanilla drawing after
-     * the frame (item tooltips, for one) hooks in from this method instead.
+     * The engine's own screen-render events are posted from a mixin on `Screen.extractRenderState`, which
+     * this class overrides without calling through, so they never fire here. Content that needs vanilla
+     * drawing (item tooltips, for one) hooks in from this method instead. It is drawn by vanilla's GUI
+     * once more after the engine's own frame, see [GuiDeferred.deferVanilla].
      */
-    protected open fun renderAfterUi(graphics: GuiGraphics, mouseX: Int, mouseY: Int) = Unit
+    protected open fun renderAfterUi(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) = Unit
 
     protected fun focusInput(nodeId: String) {
         pipeline.await()
@@ -78,7 +85,7 @@ abstract class HollowComposeUiScreen(
             UiGuiScale.Auto -> window.calculateScale(0, mc.isEnforceUnicode)
             is UiGuiScale.Fixed -> window.calculateScale(scale.factor, mc.isEnforceUnicode)
         }.coerceAtLeast(1)
-        if (factor.toDouble() == window.guiScale) return null
+        if (factor == window.guiScale) return null
 
         val logicalWidth = ceil(window.width.toDouble() / factor).toFloat().coerceAtLeast(1f)
         val logicalHeight = ceil(window.height.toDouble() / factor).toFloat().coerceAtLeast(1f)
@@ -87,7 +94,10 @@ abstract class HollowComposeUiScreen(
         return SurfaceScale(logicalWidth, logicalHeight, logicalWidth / vanillaWidth)
     }
 
-    override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+    /** The engine's frame is the whole background; vanilla's dimming and blur are not wanted under it. */
+    override fun extractBackground(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, partialTick: Float) = Unit
+
+    override fun extractRenderState(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, partialTick: Float) {
         val scale = surfaceScale()
         val frameWidth = scale?.width ?: width.toFloat()
         val frameHeight = scale?.height ?: height.toFloat()
@@ -96,8 +106,13 @@ abstract class HollowComposeUiScreen(
         val pointerY = mouseY.toFloat() * ratio
         val frame = (if (pipelineFrames()) pipeline.take(frameWidth, frameHeight) else null)
             ?: buildFrame(frameWidth, frameHeight, pointerX, pointerY, System.nanoTime())
-        renderScaled(frame, scale)
-        renderAfterUi(graphics, mouseX, mouseY)
+        // vanilla draws its GUI after the whole frame is extracted: the engine draws with GL calls, so it waits for that
+        GuiDeferred.defer { renderScaled(frame, scale) }
+        // vanilla's own content that belongs over the engine's frame (item tooltips, for one) gets its own pass
+        GuiDeferred.deferVanilla { over ->
+            renderAfterUi(over, mouseX, mouseY)
+            over.extractDeferredElements(mouseX, mouseY, partialTick)
+        }
         UiCursorManager.claim(mc.window.window, this, surface.runtime.cursor, UiCursorManager.ScreenPriority)
         if (pipelineFrames()) {
             pipeline.schedule(frameWidth, frameHeight) {
@@ -157,23 +172,23 @@ abstract class HollowComposeUiScreen(
     /** Vanilla hands pointer positions in its own GUI pixels; the surface thinks in its own. */
     private fun Double.toSurface(): Float = (this * (surfaceScale()?.ratio ?: 1f)).toFloat()
 
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(event: MouseButtonEvent, doubleClick: Boolean): Boolean {
         if (closing) return false
         pipeline.await()
-        return surface.runtime.mouseClicked(mouseX.toSurface(), mouseY.toSurface(), button, currentUiKeyModifiers())
+        return surface.runtime.mouseClicked(event.x.toSurface(), event.y.toSurface(), event.button(), currentUiKeyModifiers())
     }
 
-    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    override fun mouseReleased(event: MouseButtonEvent): Boolean {
         if (closing) return false
         pipeline.await()
-        return surface.runtime.mouseReleased(mouseX.toSurface(), mouseY.toSurface(), button, currentUiKeyModifiers())
+        return surface.runtime.mouseReleased(event.x.toSurface(), event.y.toSurface(), event.button(), currentUiKeyModifiers())
     }
 
-    override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, dragX: Double, dragY: Double): Boolean {
+    override fun mouseDragged(event: MouseButtonEvent, dragX: Double, dragY: Double): Boolean {
         if (closing) return false
         pipeline.await()
         return surface.runtime.mouseDragged(
-            mouseX.toSurface(), mouseY.toSurface(), button, dragX.toSurface(), dragY.toSurface(),
+            event.x.toSurface(), event.y.toSurface(), event.button(), dragX.toSurface(), dragY.toSurface(),
             currentUiKeyModifiers(),
         )
     }
@@ -190,23 +205,27 @@ abstract class HollowComposeUiScreen(
         )
     }
 
-    override fun charTyped(codePoint: Char, modifiers: Int): Boolean {
+    override fun charTyped(event: CharacterEvent): Boolean {
         if (closing) return false
-        if (super.charTyped(codePoint, modifiers)) return true
+        if (super.charTyped(event)) return true
         pipeline.await()
-        return surface.runtime.charTyped(codePoint, modifiers)
+        val modifiers = currentUiKeyModifiers()
+        // the UI takes UTF-16 units, like 1.21 handed them out
+        var handled = false
+        for (unit in Character.toChars(event.codepoint)) handled = surface.runtime.charTyped(unit, modifiers) || handled
+        return handled
     }
 
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+    override fun keyPressed(event: KeyEvent): Boolean {
         if (closing) return false
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
             pipeline.await()
-            if (surface.runtime.keyConsumed(keyCode, scanCode, modifiers)) return true
-            return super.keyPressed(keyCode, scanCode, modifiers)
+            if (surface.runtime.keyConsumed(event.key(), event.scancode(), event.modifiers())) return true
+            return super.keyPressed(event)
         }
-        if (super.keyPressed(keyCode, scanCode, modifiers)) return true
+        if (super.keyPressed(event)) return true
         pipeline.await()
-        return surface.runtime.keyPressed(keyCode, scanCode, modifiers)
+        return surface.runtime.keyPressed(event.key(), event.scancode(), event.modifiers())
     }
 
     override fun isPauseScreen(): Boolean = false

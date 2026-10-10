@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import androidx.compose.runtime.compositionLocalOf
 import net.minecraft.client.gui.screens.Screen
 import ru.hollowhorizon.hollowengine.client.ui.screen.HollowComposeUiScreen

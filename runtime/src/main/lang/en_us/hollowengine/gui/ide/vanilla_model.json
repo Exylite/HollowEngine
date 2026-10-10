@@ -7,5 +7,6 @@
   "error.not_json_model": "%s is not a Minecraft JSON model.",
   "error.empty_baked_model": "Model %s produced no baked geometry.",
   "error.missing_model": "Model %s is missing.",
-  "error.invalid_asset_path": "Invalid asset path: %s"
+  "error.invalid_asset_path": "Invalid asset path: %s",
+  "error.preview_unavailable": "The vanilla model preview is not available on this Minecraft version yet."
 }

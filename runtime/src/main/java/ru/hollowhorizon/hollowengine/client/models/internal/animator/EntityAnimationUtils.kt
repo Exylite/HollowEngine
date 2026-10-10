@@ -18,8 +18,8 @@ fun calculateSpeedViaDeltaMovement(entity: LivingEntity): Float {
     val dz = velocity.z.toFloat()
 
     val yawRad = Math.toRadians(entity.yBodyRot.toDouble()).toFloat()
-    val forwardX = -Mth.sin(yawRad)
-    val forwardZ = Mth.cos(yawRad)
+    val forwardX = -Mth.sin(yawRad.toDouble())
+    val forwardZ = Mth.cos(yawRad.toDouble())
 
     val forwardSpeed = dx * forwardX + dz * forwardZ
     val moveSpeed = forwardSpeed * 20f

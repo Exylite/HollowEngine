@@ -1,7 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.entities
 
 import net.minecraft.core.Direction
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.protocol.Packet
 import net.minecraft.network.protocol.game.ClientGamePacketListener
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
@@ -12,6 +11,8 @@ import net.minecraft.world.entity.*
 import net.minecraft.world.entity.vehicle.DismountHelper
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 import net.minecraft.world.phys.Vec3
 import ru.hollowhorizon.hollowengine.common.registry.ModEntities
 
@@ -45,12 +46,11 @@ class SeatEntity(entityType: EntityType<SeatEntity>, pLevel: Level) : LivingEnti
     override fun getMainArm(): HumanoidArm = HumanoidArm.RIGHT
 
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {}
-    override fun getAddEntityPacket(entity: ServerEntity): Packet<ClientGamePacketListener?>? {
+    override fun getAddEntityPacket(entity: ServerEntity): Packet<ClientGamePacketListener> {
         return ClientboundAddEntityPacket(this, entity)
     }
 
-    override fun readAdditionalSaveData(p0: CompoundTag) {}
-    override fun getArmorSlots(): Iterable<ItemStack> = emptySet()
+    override fun readAdditionalSaveData(input: ValueInput) {}
 
     override fun getItemBySlot(slot: EquipmentSlot)= ItemStack.EMPTY
 
@@ -60,7 +60,7 @@ class SeatEntity(entityType: EntityType<SeatEntity>, pLevel: Level) : LivingEnti
     ) {
     }
 
-    override fun addAdditionalSaveData(p0: CompoundTag) {}
+    override fun addAdditionalSaveData(output: ValueOutput) {}
 
 
     override fun canRide(pVehicle: Entity): Boolean = true
@@ -111,7 +111,7 @@ class SeatEntity(entityType: EntityType<SeatEntity>, pLevel: Level) : LivingEnti
 
             val seat = SeatEntity(level, player.position(), dir)
             level.addFreshEntity(seat)
-            player.startRiding(seat, false)
+            player.startRiding(seat, false, true)
         }
     }
 }

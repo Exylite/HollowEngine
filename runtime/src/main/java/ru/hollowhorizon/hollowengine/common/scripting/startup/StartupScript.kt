@@ -3,6 +3,7 @@ package ru.hollowhorizon.hollowengine.common.scripting.startup
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
+import net.minecraft.world.level.block.state.BlockBehaviour
 import ru.hollowhorizon.hollowengine.api.AutoModelType
 import ru.hollowhorizon.hollowengine.api.RegistryHolder
 import ru.hollowhorizon.hollowengine.common.registry.HollowRegistry
@@ -20,13 +21,15 @@ abstract class StartupScript(val isClientSide: Boolean, namespace: String) : Hol
     inline fun <reified T : Block> block(
         id: String,
         model: AutoModelType? = AutoModelType.CUBE_ALL,
-        itemProperties: Item.Properties = Item.Properties(),
-        noinline create: () -> T,
+        noinline configureItem: (Item.Properties) -> Item.Properties = { it },
+        noinline create: (BlockBehaviour.Properties) -> T,
     ): RegistryHolder<T> {
         val location = location(id)
-        val block = register(location, model) { create() }
+        val block = register(location, model) { create(blockProperties(location)) }
         val itemModel = model?.let { AutoModelType.custom("${location.namespace}:block/${location.path}") }
-        register(location, itemModel) { BlockItem(block.get(), itemProperties) }
+        register(location, itemModel) {
+            BlockItem(block.get(), configureItem(itemProperties(location).useBlockDescriptionPrefix()))
+        }
         return block
     }
 }

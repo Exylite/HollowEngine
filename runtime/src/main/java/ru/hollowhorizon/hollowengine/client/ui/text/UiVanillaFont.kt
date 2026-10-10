@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.text
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.getPixelRGBA
 import com.mojang.blaze3d.platform.NativeImage
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -10,7 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.utils.json.json
 import java.util.concurrent.ConcurrentHashMap
@@ -34,9 +35,9 @@ object UiVanillaFont {
     private const val FallbackAdvancePixels = 6f
     private const val RetryCooldownNanos = 2_000_000_000L
 
-    private val faces = ConcurrentHashMap<ResourceLocation, UiVanillaFontFace>()
-    private val glyphFonts = ConcurrentHashMap<ResourceLocation, UiVanillaGlyphFont>()
-    private val failedAt = ConcurrentHashMap<ResourceLocation, Long>()
+    private val faces = ConcurrentHashMap<Identifier, UiVanillaFontFace>()
+    private val glyphFonts = ConcurrentHashMap<Identifier, UiVanillaGlyphFont>()
+    private val failedAt = ConcurrentHashMap<Identifier, Long>()
 
     @Volatile
     private var epoch = UiFontResources.generation
@@ -44,10 +45,10 @@ object UiVanillaFont {
     fun isVanillaFamily(fontFamily: String): Boolean =
         fontFamily == FamilyPrefix || fontFamily.startsWith("$FamilyPrefix:")
 
-    fun locationOf(fontFamily: String): ResourceLocation? {
+    fun locationOf(fontFamily: String): Identifier? {
         if (!isVanillaFamily(fontFamily)) return null
         val name = fontFamily.removePrefix(FamilyPrefix).removePrefix(":").ifBlank { "default" }
-        return if (':' in name) ResourceLocation.tryParse(name) else ResourceLocation.withDefaultNamespace(name)
+        return if (':' in name) Identifier.tryParse(name) else Identifier.withDefaultNamespace(name)
     }
 
     fun face(fontFamily: String): UiVanillaFontFace? {
@@ -89,7 +90,7 @@ object UiVanillaFont {
         unloadAll()
     }
 
-    private fun loadFace(location: ResourceLocation): UiVanillaFontFace {
+    private fun loadFace(location: Identifier): UiVanillaFontFace {
         val target = FaceBuilder()
         readFont(location, target, HashSet())
         check(target.glyphs.isNotEmpty()) { "no usable providers in font/${location.path}.json" }
@@ -97,12 +98,12 @@ object UiVanillaFont {
     }
 
     private fun readFont(
-        location: ResourceLocation,
+        location: Identifier,
         target: FaceBuilder,
-        visited: MutableSet<ResourceLocation>,
+        visited: MutableSet<Identifier>,
     ) {
         if (!visited.add(location)) return
-        val definition = ResourceLocation.fromNamespaceAndPath(location.namespace, "font/${location.path}.json")
+        val definition = Identifier.fromNamespaceAndPath(location.namespace, "font/${location.path}.json")
         val files = readAssetStack(definition)
         check(files.isNotEmpty()) { "no font definition at $definition" }
         for (file in files.asReversed()) {
@@ -116,7 +117,7 @@ object UiVanillaFont {
     private fun readProvider(
         provider: JsonObject,
         target: FaceBuilder,
-        visited: MutableSet<ResourceLocation>,
+        visited: MutableSet<Identifier>,
     ) {
         when (provider["type"]?.jsonPrimitive?.contentOrNull) {
             "bitmap" -> readBitmapProvider(provider, target)
@@ -130,9 +131,9 @@ object UiVanillaFont {
     private fun readReferenceProvider(
         provider: JsonObject,
         target: FaceBuilder,
-        visited: MutableSet<ResourceLocation>,
+        visited: MutableSet<Identifier>,
     ) {
-        val id = provider["id"]?.jsonPrimitive?.contentOrNull?.let(ResourceLocation::tryParse) ?: return
+        val id = provider["id"]?.jsonPrimitive?.contentOrNull?.let(Identifier::tryParse) ?: return
         runCatching { readFont(id, target, visited) }.onFailure {
             HollowEngine.LOGGER.warn("Vanilla font reference {} is unreadable: {}", id, it.message)
         }
@@ -148,7 +149,7 @@ object UiVanillaFont {
     }
 
     private fun readBitmapProvider(provider: JsonObject, target: FaceBuilder) {
-        val file = provider["file"]?.jsonPrimitive?.contentOrNull?.let(ResourceLocation::tryParse) ?: return
+        val file = provider["file"]?.jsonPrimitive?.contentOrNull?.let(Identifier::tryParse) ?: return
         val rows = provider["chars"]?.jsonArray?.map { it.jsonPrimitive.content } ?: return
         if (rows.isEmpty()) return
         val grid = rows.map { it.codePoints().toArray() }
@@ -156,7 +157,7 @@ object UiVanillaFont {
         if (columns == 0) return
         val height = provider["height"]?.jsonPrimitive?.intOrNull ?: DefaultBitmapHeight
         val ascent = provider["ascent"]?.jsonPrimitive?.int ?: return
-        val texture = ResourceLocation.fromNamespaceAndPath(file.namespace, "textures/${file.path}")
+        val texture = Identifier.fromNamespaceAndPath(file.namespace, "textures/${file.path}")
 
         val bytes = readAsset(texture) ?: run {
             HollowEngine.LOGGER.warn("Vanilla font sheet {} is missing", texture)
@@ -211,7 +212,7 @@ object UiVanillaFont {
         return false
     }
 
-    private fun readAssetStack(location: ResourceLocation): List<ByteArray> {
+    private fun readAssetStack(location: Identifier): List<ByteArray> {
         val manager = runCatching { Minecraft.getInstance()?.resourceManager }.getOrNull()
         if (manager != null) {
             return runCatching { manager.getResourceStack(location) }.getOrNull().orEmpty()
@@ -223,7 +224,7 @@ object UiVanillaFont {
         return listOfNotNull(classpath?.use { it.readBytes() })
     }
 
-    private fun readAsset(location: ResourceLocation): ByteArray? {
+    private fun readAsset(location: Identifier): ByteArray? {
         val manager = runCatching { Minecraft.getInstance()?.resourceManager }.getOrNull()
         if (manager != null) {
             val resource = runCatching { manager.getResource(location).orElse(null) }.getOrNull()
@@ -234,10 +235,10 @@ object UiVanillaFont {
 
     private class FaceBuilder {
         val glyphs = HashMap<Int, UiVanillaGlyph>()
-        val coloredSheets = HashSet<ResourceLocation>()
+        val coloredSheets = HashSet<Identifier>()
 
         /** Pixel size of each sheet, so the renderer can sample texel centers rather than cell seams. */
-        val sheetSizes = HashMap<ResourceLocation, UiSheetSize>()
+        val sheetSizes = HashMap<Identifier, UiSheetSize>()
     }
 
     private fun trimmedWidth(image: NativeImage, cellWidth: Int, cellHeight: Int, column: Int, row: Int): Int {
@@ -275,7 +276,7 @@ internal data class UiVanillaGlyph(
     val vTop: Float,
     val uMax: Float,
     val vBottom: Float,
-    val texture: ResourceLocation?,
+    val texture: Identifier?,
 ) {
     companion object {
         fun blank(advance: Float) = UiVanillaGlyph(advance, 0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f, null)
@@ -286,10 +287,10 @@ internal data class UiVanillaGlyph(
 internal data class UiSheetSize(val width: Float, val height: Float)
 
 class UiVanillaFontFace internal constructor(
-    val location: ResourceLocation,
+    val location: Identifier,
     internal val glyphs: Map<Int, UiVanillaGlyph>,
-    internal val coloredSheets: Set<ResourceLocation> = emptySet(),
-    internal val sheetSizes: Map<ResourceLocation, UiSheetSize> = emptyMap(),
+    internal val coloredSheets: Set<Identifier> = emptySet(),
+    internal val sheetSizes: Map<Identifier, UiSheetSize> = emptyMap(),
 ) {
     internal fun glyphOrFallback(codepoint: Int): UiVanillaGlyph? {
         glyphs[codepoint]?.let { return it }

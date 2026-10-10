@@ -27,7 +27,7 @@ internal object StoryBuiltinFunctions {
     private fun StoryFunctionRegistry.waitFunction() {
         add("wait", number("time")) { args ->
             val deadline = if (state.contains(DEADLINE_KEY)) {
-                state.getLong(DEADLINE_KEY)
+                state.getLongOr(DEADLINE_KEY, 0L)
             } else {
                 (System.currentTimeMillis() + args.millis("time")).also { state.putLong(DEADLINE_KEY, it) }
             }

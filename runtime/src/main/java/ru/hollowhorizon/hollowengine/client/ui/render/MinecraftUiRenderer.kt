@@ -1,17 +1,22 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
+import org.joml.Vector3f
+import net.minecraft.client.renderer.entity.state.EntityRenderState
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
 import com.mojang.blaze3d.platform.Lighting
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.mojang.blaze3d.vertex.PoseStack
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import com.mojang.math.Axis
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.texture.DynamicTexture
 import net.minecraft.client.renderer.texture.SimpleTexture
 import net.minecraft.client.renderer.texture.TextureAtlas
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -41,19 +46,19 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.*
 
 private data class SvgRasterKey(
-    val location: ResourceLocation,
+    val location: Identifier,
     val revision: Long,
     val width: Int,
     val height: Int,
 )
 
 private data class SvgRasterTexture(
-    val location: ResourceLocation,
+    val location: Identifier,
     val texture: DynamicTexture,
 )
 
 private data class SvgRasterQuad(
-    val texture: ResourceLocation,
+    val texture: Identifier,
     val width: Float,
     val height: Float,
     val transform: UiMatrix4,
@@ -166,7 +171,7 @@ class MinecraftUiRenderer {
     private val shapeBatchBounds = UiBatchBounds()
     private val imageBatchBounds = UiBatchBounds()
     private val textBatchBounds = UiBatchBounds()
-    private val phaseImageBatches = linkedMapOf<ResourceLocation, MutableList<UiTexturedQuad>>()
+    private val phaseImageBatches = linkedMapOf<Identifier, MutableList<UiTexturedQuad>>()
     private var quadMinX = 0f
     private var quadMinY = 0f
     private var quadMaxX = 0f
@@ -564,7 +569,7 @@ class MinecraftUiRenderer {
     private fun drawParticles(command: DrawParticlesCommand) {
         val transform = effective(command.transform)
         if (isBackfaceHidden(command.rect.width, command.rect.height, transform, command.backfaceVisibility)) return
-        val batches = linkedMapOf<ResourceLocation, MutableList<UiTexturedQuad>>()
+        val batches = linkedMapOf<Identifier, MutableList<UiTexturedQuad>>()
         appendParticleQuads(command, transform, batches)
         activeProfile?.let { it.imageDraws += batches.size }
         batches.forEach { (texture, quads) -> UiTextureEffects.drawTexturedQuads(texture, quads, command.filter) }
@@ -599,7 +604,7 @@ class MinecraftUiRenderer {
         imageBatchBounds.clear()
     }
 
-    private fun flushImageBatches(imageBatches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>) {
+    private fun flushImageBatches(imageBatches: MutableMap<Identifier, MutableList<UiTexturedQuad>>) {
         if (imageBatches.isEmpty()) return
         activeProfile?.let { it.imageDraws += imageBatches.size }
         imageBatches.forEach { (texture, quads) -> UiTextureEffects.drawTexturedQuads(texture, quads) }
@@ -608,10 +613,10 @@ class MinecraftUiRenderer {
 
     private fun appendImageBatch(
         command: DrawImageCommand,
-        batches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>,
+        batches: MutableMap<Identifier, MutableList<UiTexturedQuad>>,
     ) {
         if (command.rect.width <= 0f || command.rect.height <= 0f || command.opacity <= 0f) return
-        val location = ResourceLocation.tryParse(command.source) ?: return
+        val location = Identifier.tryParse(command.source) ?: return
         val transform = effective(command.transform)
         if (isBackfaceHidden(command.rect.width, command.rect.height, transform, command.backfaceVisibility)) return
         batches.getOrPut(location) { mutableListOf() } += UiTexturedQuad(
@@ -628,7 +633,7 @@ class MinecraftUiRenderer {
 
     private fun appendSvgImage(
         command: DrawImageCommand,
-        batches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>,
+        batches: MutableMap<Identifier, MutableList<UiTexturedQuad>>,
     ): Boolean {
         val quad = svgRasterQuad(
             width = command.rect.width,
@@ -694,15 +699,15 @@ class MinecraftUiRenderer {
 
     private fun createSvgRasterTexture(key: SvgRasterKey): SvgRasterTexture {
         val image = UiSvgRasterizer.rasterize(key.location, key.revision, key.width, key.height)
-        val texture = DynamicTexture(image)
+        val texture = DynamicTexture({ "hollowengine:ui" }, image)
         val location = svgDynamicTextureLocation(key)
         Minecraft.getInstance().textureManager.register(location, texture)
         return SvgRasterTexture(location, texture)
     }
 
-    private fun svgDynamicTextureLocation(key: SvgRasterKey): ResourceLocation {
+    private fun svgDynamicTextureLocation(key: SvgRasterKey): Identifier {
         val hash = key.hashCode().toString().replace("-", "n")
-        return ResourceLocation.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/svg/$hash")
+        return Identifier.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/svg/$hash")
     }
 
     private fun flushShapeBatch() {
@@ -1338,7 +1343,7 @@ class MinecraftUiRenderer {
         if (ModShaders.UI_IMAGE_SHADOW == null || ModShaders.UI_EFFECT == null) return true
         if (command.opacity <= 0f || image.tintAlpha <= 0f || image.rect.width <= 0f || image.rect.height <= 0f) return true
         val svg = svgRasterQuad(image.rect.width, image.rect.height, image.source, 1f, UiMatrix4.identity(), image.fit)
-        val location = svg?.texture ?: ResourceLocation.tryParse(image.source) ?: return true
+        val location = svg?.texture ?: Identifier.tryParse(image.source) ?: return true
         if (svg == null && svgLocation(image.source) != null) return true
         val sourceTexture = Minecraft.getInstance().textureManager.getTexture(location)
         val placement = if (svg != null) {
@@ -2053,7 +2058,7 @@ class MinecraftUiRenderer {
             return
         }
         if (svgLocation(source) != null) return
-        val location = ResourceLocation.tryParse(source) ?: return
+        val location = Identifier.tryParse(source) ?: return
         RenderSystem.setShaderTexture(0, location)
         UiTextureEffects.drawTexturedQuad(
             width,
@@ -2070,8 +2075,8 @@ class MinecraftUiRenderer {
         )
     }
 
-    private fun svgLocation(source: String): ResourceLocation? {
-        val location = ResourceLocation.tryParse(source) ?: return null
+    private fun svgLocation(source: String): Identifier? {
+        val location = Identifier.tryParse(source) ?: return null
         return location.takeIf { it.path.endsWith(".svg", ignoreCase = true) }
     }
 
@@ -2116,23 +2121,15 @@ class MinecraftUiRenderer {
         if (width <= 0f || height <= 0f) return
 
         val rect = UiRect(origin.x, origin.y, width, height)
-        val depth = nextItemDepth(rect)
-        stack.render(rect.x, rect.y, rect.width, rect.height, stack = PoseStack().apply { translate(0f, 0f, depth) })
-        drawItemDecorations(stack, rect, depth)
+        GuiDeferred.vanillaUnitsPerUiUnit = vanillaUnitsPerUiUnit()
+        stack.render(rect.x, rect.y, rect.width, rect.height)
+        drawItemDecorations(stack, rect)
     }
 
-    /**
-     * Reserves this item's depth slice and advances the cursor past it.
-     *
-     * A slice has to be at least as deep as the model is, and a GUI item model is as deep as it is wide.
-     * The budget is the projection's near plane; past it items would be clipped away entirely, so the
-     * offset stops growing instead and only very crowded screens can see items share a slice again.
-     */
-    private fun nextItemDepth(rect: UiRect): Float {
-        val depth = itemDepthOffset
-        val slice = max(rect.width, rect.height).coerceAtLeast(1f)
-        itemDepthOffset = min(itemDepthOffset + slice, MaxItemDepth)
-        return depth
+    /** How many of vanilla's GUI units a unit of the surface being drawn is. */
+    private fun vanillaUnitsPerUiUnit(): Float {
+        val guiScale = Minecraft.getInstance().window.guiScale.toFloat()
+        return (renderTarget?.scale ?: guiScale) / guiScale
     }
 
     /**
@@ -2141,21 +2138,16 @@ class MinecraftUiRenderer {
      *
      * Vanilla assumes a 16x16 slot, hence the scale from that onto the item's actual rect.
      */
-    private fun drawItemDecorations(stack: ItemStack, rect: UiRect, depth: Float) {
+    private fun drawItemDecorations(stack: ItemStack, rect: UiRect) {
         if (rect.width <= 0f || rect.height <= 0f) return
-        val minecraft = Minecraft.getInstance()
-        val graphics = GuiGraphics(minecraft, minecraft.renderBuffers().bufferSource())
-        val pose = graphics.pose()
-        pose.pushPose()
-        try {
-            pose.translate(rect.x, rect.y, depth)
-            pose.scale(rect.width / VanillaSlotSize, rect.height / VanillaSlotSize, 1f)
-            graphics.renderItemDecorations(minecraft.font, stack, 0, 0)
-            graphics.flush()
-        } finally {
-            pose.popPose()
-            RenderSystem.enableBlend()
-            configureUiBlend()
+        val units = GuiDeferred.vanillaUnitsPerUiUnit
+        GuiDeferred.deferVanilla { graphics ->
+            val pose = graphics.pose()
+            pose.pushMatrix()
+            pose.translate(rect.x * units, rect.y * units)
+            pose.scale(rect.width * units / VanillaSlotSize, rect.height * units / VanillaSlotSize)
+            graphics.itemDecorations(Minecraft.getInstance().font, stack, 0, 0)
+            pose.popMatrix()
         }
     }
 
@@ -2168,17 +2160,13 @@ class MinecraftUiRenderer {
             return
         }
 
-        val rect = UiRect(0f, 0f, command.rect.width, command.rect.height)
-        clearDepthOf(transformedLocalRect(rect, transform))
-        POSE_STACK.pushPose()
-        POSE_STACK.mulPose(transform.toMatrix4f())
-        val drawn = try {
-            renderEntity(entity, rect, command.entity.view)
-        } finally {
-            POSE_STACK.popPose()
-            clearDepthOf(transformedLocalRect(rect, transform))
-        }
-        if (!drawn) drawEntityPlaceholder(command)
+        val origin = transform.transform(0f, 0f)
+        transform.axisScales(itemAxisScales)
+        val rect = UiRect(
+            origin.x, origin.y, command.rect.width * itemAxisScales[0], command.rect.height * itemAxisScales[1],
+        )
+        if (rect.width <= 0f || rect.height <= 0f) return
+        if (!renderEntity(entity, rect, command.entity.view)) drawEntityPlaceholder(command)
     }
 
     private fun drawEntityPlaceholder(command: DrawEntityCommand) {
@@ -2217,7 +2205,7 @@ class MinecraftUiRenderer {
         } catch (e: Throwable) {
             HollowEngine.LOGGER.error("Error in Modifier.drawGl block", e)
         } finally {
-            Lighting.setupFor3DItems()
+            RenderSystem.resetShaderLights()
             POSE_STACK.popPose()
             clearDepthOf(transformedLocalRect(rect, transform))
             if (depthEnabled) RenderSystem.enableDepthTest() else RenderSystem.disableDepthTest()
@@ -2227,48 +2215,45 @@ class MinecraftUiRenderer {
         }
     }
 
-    /** Returns false when nothing can draw this entity, so the caller shows the placeholder. */
+    /**
+     * Returns false when nothing can draw this entity, so the caller shows the placeholder. Vanilla draws
+     * an entity in a GUI from a render state, as a picture of its own; the state is taken now, the
+     * picture comes with vanilla's second pass over the engine's frame.
+     */
     private fun renderEntity(entity: Entity, rect: UiRect, view: UiEntityView): Boolean {
-        val depthEnabled = GL11.glIsEnabled(GL11.GL_DEPTH_TEST)
-        val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
-        POSE_STACK.pushPose()
-        try {
-            val xOffset = rect.x + rect.width / 2f + view.offsetX
-            val yOffset = rect.y + rect.height + view.offsetY
-            POSE_STACK.translate(xOffset.toDouble(), yOffset.toDouble(), 0.0)
-            val fit = min(rect.width / entity.bbWidth, rect.height / entity.bbHeight) * 0.92f
-            val scale = fit * view.zoom.coerceAtLeast(0.01f)
-            POSE_STACK.scale(scale, scale, -scale)
-            POSE_STACK.mulPose(Axis.ZP.rotationDegrees(-180f))
-            if (view.pitch != 0f) POSE_STACK.mulPose(Axis.XP.rotationDegrees(view.pitch))
-
-            Lighting.setupForEntityInInventory()
-
-            val mc = Minecraft.getInstance()
-            val dispatcher = mc.entityRenderDispatcher
-            val buffers = mc.renderBuffers().bufferSource()
-            dispatcher.setRenderShadow(false)
-            RenderSystem.enableDepthTest()
-            GL11.glDepthMask(true)
-            try {
-                facingTheViewer(entity, view.yaw) {
-                    RenderSystem.runAsFancy {
-                        dispatcher.render(entity, 0.0, 0.0, 0.0, 0f, 1f, POSE_STACK, buffers, LightTexture.FULL_BRIGHT)
-                    }
-                }
-                buffers.endBatch()
-                return true
-            } finally {
-                dispatcher.setRenderShadow(true)
-            }
-        } finally {
-            Lighting.setupFor3DItems()
-            POSE_STACK.popPose()
-            if (!depthEnabled) RenderSystem.disableDepthTest()
-            GL11.glDepthMask(depthMask)
+        val dispatcher = Minecraft.getInstance().entityRenderDispatcher
+        var captured: EntityRenderState? = null
+        facingTheViewer(entity, view.yaw) {
+            captured = runCatching { dispatcher.getRenderer(entity).createRenderState(entity, 1f) }.getOrNull()
         }
+        val state = captured ?: return false
+        state.shadowPieces.clear()
+        state.outlineColor = 0
+        state.lightCoords = LightCoordsUtil.FULL_BRIGHT
+        state.nameTag = null
+        state.scoreText = null
+
+        val units = vanillaUnitsPerUiUnit()
+        val fit = min(rect.width / entity.bbWidth, rect.height / entity.bbHeight) * 0.92f
+        val size = fit * view.zoom.coerceAtLeast(0.01f)
+        // the picture is centered on the entity's middle, the portrait wants its feet on the rect's bottom
+        val centerX = rect.x + rect.width / 2f + view.offsetX
+        val centerY = rect.y + rect.height - size * entity.bbHeight / 2f + view.offsetY
+        val halfWidth = rect.width / 2f
+        val halfHeight = rect.height / 2f
+        val pitch = Quaternionf().rotateX(Math.toRadians(view.pitch.toDouble()).toFloat())
+        val rotation = Quaternionf().rotateZ(Math.PI.toFloat()).mul(pitch)
+        val translation = Vector3f(0f, state.boundingBoxHeight / 2f, 0f)
+        GuiDeferred.deferVanilla { graphics ->
+            graphics.entity(
+                state, size * units, translation, rotation, pitch,
+                ((centerX - halfWidth) * units).toInt(), ((centerY - halfHeight) * units).toInt(),
+                ((centerX + halfWidth) * units).toInt(), ((centerY + halfHeight) * units).toInt(),
+            )
+        }
+        return true
     }
-    
+
     private inline fun facingTheViewer(entity: Entity, yaw: Float, block: () -> Unit) {
         val yRot = entity.yRot
         val yRotO = entity.yRotO
@@ -2405,7 +2390,9 @@ class MinecraftUiRenderer {
     }
 
     /**
-     * Clears the depth buffer inside [rect].
+     * Clears the depth buffer inside [rect] to the far value of the engine's own depth, which is not
+     * what vanilla leaves as the clear value: it clears to 0 for the reversed depth of the level, and
+     * a canvas that draws with `LEQUAL` over that sees nothing pass.
      */
     private fun clearDepthOf(rect: UiRect) {
         if (rect.width <= 0f || rect.height <= 0f) return
@@ -2414,7 +2401,10 @@ class MinecraftUiRenderer {
         setScissor(rect)
         val depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK)
         if (!depthMask) GL11.glDepthMask(true)
+        val clearDepth = GL11.glGetDouble(GL11.GL_DEPTH_CLEAR_VALUE)
+        GL11.glClearDepth(1.0)
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT)
+        GL11.glClearDepth(clearDepth)
         if (!depthMask) GL11.glDepthMask(false)
         scissorState = ScissorUnknown
         setScissor(previous as? UiRect)
@@ -2464,9 +2454,14 @@ class MinecraftUiRenderer {
         RenderSystem.viewport(target.x, target.y, target.width, target.height)
     }
 
+    /**
+     * Vanilla runs its context with a zero-to-one clip volume, so the depth range of the UI's projection has
+     * to be zero-to-one as well: with the usual minus-one-to-one mapping everything in front of `z = 0` is
+     * clipped away, which is the near half of any model or other 3D content a screen shows.
+     */
     private fun configureLayerProjection(width: Float, height: Float) {
         RenderSystem.setProjectionMatrix(
-            Matrix4f().setOrtho(0f, width, height, 0f, -1000f, 1000f),
+            Matrix4f().setOrtho(0f, width, height, 0f, -1000f, 1000f, true),
             VertexSorting.ORTHOGRAPHIC_Z,
         )
         val stack = RenderSystem.getModelViewStack()

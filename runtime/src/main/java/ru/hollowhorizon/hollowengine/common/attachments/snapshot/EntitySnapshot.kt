@@ -7,7 +7,7 @@ import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.encodeCollection
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
@@ -20,8 +20,8 @@ import ru.hollowhorizon.hollowengine.common.utils.bytebuf.FriendlyByteBufEncoder
 sealed class Snapshot {
     abstract val components: List<@Polymorphic Component>
 
-    fun componentById(): LinkedHashMap<ResourceLocation, Component> =
-        LinkedHashMap<ResourceLocation, Component>().apply {
+    fun componentById(): LinkedHashMap<Identifier, Component> =
+        LinkedHashMap<Identifier, Component>().apply {
             components.forEach { component ->
                 val id = ComponentDescriptorRegistry.idFor(component::class)
                     ?: error("Component descriptor not found for ${component::class.qualifiedName}")

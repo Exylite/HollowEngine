@@ -102,7 +102,7 @@ A startup script can be [imported](/docs/hollowengine/scripting/imports) into an
 ```kotlin
 // items.startup.kts
 val RUBY by register("ruby") {
-    Item(Item.Properties())
+    Item(itemProperties(it))
 }
 ```
 
@@ -139,7 +139,7 @@ If two imported startup scripts declare a variable with the same name, say `CUST
 package mypack.weapons
 
 val CUSTOM_ITEM by register("ruby_sword") {
-    Item(Item.Properties().stacksTo(1))
+    Item(itemProperties(it).stacksTo(1))
 }
 ```
 
@@ -148,7 +148,7 @@ val CUSTOM_ITEM by register("ruby_sword") {
 package mypack.food
 
 val CUSTOM_ITEM by register("ruby_apple") {
-    Item(Item.Properties())
+    Item(itemProperties(it))
 }
 ```
 

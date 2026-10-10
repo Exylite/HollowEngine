@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.client.ui.render
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.DrawParticlesCommand
 import ru.hollowhorizon.hollowengine.client.ui.UiMatrix4
 import ru.hollowhorizon.hollowengine.client.ui.particles.UiParticleAnimation
@@ -34,7 +34,7 @@ internal fun particlePlacement(
 internal fun appendParticleQuads(
     command: DrawParticlesCommand,
     transform: UiMatrix4,
-    batches: MutableMap<ResourceLocation, MutableList<UiTexturedQuad>>,
+    batches: MutableMap<Identifier, MutableList<UiTexturedQuad>>,
 ) {
     val system = command.system
     system.prepare(command.rect.width, command.rect.height)
@@ -44,7 +44,7 @@ internal fun appendParticleQuads(
     val engine = Minecraft.getInstance().particleEngine
     val sprites = arrayOfNulls<List<TextureAtlasSprite>>(system.emitters.size)
     system.emitters.forEachIndexed { index, emitter ->
-        sprites[index] = engine.spriteSets[emitter.location]?.sprites
+        sprites[index] = engine.resourceManager.spriteSets[emitter.location]?.sprites
     }
     val interpolation = system.interpolation
     var quads: MutableList<UiTexturedQuad>? = null

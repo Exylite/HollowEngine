@@ -1,27 +1,45 @@
 package ru.hollowhorizon.hollowengine.bootstrap
 
+import net.minecraft.server.packs.resources.ResourceManager
+import net.minecraft.server.packs.resources.Resource
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.client.render.legacy.GuiDeferred
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.MainTarget
+import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL30
+import com.mojang.blaze3d.opengl.GlStateManager as VanillaGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
 import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.datafixers.util.Either
-import net.minecraft.Util
+import net.minecraft.util.Util
+import net.minecraft.util.profiling.Profiler
 import net.minecraft.client.Camera
 import net.minecraft.client.Minecraft
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.model.SkullModelBase
+import net.minecraft.client.model.`object`.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.client.particle.ParticleEngine
+import net.minecraft.client.particle.ParticleResources
+import net.minecraft.client.renderer.SubmitNodeCollector
+import net.minecraft.client.renderer.entity.player.AvatarRenderer
+import net.minecraft.core.ClientAsset
+import net.minecraft.world.entity.player.PlayerModelType
+import ru.hollowhorizon.hollowengine.client.render.legacy.RecordingBufferSource
 import net.minecraft.client.player.AbstractClientPlayer
-import net.minecraft.client.resources.PlayerSkin
+import net.minecraft.world.entity.player.PlayerSkin
 import net.minecraft.client.player.KeyboardInput
 import net.minecraft.client.renderer.GameRenderer
 import net.minecraft.client.renderer.LevelRenderer
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import net.minecraft.client.renderer.culling.Frustum
 import net.minecraft.client.renderer.entity.EntityRenderer
 import net.minecraft.client.renderer.entity.EntityRendererProvider
@@ -31,8 +49,7 @@ import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
 import net.minecraft.core.NonNullList
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.FileToIdConverter
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
@@ -54,6 +71,23 @@ import net.minecraft.world.level.block.SkullBlock
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.EntityHitResult
+import net.minecraft.world.phys.HitResult
+import net.minecraft.world.phys.Vec3
+import net.minecraft.world.phys.shapes.VoxelShape
+import ru.hollowhorizon.hollowengine.client.colliders.ClientColliderHooks
+import ru.hollowhorizon.hollowengine.client.colliders.ClientColliderPoses
+import ru.hollowhorizon.hollowengine.client.colliders.ColliderDebugRenderer
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderClaims
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderCombat
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderContacts
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderModes
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderPathObstacles
+import ru.hollowhorizon.hollowengine.common.colliders.EntityColliders
+import ru.hollowhorizon.hollowengine.common.colliders.SolidColliders
+import ru.hollowhorizon.hollowengine.common.entities.EntityBodies
+import java.util.function.Predicate
+import java.util.function.Supplier
 import org.joml.Matrix4f
 import ru.hollowhorizon.hollowengine.ConsoleAppender
 import ru.hollowhorizon.hollowengine.LOGGER
@@ -62,6 +96,7 @@ import ru.hollowhorizon.hollowengine.api.ModList
 import ru.hollowhorizon.hollowengine.api.extensions.FakePlayerFactory
 import ru.hollowhorizon.hollowengine.api.extensions.ItemStackHelper
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.EventBridge
+import ru.hollowhorizon.hollowengine.bootstrap.runtime.PathObstacles
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimePlatform
 import ru.hollowhorizon.hollowengine.client.audio.streams.ExtendedSoundConverter
@@ -80,6 +115,7 @@ import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.cutscene.CutsceneCam
 import ru.hollowhorizon.hollowengine.client.ui.script.UiScriptHudHost
 import ru.hollowhorizon.hollowengine.common.ui.HudPlacement
 import ru.hollowhorizon.hollowengine.client.editor.WorldInspector
+import ru.hollowhorizon.hollowengine.client.editor.WorldObjectContextMenu
 import ru.hollowhorizon.hollowengine.client.ui.notification.NotificationOverlay
 import ru.hollowhorizon.hollowengine.client.vfx.render.VfxWorldRenderer
 import ru.hollowhorizon.hollowengine.common.ui.hud.HudLayerRegistry
@@ -164,7 +200,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onPlayerInteractEntity(player: Player, hand: InteractionHand, target: Entity): Boolean {
-        val event = PlayerInteractEvent.EntityInteract(player, hand, target)
+        val collider = ColliderClaims.peek(player, target)?.takeIf { it.spec.modes.interact }?.hit
+        val event = PlayerInteractEvent.EntityInteract(player, hand, target, collider)
         PlayerInteractEvent.EntityInteract.post(event)
         return event.isCanceled
     }
@@ -182,7 +219,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         if (event.isCanceled) return null
 
         if (!player.level().isClientSide) {
-            player.commandSenderWorld.addFreshEntity(event.entity)
+            player.level().addFreshEntity(event.entity)
         }
 
         return event.entity
@@ -308,7 +345,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         return event.stack.takeIf { it != stack }
     }
 
-    override fun onRegisterTags(registry: Any, value: Map<ResourceLocation, List<TagLoader.EntryWithSource>>) {
+    override fun onRegisterTags(registry: Any, value: Map<Identifier, List<TagLoader.EntryWithSource>>) {
         @Suppress("UNCHECKED_CAST") RegisterTagsEvent.post(
             RegisterTagsEvent(
                 registry as net.minecraft.core.Registry<*>,
@@ -345,7 +382,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onScreenRenderPre(
         screen: Screen,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         mouseX: Int,
         mouseY: Int,
         partialTick: Float,
@@ -357,7 +394,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onScreenRenderPost(
         screen: Screen,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         mouseX: Int,
         mouseY: Int,
         partialTick: Float,
@@ -367,17 +404,22 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderArm(
         stack: PoseStack,
-        multiBufferSource: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
         player: AbstractClientPlayer,
         arm: HumanoidArm,
-    ): Boolean = RenderArmEvent.post(RenderArmEvent(stack, multiBufferSource, packedLight, player, arm)).isCanceled
+    ): Boolean {
+        val source = RecordingBufferSource(submitNodeCollector)
+        val event = RenderArmEvent.post(RenderArmEvent(stack, source, packedLight, player, arm))
+        source.endBatch()
+        return event.isCanceled
+    }
 
     override fun onRenderItemInHand(camera: Camera, partialTick: Float, projectionMatrix: Matrix4f): Boolean =
         RenderItemInHandEvent.post(RenderItemInHandEvent(camera, partialTick, projectionMatrix)).isCanceled
 
-    override fun onRegisterParticles(particleEngine: ParticleEngine) {
-        RegisterParticlesEvent.post(RegisterParticlesEvent(particleEngine))
+    override fun onRegisterParticles(particleResources: ParticleResources) {
+        RegisterParticlesEvent.post(RegisterParticlesEvent(particleResources))
     }
 
     override fun onClientUseItemOn(player: Player, hand: InteractionHand, hitResult: BlockHitResult): Boolean {
@@ -387,7 +429,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onClientInteractEntity(player: Player, hand: InteractionHand, target: Entity): Boolean {
-        val event = PlayerInteractEvent.EntityInteract(player, hand, target)
+        val collider = ClientColliderHooks.interacted(target)
+        val event = PlayerInteractEvent.EntityInteract(player, hand, target, collider)
         PlayerInteractEvent.EntityInteract.post(event)
         return event.isCanceled
     }
@@ -448,15 +491,15 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLoadCompleteSound(
-        soundId: ResourceLocation,
+        soundId: Identifier,
         resourceManager: ResourceProvider,
-        cache: Map<ResourceLocation, CompletableFuture<SoundBuffer>>,
+        cache: Map<Identifier, CompletableFuture<SoundBuffer>>,
     ): CompletableFuture<SoundBuffer>? {
         val path = soundId.path
         if (!path.endsWith(".mp3") && !path.endsWith(".wav")) return null
 
         @Suppress("UNCHECKED_CAST") val mutableCache =
-            cache as MutableMap<ResourceLocation, CompletableFuture<SoundBuffer>>
+            cache as MutableMap<Identifier, CompletableFuture<SoundBuffer>>
         return mutableCache.computeIfAbsent(soundId) { resourceLocation ->
             CompletableFuture.supplyAsync({
                 try {
@@ -471,7 +514,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLoadStreamSound(
-        soundId: ResourceLocation,
+        soundId: Identifier,
         resourceManager: ResourceProvider,
         isWrapper: Boolean,
     ): CompletableFuture<AudioStream>? {
@@ -494,7 +537,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         }, Util.backgroundExecutor())
     }
 
-    override fun createSoundConverter(): FileToIdConverter = ExtendedSoundConverter
+    override fun listExtraSounds(resourceManager: ResourceManager): Map<Identifier, Resource> =
+        ExtendedSoundConverter.listExtra(resourceManager)
+
+    override fun extendedSoundFile(id: Identifier): Identifier? = ExtendedSoundConverter.fileOf(id)
 
     override fun getOpenGlVersionOverride(): String = HollowCoreLoader.openGlVersion
 
@@ -502,6 +548,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onLevelFrameRendered(minecraft: Minecraft) {
         RenderTickEvent.LevelRendered.post(RenderTickEvent.LevelRendered(minecraft))
+    }
+
+    override fun onGuiFrameRendered(minecraft: Minecraft) {
+        GuiDeferred.flushAll(minecraft)
     }
 
     override fun onBeforeBlitScreen(minecraft: Minecraft) {
@@ -559,6 +609,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onClientRenderTickPre(client: Minecraft) {
+        RenderSystem.replayQueue()
         CutsceneCameraSystem.update(client)
         RenderTickEvent.Pre.post(RenderTickEvent.Pre(client))
     }
@@ -586,13 +637,14 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLevelTickBlockEntities(level: Level) {
-        val profiler = level.profiler
+        val profiler = Profiler.get()
         profiler.push("HollowEngine ECS")
         AttachmentRegistry.tick(level)
         profiler.pop()
     }
 
     override fun onLevelClosed(level: Level) {
+        LevelEvent.Unload.post(LevelEvent.Unload(level))
         AttachmentRegistry.close(level)
     }
 
@@ -609,6 +661,80 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         EntityEvent.Hurt.post(event)
         return event.isCanceled
     }
+
+    override fun onLivingEntityHurt(entity: LivingEntity, damageSource: DamageSource, amount: Float): Float {
+        val event = EntityEvent.Hurt(entity, damageSource, amount)
+        EntityEvent.Hurt.post(event)
+        return if (event.isCanceled) Float.NaN else event.amount
+    }
+
+    override fun bodyPushable(entity: Entity, vanilla: Boolean): Boolean = EntityBodies.isPushable(entity, vanilla)
+
+    override fun bodyPushesOthers(entity: Entity): Boolean = EntityBodies.pushesOthers(entity)
+
+    override fun bodySolid(entity: Entity, vanilla: Boolean): Boolean = EntityBodies.isSolid(entity, vanilla)
+
+    override fun bodyDimensions(entity: Entity, vanilla: EntityDimensions): EntityDimensions =
+        EntityBodies.dimensions(entity, vanilla)
+
+    override fun collideWithColliders(entity: Entity, movement: Vec3, move: Supplier<Vec3>): Vec3 {
+        val moved = SolidColliders.during(entity, movement, move)
+        if (entity.noPhysics || !ColliderContacts.isSimulatedHere(entity)) return moved
+        val kept = SolidColliders.keepOutOfBlocks(entity, moved)
+        EntityBodies.afterMove(entity, movement, kept)
+        return kept
+    }
+
+    override fun collideShapesWithColliders(movement: Vec3, box: AABB, shapes: List<VoxelShape>, vanilla: Supplier<Vec3>): Vec3 =
+        SolidColliders.collide(movement, box, shapes, vanilla)
+
+    override fun stepHeightsWithColliders(box: AABB, limit: Float, vanilla: FloatArray): FloatArray =
+        SolidColliders.stepHeights(box, limit, vanilla)
+
+    override fun onLivingEntityTickStart(entity: LivingEntity) = ColliderContacts.resolve(entity)
+
+    override fun isSupportedByColliders(entity: Entity): Boolean = SolidColliders.supports(entity)
+
+    override fun isObstructedByColliders(level: Level, shape: VoxelShape): Boolean = SolidColliders.obstructs(level, shape)
+
+    override fun overlapsSolidColliders(entity: Entity, box: AABB): Boolean = SolidColliders.overlaps(entity, box)
+
+    override fun pathObstacles(mob: Mob): PathObstacles? = ColliderPathObstacles.of(mob)
+
+    override fun resolveColliderDamage(entity: Entity, damageSource: DamageSource): DamageSource =
+        ColliderCombat.resolve(entity, damageSource)
+
+    override fun hasColliderTargets(entity: Entity, projectile: Boolean): Boolean =
+        EntityColliders.hasTargets(entity, colliderModes(projectile))
+
+    override fun pickColliders(
+        level: Level, source: Entity?, start: Vec3, end: Vec3, search: AABB,
+        predicate: Predicate<Entity>, maxDistanceSquared: Double, vanilla: EntityHitResult?, projectile: Boolean,
+    ): EntityHitResult? =
+        EntityColliders.pick(level, source, start, end, search, predicate, maxDistanceSquared, vanilla, colliderModes(projectile))
+
+    override fun pickEachCollider(
+        level: Level, source: Entity?, start: Vec3, end: Vec3, search: AABB, predicate: Predicate<Entity>,
+    ): Collection<EntityHitResult> =
+        EntityColliders.pickEach(level, source, start, end, search, predicate, colliderModes(projectile = true))
+
+    override fun onPlayerAttack(player: Player, target: Entity, attack: Runnable) =
+        ColliderCombat.attack(player, target, attack)
+
+    override fun onProjectileHit(projectile: Entity, result: HitResult, hit: Runnable) =
+        ColliderCombat.projectileHit(projectile, result, hit)
+
+    override fun colliderReachBounds(player: Player, target: Entity, vanilla: AABB): AABB =
+        ColliderClaims.reachBounds(player, target, vanilla)
+
+    override fun onClientTargetEntity(target: Entity, result: HitResult?) = ClientColliderHooks.claim(result, target)
+
+    override fun renderColliderHitbox(entity: Entity, partialTick: Float): Boolean =
+        ColliderDebugRenderer.renderHitbox(entity, partialTick)
+
+    /** Projectiles land only on colliders that take hits; the crosshair also stops at the clickable ones. */
+    private fun colliderModes(projectile: Boolean): (ColliderModes) -> Boolean =
+        if (projectile) ColliderModes::hit else ColliderModes::isTarget
 
     override fun onEntityChangedDimension(entity: Entity, resultEntity: Entity?, fromLevel: Level, toLevel: Level) {
         if (resultEntity != null) {
@@ -629,8 +755,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onAddEntityRendererLayers(
-        renderers: MutableMap<EntityType<*>, EntityRenderer<*>>,
-        playerRenderers: MutableMap<String, EntityRenderer<out Player>>,
+        renderers: Map<EntityType<*>, EntityRenderer<*, *>>,
+        playerRenderers: Map<PlayerModelType, AvatarRenderer<AbstractClientPlayer>>,
         context: EntityRendererProvider.Context,
     ) {
         AddEntityRendererLayers.post(AddEntityRendererLayers(renderers, playerRenderers, context))
@@ -641,11 +767,13 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTick: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ): Boolean {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         val event = RenderEntityEvent.Pre(entity, entityYaw, partialTick, poseStack, buffer, packedLight)
         RenderEntityEvent.Pre.post(event)
+        buffer.endBatch()
         return event.isCanceled
     }
 
@@ -654,9 +782,10 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTick: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ) {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         RenderEntityEvent.Post.post(
             RenderEntityEvent.Post(
                 entity,
@@ -667,6 +796,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
                 packedLight
             )
         )
+        buffer.endBatch()
     }
 
     override fun extendEntityCullingBounds(entity: Entity, vanillaBounds: AABB): AABB =
@@ -680,6 +810,9 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         RenderEntityNameplateEvent.post(event)
         return event.isVisible
     }
+
+    override fun entityNameplateAttachment(entity: Entity, vanilla: Vec3?): Vec3? =
+        vanilla?.let { ClientColliderPoses.nameplateAttachment(entity, it) }
 
     override fun onCameraSetup(
         gameRenderer: GameRenderer,
@@ -760,11 +893,13 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         entityYaw: Float,
         partialTicks: Float,
         poseStack: PoseStack,
-        buffer: MultiBufferSource,
+        submitNodeCollector: SubmitNodeCollector,
         packedLight: Int,
     ): Boolean {
+        val buffer = RecordingBufferSource(submitNodeCollector)
         val event = RenderPlayerEvent(player, entityYaw, partialTicks, poseStack, buffer, packedLight)
         RenderPlayerEvent.post(event)
+        buffer.endBatch()
         return event.isCanceled
     }
 
@@ -781,14 +916,15 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         val elytra = materials?.materials?.get(MaterialsComponent.ELYTRA)?.let(MaterialSources::resolve)
         if (skin == null && cape == null && elytra == null && arms == null) return null
 
+        // the texture is the file's own path; vanilla's resource assets would add the folder and extension again
+        fun asset(texture: Identifier) = ClientAsset.ResourceTexture(texture, texture)
         return PlayerSkin(
-            skin?.texture ?: vanilla.texture(),
-            vanilla.textureUrl(),
-            cape?.texture ?: vanilla.capeTexture(),
-            elytra?.texture ?: vanilla.elytraTexture(),
+            skin?.texture?.let(::asset) ?: vanilla.body(),
+            cape?.texture?.let(::asset) ?: vanilla.cape(),
+            elytra?.texture?.let(::asset) ?: vanilla.elytra(),
             when (arms ?: skinSource?.let(MaterialSources::armsOf)) {
-                PlayerArms.SLIM -> PlayerSkin.Model.SLIM
-                PlayerArms.WIDE -> PlayerSkin.Model.WIDE
+                PlayerArms.SLIM -> PlayerModelType.SLIM
+                PlayerArms.WIDE -> PlayerModelType.WIDE
                 null -> vanilla.model()
             },
             vanilla.secure(),
@@ -817,11 +953,11 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderOverlayPre(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layerId: String,
     ): Boolean {
-        val layer = ResourceLocation.parse(layerId)
+        val layer = Identifier.parse(layerId)
         val event = RenderOverlayEvent.Pre(window, guiGraphics, partialTick, layer)
         RenderOverlayEvent.Pre.post(event)
 
@@ -835,22 +971,23 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
 
     override fun onRenderOverlayPost(
         window: Window,
-        guiGraphics: GuiGraphics,
+        guiGraphics: GuiGraphicsExtractor,
         partialTick: Float,
         layerId: String,
     ) {
-        val layer = ResourceLocation.parse(layerId)
+        val layer = Identifier.parse(layerId)
         RenderOverlayEvent.Post.post(RenderOverlayEvent.Post(window, guiGraphics, partialTick, layer))
         UiScriptHudHost.render(layer, HudPlacement.AFTER, System.nanoTime())
     }
 
-    override fun onRenderHudPost(window: Window, guiGraphics: GuiGraphics, partialTick: Float) {
+    override fun onRenderHudPost(window: Window, guiGraphics: GuiGraphicsExtractor, partialTick: Float) {
         RenderHudEvent.post(RenderHudEvent(window, guiGraphics, partialTick))
     }
 
     override fun onKeyboardKey(windowPointer: Long, key: Int, scanCode: Int, action: Int, modifiers: Int): Boolean {
         ClientKeyWaitManager.handleKey(key, action)
         if (HollowIdeOverlay.handleKey(key, scanCode, action, modifiers)) return true
+        if (WorldObjectContextMenu.handleKey(key, scanCode, action, modifiers)) return true
         if (TransformGizmoEditor.handleKey(key, scanCode, action, modifiers)) return true
         if (UiScriptHudHost.handleKey(key, scanCode, action, modifiers)) return true
         return false
@@ -882,7 +1019,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         var isGizmoBlocking = false
         if (world != null) {
             WorldInspector.handleMouseMove(world.x, world.y)
-            isGizmoInputCaptured = TransformGizmoEditor.handleMouseMove(world.x, world.y)
+            isGizmoInputCaptured = WorldObjectContextMenu.handleMouseMove(world.x, world.y)
+            isGizmoInputCaptured = isGizmoInputCaptured || TransformGizmoEditor.handleMouseMove(world.x, world.y)
             val (guiX, guiY) = hudPointer(minecraft, world.x, world.y)
             isScriptOverlayCaptured = UiScriptHudHost.handleMouseMove(guiX, guiY)
             isGizmoBlocking = TransformGizmoEditor.shouldBlockScreenInput(world.x, world.y)
@@ -926,7 +1064,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         if (HollowIdeOverlay.handleMouseButton(x, y, button, action)) return true
         val world = HollowIdeOverlay.worldPointer(x, y) ?: return true
         val (guiX, guiY) = hudPointer(minecraft, world.x, world.y)
-        return TransformGizmoEditor.handleMouseButton(world.x, world.y, button, action) ||
+        return WorldObjectContextMenu.handleMouseButton(world.x, world.y, button, action) ||
+                TransformGizmoEditor.handleMouseButton(world.x, world.y, button, action) ||
                 WorldInspector.pickAt(world.x, world.y, button, action) ||
                 UiScriptHudHost.handleMouseButton(guiX, guiY, button, action) ||
                 TransformGizmoEditor.shouldBlockScreenInput(world.x, world.y)
@@ -978,11 +1117,41 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         frustum: Frustum?,
         stage: RuntimeBridge.RenderLevelStage,
     ) {
-        RenderLevelStageEvent.post(
-            RenderLevelStageEvent(
-                renderer, poseStack, projectionMatrix, ticks, partialTick, camera, frustum, stage.toRenderStage()
-            )
-        )
+        // the level is drawn with a reversed depth in the zero-to-one range, and so is everything added to it here
+        val reversed = RenderSystem.reverseDepth
+        RenderSystem.reverseDepth = true
+        val modelView = RenderSystem.getModelViewStack()
+        modelView.pushMatrix()
+        // as in 1.21 the camera rotation is the model view matrix and the pose stack of the event starts out empty
+        modelView.set(poseStack.last().pose())
+        RenderSystem.applyModelViewMatrix()
+        RenderSystem.backupProjectionMatrix()
+        RenderSystem.setProjectionMatrix(projectionMatrix)
+        try {
+            LegacyGl.scope {
+                // 26.x binds a framebuffer only while one of its render passes runs, and the hooks draw between them
+                val framebuffer = VanillaGl.getFrameBuffer(GL30.GL_DRAW_FRAMEBUFFER)
+                MainTarget.get().bindWrite(true)
+                // a render pass leaves its scissor on, which has nothing to do with what the hooks draw
+                val scissor = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST)
+                if (scissor) VanillaGl._disableScissorTest()
+                try {
+                    RenderLevelStageEvent.post(
+                        RenderLevelStageEvent(
+                            renderer, PoseStack(), projectionMatrix, ticks, partialTick, camera, frustum, stage.toRenderStage()
+                        )
+                    )
+                } finally {
+                    if (scissor) VanillaGl._enableScissorTest()
+                    VanillaGl._glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer)
+                }
+            }
+        } finally {
+            RenderSystem.restoreProjectionMatrix()
+            modelView.popMatrix()
+            RenderSystem.applyModelViewMatrix()
+            RenderSystem.reverseDepth = reversed
+        }
     }
 
     override fun onCommonInitialize() {

@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
@@ -73,7 +73,7 @@ object DefaultScriptDefinitions {
                 baseClass = ReloadScript::class.qualifiedName!!,
                 defaultImports = listOf(
                     "ru.hollowhorizon.hollowengine.common.scripting.annotations.*",
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                     ItemStack::class.qualifiedName!!,
                     "net.minecraft.core.component.DataComponentPatch",
                     SubscribeEvent::class.qualifiedName!!,
@@ -108,7 +108,7 @@ object DefaultScriptDefinitions {
                     "net.minecraft.world.level.block.Block",
                     "net.minecraft.world.level.block.SoundType",
                     "net.minecraft.world.level.block.state.BlockBehaviour",
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                     ItemStack::class.qualifiedName!!,
                     SubscribeEvent::class.qualifiedName!!,
                     Import::class.qualifiedName!!,
@@ -135,9 +135,11 @@ object DefaultScriptDefinitions {
                     "ru.hollowhorizon.hollowengine.common.ui.net.*",
                     "ru.hollowhorizon.hollowengine.client.ui.script.observe",
                     "ru.hollowhorizon.hollowengine.client.ui.script.LocalReplacedScreen",
+                    "ru.hollowhorizon.hollowengine.common.colliders.collider",
+                    "ru.hollowhorizon.hollowengine.common.colliders.colliders",
                     "ru.hollowhorizon.hollowengine.common.scripting.annotations.*",
                     "net.minecraft.nbt.CompoundTag",
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                 )
             )
             this += Provider(
@@ -158,7 +160,7 @@ object DefaultScriptDefinitions {
                     "kotlin.time.Duration.Companion.minutes",
                     "kotlin.time.Duration.Companion.seconds",
                     "java.time.Instant",
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                     "net.minecraft.nbt.CompoundTag",
                     "net.minecraft.world.entity.Entity",
                     "net.minecraft.world.entity.LivingEntity",
@@ -182,12 +184,16 @@ object DefaultScriptDefinitions {
                     "ru.hollowhorizon.hollowengine.common.npcs.actions.*",
                     "ru.hollowhorizon.hollowengine.common.npcs.navigation.MoveOptions",
                     "ru.hollowhorizon.hollowengine.common.npcs.navigation.MoveResult",
+                    "ru.hollowhorizon.hollowengine.common.npcs.navigation.Shortfall",
                     "ru.hollowhorizon.hollowengine.common.npcs.navigation.UnavailableTargetPolicy",
                     "ru.hollowhorizon.hollowengine.common.npcs.navigation.UnreachablePolicy",
-                    "ru.hollowhorizon.hollowengine.common.npcs.HitboxMode",
+                    "ru.hollowhorizon.hollowengine.common.npcs.navigation.Facing",
+                    "ru.hollowhorizon.hollowengine.common.npcs.navigation.Zone",
+                    "ru.hollowhorizon.hollowengine.common.npcs.navigation.NavigationComponent",
                     "ru.hollowhorizon.hollowengine.common.entities.*",
                     "ru.hollowhorizon.hollowengine.common.attachments.components.*",
                     "ru.hollowhorizon.hollowengine.common.models.*",
+                    "ru.hollowhorizon.hollowengine.common.colliders.*",
                     "ru.hollowhorizon.hollowengine.common.attachments.api.set",
                     "ru.hollowhorizon.hollowengine.common.dialogue.*",
                     "ru.hollowhorizon.hollowengine.common.utils.rl",
@@ -206,7 +212,7 @@ object DefaultScriptDefinitions {
                 baseClass = CONSOLE_SCRIPT,
                 defaultImports = listOf(
                     Import::class.qualifiedName!!,
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                     ItemStack::class.qualifiedName!!,
                     "net.minecraft.core.BlockPos",
                     "net.minecraft.world.phys.Vec3",
@@ -224,7 +230,7 @@ object DefaultScriptDefinitions {
                 baseClass = ServerConsoleScript::class.qualifiedName!!,
                 defaultImports = listOf(
                     Import::class.qualifiedName!!,
-                    ResourceLocation::class.qualifiedName!!,
+                    Identifier::class.qualifiedName!!,
                     ItemStack::class.qualifiedName!!,
                     "net.minecraft.core.BlockPos",
                     "net.minecraft.world.phys.Vec3",

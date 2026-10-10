@@ -1,11 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.shadergraph
 
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexBuffer
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexBuffer
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL33
@@ -22,7 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * The whole graph is one program: a uniform picks whose value a draw shows, so an edit compiles once
  * however many nodes there are, and a value typed on a node is a uniform too, so changing it compiles
  * nothing. A node that reads the shape of what it is on, and the output node, are drawn on the mesh
- * the graph picked; the rest on a flat quad.
+ * the graph picked; the rest on a flat quad. Every preview of a post effect is the screen: a quad of
+ * its aspect over the screenshot the graph names.
  */
 internal class ShaderGraphPreviews {
     /** A graph to draw, and what tells one version of it from the next. */
@@ -38,6 +40,8 @@ internal class ShaderGraphPreviews {
 
     private val name = "preview_${Counter.incrementAndGet()}"
     private val meshes = ShaderPreviewMeshes()
+    private val scene = ShaderPreviewScene()
+    private val sceneDepth = ShaderPreviewScene()
     private val started = System.nanoTime()
     private var program: ShaderInstance? = null
     private var programSource: String? = null
@@ -71,14 +75,21 @@ internal class ShaderGraphPreviews {
                 RenderSystem.disableBlend()
                 RenderSystem.disableDepthTest()
                 val master = frame.graph.nodes.firstOrNull { ShaderNodeTypes.of(it.type)?.master != null }?.id
+                val screen = frame.graph.target == ShaderTarget.POST
+                val texture = textureAt(frame.graph.preview.texture)
+                val sceneTexture = if (screen) scene.texture(frame.graph.preview.scene) else texture
+                val mainTexture = if (screen) sceneTexture else texture
+                val depthTexture = if (screen) sceneDepth.texture(frame.graph.preview.sceneDepth) else texture
+                val images = PreviewImages(mainTexture, sceneTexture, depthTexture)
                 compiled.previewIndex.forEach { (node, index) ->
-                    val pixels = if (node == master) OUTPUT_PIXELS else PIXELS
-                    val target = target(node, pixels)
+                    val width = if (node == master) OUTPUT_PIXELS else PIXELS
+                    val height = if (screen) (width * ShaderGraphPreview.SCREEN_ASPECT).toInt() else width
+                    val target = target(node, width, height)
                     target.setClearColor(0f, 0f, 0f, 0f)
-                    target.clear(Minecraft.ON_OSX)
+                    target.clear()
                     target.bindWrite(true)
-                    val mesh = frame.graph.preview.mesh.takeIf { node in compiled.spatial } ?: ShaderPreviewMesh.QUAD
-                    draw(shader, frame.graph, compiled, mesh, index, pixels)
+                    val mesh = frame.graph.preview.mesh.takeIf { !screen && node in compiled.spatial } ?: ShaderPreviewMesh.QUAD
+                    draw(shader, frame.graph, compiled, mesh, index, width, height, images)
                 }
             }
         }
@@ -86,11 +97,11 @@ internal class ShaderGraphPreviews {
         if (blend) RenderSystem.enableBlend()
     }
 
-    private fun target(node: String, pixels: Int): TextureTarget {
+    private fun target(node: String, width: Int, height: Int): TextureTarget {
         val existing = targets[node]
-        if (existing != null && existing.width == pixels) return existing
+        if (existing != null && existing.width == width && existing.height == height) return existing
         existing?.destroyBuffers()
-        return TextureTarget(pixels, pixels, false, Minecraft.ON_OSX).also { targets[node] = it }
+        return TextureTarget(width, height, false).also { targets[node] = it }
     }
 
     private fun draw(
@@ -99,7 +110,9 @@ internal class ShaderGraphPreviews {
         compiled: ShaderPreviewCode,
         mesh: ShaderPreviewMesh,
         index: Int,
-        pixels: Int,
+        width: Int,
+        height: Int,
+        images: PreviewImages,
     ) {
         val seconds = (System.nanoTime() - started) / 1_000_000_000f
         val flat = mesh == ShaderPreviewMesh.QUAD
@@ -113,8 +126,11 @@ internal class ShaderGraphPreviews {
         shader.safeGetUniform("PreviewNode").set(index)
         shader.safeGetUniform("PreviewTime").set(seconds)
         shader.safeGetUniform("PreviewFlat").set(if (flat) 1f else 0f)
-        shader.safeGetUniform("PreviewPixels").set(pixels.toFloat())
-        shader.setSampler("Sampler0", textureAt(graph.preview.texture))
+        shader.safeGetUniform("PreviewSize").set(width.toFloat(), height.toFloat())
+        shader.safeGetUniform("PreviewScreen").set(if (graph.target == ShaderTarget.POST) 1f else 0f)
+        shader.setSampler("PreviewScene", images.scene)
+        shader.setSampler("PreviewDepth", images.depth)
+        shader.setSampler("Sampler0", images.main)
         graph.properties.forEach { property ->
             if (property.type == ShaderType.TEXTURE) {
                 if (property.texture.isNotBlank()) shader.setSampler(
@@ -160,6 +176,9 @@ internal class ShaderGraphPreviews {
         }
     }
 
+    /** The textures a draw samples: the main texture, and for a post effect the screenshot and its depth. */
+    private class PreviewImages(val main: Int, val scene: Int, val depth: Int)
+
     /** Where the mesh is in the world, and the camera that looks at it. */
     private class PreviewCamera(val model: Matrix4f, val view: Matrix4f, val projection: Matrix4f)
 
@@ -177,8 +196,9 @@ internal class ShaderGraphPreviews {
         val source = ShaderGraphTemplates.preview(compiled)
         val vertexSource = ShaderGraphTemplates.previewVertex(compiled)
         code = compiled
-        animated =
-            ShaderInput.TIME.glsl in compiled.statements.text || ShaderInput.TIME.glsl in compiled.vertex.text || graph.preview.rotate && graph.preview.mesh != ShaderPreviewMesh.QUAD && compiled.spatial.any { it in compiled.previewIndex }
+        val turning = graph.target == ShaderTarget.SURFACE && graph.preview.rotate &&
+                graph.preview.mesh != ShaderPreviewMesh.QUAD && compiled.spatial.any { it in compiled.previewIndex }
+        animated = ShaderInput.TIME.glsl in compiled.statements.text || ShaderInput.TIME.glsl in compiled.vertex.text || turning
         (targets.keys - compiled.previewIndex.keys).forEach { targets.remove(it)?.destroyBuffers() }
         if (vertexSource + source == programSource) return
 
@@ -192,7 +212,7 @@ internal class ShaderGraphPreviews {
                 vertex = ShaderGraphPrograms.stage(stage),
                 fragment = ShaderGraphPrograms.stage(stage),
                 attributes = listOf("Position", "Color", "UV0", "UV1", "UV2", "Normal"),
-                samplers = listOf("Sampler0") + ShaderGraphPrograms.propertySamplers(graph.properties),
+                samplers = listOf("Sampler0", "PreviewScene", "PreviewDepth") + ShaderGraphPrograms.propertySamplers(graph.properties),
                 uniforms = listOf(
                     ShaderGraphUniform("ModelViewMat", "matrix4x4", IDENTITY),
                     ShaderGraphUniform("ProjMat", "matrix4x4", IDENTITY),
@@ -200,7 +220,8 @@ internal class ShaderGraphPreviews {
                     ShaderGraphUniform("PreviewNode", "int", listOf(0f)),
                     ShaderGraphUniform("PreviewTime", "float", listOf(0f)),
                     ShaderGraphUniform("PreviewFlat", "float", listOf(1f)),
-                    ShaderGraphUniform("PreviewPixels", "float", listOf(PIXELS.toFloat())),
+                    ShaderGraphUniform("PreviewScreen", "float", listOf(0f)),
+                    ShaderGraphUniform("PreviewSize", "float", listOf(PIXELS.toFloat(), PIXELS.toFloat())),
                 ) + ShaderGraphPrograms.propertyUniforms(graph.properties),
             ),
             stages = mapOf("vsh" to vertexSource, "fsh" to source),
@@ -231,6 +252,8 @@ internal class ShaderGraphPreviews {
         programSource = null
         drawnRevision = null
         meshes.release()
+        scene.release()
+        sceneDepth.release()
         targets.values.forEach(TextureTarget::destroyBuffers)
         targets.clear()
     }

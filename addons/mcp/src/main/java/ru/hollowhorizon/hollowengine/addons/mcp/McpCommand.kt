@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.addons.mcp
 
+import net.minecraft.server.players.NameAndId
+import ru.hollowhorizon.hollowengine.common.utils.compat.displayClientMessage
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermission
 import com.mojang.brigadier.tree.CommandNode
 import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
@@ -71,7 +74,7 @@ internal class McpCommand(private val server: () -> McpServer?, private val stat
     private fun isHost(source: CommandSourceStack): Boolean {
         if (!isPhysicalClient) return false
         val player = source.player ?: return false
-        return source.server.isSingleplayerOwner(player.gameProfile)
+        return source.server.isSingleplayerOwner(NameAndId(player.gameProfile))
     }
 
     private fun title(running: Boolean, url: String?): MutableComponent {
@@ -92,8 +95,8 @@ internal class McpCommand(private val server: () -> McpServer?, private val stat
             row.append(
                 Component.literal("[ ${client.title} ]").withStyle { style ->
                     style.withColor(client.color).withBold(true)
-                        .withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hollowengine mcp copy ${client.id}"))
-                        .withHoverEvent(HoverEvent(HoverEvent.Action.SHOW_TEXT, hint))
+                        .withClickEvent(ClickEvent.RunCommand("/hollowengine mcp copy ${client.id}"))
+                        .withHoverEvent(HoverEvent.ShowText(hint))
                 }
             )
         }

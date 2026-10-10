@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui
 
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.common.utils.areStacksEqual
 
@@ -43,7 +43,7 @@ class UiItem(stack: ItemStack) {
          * so a bad id costs one lookup instead of one per frame.
          */
         fun of(id: String): UiItem {
-            val location = ResourceLocation.tryParse(id) ?: return Empty
+            val location = Identifier.tryParse(id) ?: return Empty
             val item = BuiltInRegistries.ITEM.getOptional(location).orElse(null) ?: return Empty
             return UiItem(ItemStack(item))
         }

@@ -1,14 +1,17 @@
 package ru.hollowhorizon.hollowengine.common.attachments.components.ai
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.resources.Identifier
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.entity.PathfinderMob
 import net.minecraft.world.entity.item.ItemEntity
+import net.minecraft.world.phys.Vec3
 import ru.hollowhorizon.hollowengine.common.attachments.api.AttachmentRegistry
 import ru.hollowhorizon.hollowengine.common.attachments.components.ComponentDescriptorRegistry
 import ru.hollowhorizon.hollowengine.common.attachments.tracking.MCEntity
+import ru.hollowhorizon.hollowengine.common.npcs.navigation.NpcPathNavigation
 import ru.hollowhorizon.hollowengine.common.npcs.navigation.faceTowards
 import java.util.*
 
@@ -20,6 +23,9 @@ private object AIRuntimeState {
 }
 
 object AIComponentSystems {
+    /** How many points ahead a patrol plans its pace along. */
+    private const val PATROL_LOOKAHEAD = 4
+
     private val attackId by lazy { descriptorId(AttackTargetComponent::class) }
     private val followId by lazy { descriptorId(FollowTargetComponent::class) }
     private val moveToId by lazy { descriptorId(MoveToPositionComponent::class) }
@@ -27,7 +33,7 @@ object AIComponentSystems {
     private val lookAtId by lazy { descriptorId(LookAtTargetComponent::class) }
     private val pickupId by lazy { descriptorId(PickupLootComponent::class) }
 
-    fun tickEntity(entity: MCEntity, components: Map<ResourceLocation, Any>) {
+    fun tickEntity(entity: MCEntity, components: Map<Identifier, Any>) {
         val attack = components[attackId] as? AttackTargetComponent
         val follow = components[followId] as? FollowTargetComponent
         val moveTo = components[moveToId] as? MoveToPositionComponent
@@ -95,7 +101,7 @@ object AIComponentSystems {
         (mob as? PathfinderMob)?.navigation?.stop()
         if (cooldown <= 0) {
             mob.swing(InteractionHand.MAIN_HAND)
-            mob.doHurtTarget(target)
+            (mob.level() as? ServerLevel)?.let { mob.doHurtTarget(it, target) }
             AIRuntimeState.attackCooldowns[entity.uuid] = attack.cooldownTicks.coerceAtLeast(1)
         }
     }
@@ -181,7 +187,26 @@ object AIComponentSystems {
         val activeIndex =
             AIRuntimeState.patrolIndices.getOrDefault(entityId, currentIndex).coerceIn(0, patrol.points.lastIndex)
         val activePoint = patrol.points[activeIndex]
+        (mob.navigation as? NpcPathNavigation)?.aim(activePoint.position, passedThrough(patrol, activeIndex), patrol.arrivalRadius.toDouble())
         mob.navigation.moveTo(activePoint.position.x, activePoint.position.y, activePoint.position.z, patrol.arrivalRadius.toInt(), patrol.speed.toDouble())
+    }
+
+    private fun passedThrough(patrol: PatrolPathComponent, index: Int): List<Vec3> {
+        if (patrol.points[index].waitTicks > 0) return emptyList()
+        val points = ArrayList<Vec3>()
+        var next = index
+        while (points.size < PATROL_LOOKAHEAD) {
+            next++
+            if (next > patrol.points.lastIndex) {
+                if (!patrol.loop) break
+                next = 0
+            }
+            if (next == index) break
+            val point = patrol.points[next]
+            points += point.position
+            if (point.waitTicks > 0) break
+        }
+        return points
     }
 
     private fun handleLookAt(entity: MCEntity, lookAt: LookAtTargetComponent?) {
@@ -236,7 +261,7 @@ object AIComponentSystems {
         if (pickup == null) AIRuntimeState.lootScanCooldowns.remove(entityId)
     }
 
-    private fun descriptorId(type: kotlin.reflect.KClass<*>): ResourceLocation =
+    private fun descriptorId(type: kotlin.reflect.KClass<*>): Identifier =
         ComponentDescriptorRegistry.idFor(type)
             ?: error("Component descriptor not found for ${type.qualifiedName}")
 }

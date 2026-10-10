@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.ui
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
  * rebuilt from scratch each time rather than merged, a renamed or deleted screen must not linger.
  */
 object UiDefinitionRegistry {
-    private val screens = ConcurrentHashMap<ResourceLocation, UiScreenDefinition>()
-    private val overlays = ConcurrentHashMap<ResourceLocation, UiOverlayDefinition>()
-    private val surfaces = ConcurrentHashMap<ResourceLocation, UiSurfaceDefinition>()
+    private val screens = ConcurrentHashMap<Identifier, UiScreenDefinition>()
+    private val overlays = ConcurrentHashMap<Identifier, UiOverlayDefinition>()
+    private val surfaces = ConcurrentHashMap<Identifier, UiSurfaceDefinition>()
 
     /** Replaced screen class name -> the scripted screen that replaces it. */
     private val overrides = ConcurrentHashMap<String, OverrideEntry>()
@@ -44,11 +44,11 @@ object UiDefinitionRegistry {
         surfaces[definition.id] = definition
     }
 
-    fun screen(id: ResourceLocation): UiScreenDefinition? = screens[id]
+    fun screen(id: Identifier): UiScreenDefinition? = screens[id]
 
-    fun overlay(id: ResourceLocation): UiOverlayDefinition? = overlays[id]
+    fun overlay(id: Identifier): UiOverlayDefinition? = overlays[id]
 
-    fun surface(id: ResourceLocation): UiSurfaceDefinition? = surfaces[id]
+    fun surface(id: Identifier): UiSurfaceDefinition? = surfaces[id]
 
     fun screenOverride(type: Class<*>): UiScreenDefinition? {
         if (overrides.isEmpty()) return null
