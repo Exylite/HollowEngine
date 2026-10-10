@@ -1,13 +1,17 @@
 package ru.hollowhorizon.hollowengine.common.entities.objects
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
-import net.minecraft.core.HolderLookup
+import net.minecraft.core.UUIDUtil
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.Tag
+import net.minecraft.resources.Identifier
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.datafix.DataFixTypes
 import net.minecraft.world.level.saveddata.SavedData
+import net.minecraft.world.level.saveddata.SavedDataType
+import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.attachments.editor.canEditEntities
 import ru.hollowhorizon.hollowengine.common.utils.nbt.ForUuid
 import java.util.UUID
@@ -36,11 +40,11 @@ class WorldObjectFavorites private constructor() : SavedData() {
 
     operator fun get(uuid: UUID): WorldObjectFavorite? = entries[uuid]
 
-    override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
+    private fun save(): CompoundTag {
         val list = ListTag()
         entries.values.forEach { favorite ->
             list += CompoundTag().apply {
-                putUUID("Id", favorite.uuid)
+                store("Id", UUIDUtil.CODEC, favorite.uuid)
                 putString("Name", favorite.name)
                 putString("Dimension", favorite.dimension)
                 putDouble("X", favorite.x)
@@ -48,34 +52,38 @@ class WorldObjectFavorites private constructor() : SavedData() {
                 putDouble("Z", favorite.z)
             }
         }
-        tag.put("Favorites", list)
-        return tag
+        return CompoundTag().apply { put("Favorites", list) }
     }
 
     companion object {
-        private const val NAME = "hollowengine_object_favorites"
-
         /**
          * Vanilla, unlike NeoForge, runs every saved file through a fixer and has no case for none. The data is
          * written at the current version, so the level fixer leaves it as it is.
          */
-        private val factory = Factory(::WorldObjectFavorites, ::load, DataFixTypes.LEVEL)
+        private val TYPE = SavedDataType(
+            Identifier.fromNamespaceAndPath(HollowEngine.MODID, "object_favorites"),
+            ::WorldObjectFavorites,
+            CompoundTag.CODEC.xmap(::load, WorldObjectFavorites::save),
+            DataFixTypes.LEVEL,
+        )
 
-        fun of(server: MinecraftServer): WorldObjectFavorites = server.overworld().dataStorage.computeIfAbsent(factory, NAME)
+        fun of(server: MinecraftServer): WorldObjectFavorites = server.overworld().dataStorage.computeIfAbsent(TYPE)
 
-        private fun load(tag: CompoundTag, registries: HolderLookup.Provider) = WorldObjectFavorites().apply {
-            tag.getList("Favorites", Tag.TAG_COMPOUND.toInt()).forEach { element ->
-                val entry = element as? CompoundTag ?: return@forEach
-                if (!entry.hasUUID("Id")) return@forEach
-                val favorite = WorldObjectFavorite(
-                    entry.getUUID("Id"),
-                    entry.getString("Name"),
-                    entry.getString("Dimension"),
-                    entry.getDouble("X"),
-                    entry.getDouble("Y"),
-                    entry.getDouble("Z"),
-                )
-                entries[favorite.uuid] = favorite
+        private fun load(tag: CompoundTag) = WorldObjectFavorites().apply {
+            tag.getList("Favorites").ifPresent { list ->
+                list.forEach { element ->
+                    val entry = element as? CompoundTag ?: return@forEach
+                    val id = entry.read("Id", UUIDUtil.CODEC).orElse(null) ?: return@forEach
+                    val favorite = WorldObjectFavorite(
+                        id,
+                        entry.getStringOr("Name", ""),
+                        entry.getStringOr("Dimension", ""),
+                        entry.getDoubleOr("X", 0.0),
+                        entry.getDoubleOr("Y", 0.0),
+                        entry.getDoubleOr("Z", 0.0),
+                    )
+                    entries[favorite.uuid] = favorite
+                }
             }
         }
 

@@ -46,7 +46,7 @@ vec3 sg_project(vec3 point) {
 
 vec3 sg_pixel_position() {
     float depth = texture(SceneDepth, texCoord).r;
-    vec4 at = InvViewProjMat * vec4(texCoord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+    vec4 at = InvViewProjMat * vec4(texCoord * 2.0 - 1.0, hollowengine_ndc_depth(SceneProjMat, depth), 1.0);
     return at.xyz / at.w - ViewEye;
 }
 

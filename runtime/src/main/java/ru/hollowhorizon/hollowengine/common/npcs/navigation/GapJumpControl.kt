@@ -67,8 +67,8 @@ internal class GapJumpControl(private val mob: NpcEntity) {
         }
 
         val yaw = mob.yRot * Mth.DEG_TO_RAD
-        val dirX = -Mth.sin(yaw).toDouble()
-        val dirZ = Mth.cos(yaw).toDouble()
+        val dirX = -Mth.sin(yaw.toDouble()).toDouble()
+        val dirZ = Mth.cos(yaw.toDouble()).toDouble()
         val body = NpcNavigationGeometry.jumpBody(mob, speed, friction)
         return when (JumpSimulation.decide(space, body, position, motion.x, motion.z, dirX, dirZ, jump.landing)) {
             JumpDecision.TAKE_OFF -> takeOff(speed)
@@ -127,8 +127,8 @@ internal class GapJumpControl(private val mob: NpcEntity) {
         val yaw = mob.yRot * Mth.DEG_TO_RAD
         val towardX = (dx / distance).toFloat()
         val towardZ = (dz / distance).toFloat()
-        mob.zza = input * (-towardX * Mth.sin(yaw) + towardZ * Mth.cos(yaw))
-        mob.xxa = input * (towardX * Mth.cos(yaw) + towardZ * Mth.sin(yaw))
+        mob.zza = input * (-towardX * Mth.sin(yaw.toDouble()) + towardZ * Mth.cos(yaw.toDouble()))
+        mob.xxa = input * (towardX * Mth.cos(yaw.toDouble()) + towardZ * Mth.sin(yaw.toDouble()))
     }
 
     private fun turnBody(yaw: Float, maxTurn: Float) {

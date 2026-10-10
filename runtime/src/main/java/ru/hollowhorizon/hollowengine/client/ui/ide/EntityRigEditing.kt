@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.editor.WorldHistory
 import ru.hollowhorizon.hollowengine.client.history.SnapshotStep
 import ru.hollowhorizon.hollowengine.client.history.UndoLabel
@@ -36,7 +36,7 @@ internal class EntityRigEditing(val entityId: Int, initial: Model) : RigEditing 
     override val history get() = WorldHistory.history
 
     override val occupied: ModelRig
-        get() = RigAssets.of(ResourceLocation.tryParse(model.model)).overlay(rig)
+        get() = RigAssets.of(Identifier.tryParse(model.model)).overlay(rig)
 
     override fun edit(mergeKey: String?, label: UndoLabel?, change: (ModelRig) -> ModelRig) {
         val next = change(rig)

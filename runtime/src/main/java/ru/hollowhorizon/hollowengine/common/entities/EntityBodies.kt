@@ -94,7 +94,7 @@ object EntityBodies {
     }
 
     internal fun shoveFromPlayer(player: ServerPlayer, packet: BodyShovePacket) {
-        val body = player.serverLevel().getEntity(packet.entityId) ?: return
+        val body = player.level().getEntity(packet.entityId) ?: return
         if (!isMovedByOthers(body)) return
         val near = player.boundingBox.inflate(PLAYER_REACH)
         if (shapesOf(body).none { it.bounds.intersects(near) }) return

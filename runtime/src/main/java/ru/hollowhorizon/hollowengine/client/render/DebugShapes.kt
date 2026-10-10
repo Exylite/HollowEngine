@@ -1,13 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.render
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.blaze3d.vertex.VertexFormat
-import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.MultiBufferSource
-import net.minecraft.client.renderer.RenderStateShard
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderType
 import ru.hollowhorizon.hollowengine.client.utils.color
 import ru.hollowhorizon.hollowengine.client.utils.vertex
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
@@ -17,27 +13,10 @@ import kotlin.math.abs
 
 @ClientOnly
 object DebugShapes {
-    val PANEL: RenderType = shapes("hollowengine:debug_panel_shapes", RenderStateShard.MAIN_TARGET)
+    val PANEL: RenderType = RenderType.triangles("hollowengine:debug_panel_shapes")
 
     /** Over the world, as the skeleton shown with hitboxes is. */
-    val OVERLAY: RenderType = shapes("hollowengine:debug_overlay_shapes", RenderStateShard.ITEM_ENTITY_TARGET)
-
-    private fun shapes(name: String, target: RenderStateShard.OutputStateShard): RenderType = RenderType.create(
-        name,
-        DefaultVertexFormat.POSITION_COLOR,
-        VertexFormat.Mode.TRIANGLES,
-        1536,
-        false,
-        true,
-        RenderType.CompositeState.builder()
-            .setShaderState(RenderStateShard.ShaderStateShard(GameRenderer::getPositionColorShader))
-            .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-            .setOutputState(target)
-            .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-            .setCullState(RenderStateShard.NO_CULL)
-            .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-            .createCompositeState(false),
-    )
+    val OVERLAY: RenderType = RenderType.triangles("hollowengine:debug_overlay_shapes")
 
     fun batch(buffers: MultiBufferSource, poseStack: PoseStack, type: RenderType = PANEL): Batch =
         Batch(buffers.getBuffer(type), poseStack.last())

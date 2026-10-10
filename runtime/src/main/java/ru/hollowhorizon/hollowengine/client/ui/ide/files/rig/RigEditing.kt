@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.rig
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.history.UndoLabel
 import ru.hollowhorizon.hollowengine.client.history.UndoOwner
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.RigAssets
@@ -39,7 +39,7 @@ class NestedRigEditing(
     override val rig: ModelRig get() = spec?.rig ?: ModelRig.EMPTY
 
     override val occupied: ModelRig
-        get() = spec?.let { RigAssets.of(ResourceLocation.tryParse(it.model)).overlay(it.rig) } ?: ModelRig.EMPTY
+        get() = spec?.let { RigAssets.of(Identifier.tryParse(it.model)).overlay(it.rig) } ?: ModelRig.EMPTY
 
     override val history get() = parent.history
 

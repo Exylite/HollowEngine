@@ -4,7 +4,7 @@ import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.FluidTags
 import net.minecraft.tags.TagKey
 import net.minecraft.util.Mth
@@ -112,11 +112,11 @@ internal class AvoidRules(
         private fun matcher(text: String): ((BlockState) -> Boolean)? {
             val name = text.trim()
             if (name.startsWith("#")) {
-                val id = ResourceLocation.tryParse(name.drop(1)) ?: return null
+                val id = Identifier.tryParse(name.drop(1)) ?: return null
                 val tag = TagKey.create(Registries.BLOCK, id)
                 return { it.`is`(tag) }
             }
-            val id = ResourceLocation.tryParse(name) ?: return null
+            val id = Identifier.tryParse(name) ?: return null
             val block = BuiltInRegistries.BLOCK.getOptional(id).orElse(null) ?: return null
             return { it.`is`(block) }
         }

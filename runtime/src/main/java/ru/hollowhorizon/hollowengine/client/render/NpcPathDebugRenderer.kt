@@ -55,7 +55,7 @@ object NpcPathDebugRenderer {
         if (paths.isEmpty()) return
 
         val camera = event.camera.position()
-        val buffers = DebugLines.batch(ImmediateBufferSource, event.poseStack)
+        val buffers = DebugLines.batch(ImmediateBufferSource, event.poseStack, DebugLines.WORLD)
         for ((_, debugPath) in paths) {
             val nodes = debugPath.path.let { path -> (0 until path.nodeCount).map { path.getNode(it) } }
             nodes.zipWithNext().forEachIndexed { index, (from, to) ->

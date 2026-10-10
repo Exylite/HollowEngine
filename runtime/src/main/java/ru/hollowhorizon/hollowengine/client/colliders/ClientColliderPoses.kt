@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.colliders
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.Vec3
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.RigAssets
@@ -30,14 +30,14 @@ import ru.hollowhorizon.hollowengine.common.utils.math.Mat4f
  * hung on it, so they are where the player sees them. A model that was never drawn has none to offer.
  */
 object ClientColliderPoses {
-    private val rigs = EntityRigs { model -> RigAssets.of(ResourceLocation.tryParse(model)) }
+    private val rigs = EntityRigs { model -> RigAssets.of(Identifier.tryParse(model)) }
 
     fun of(entity: Entity): List<EntityCollider> {
         val node = modelNode(entity) ?: return emptyList()
         if (rig(entity)?.hasColliders() != true) return emptyList()
 
         val instance = entity.modelInstanceOrNull(node.nodeId, node.model.model) ?: return emptyList()
-        val partialTick = Minecraft.getInstance().timer.getGameTimeDeltaPartialTick(false)
+        val partialTick = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
         val placed = DrawnScope(instance.attachment, null, 0).placeColliders(
             entityModelMatrix(entity, node.transform, partialTick),
             hostPosition(entity, partialTick),
@@ -52,7 +52,7 @@ object ClientColliderPoses {
     fun nameplateAttachment(entity: Entity, vanilla: Vec3): Vec3 {
         val colliders = of(entity)
         if (colliders.isEmpty()) return vanilla
-        val partialTick = Minecraft.getInstance().timer.getGameTimeDeltaPartialTick(false)
+        val partialTick = Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false)
         val top = colliders.maxOf { it.volume.bounds.maxY } - hostPosition(entity, partialTick).y - 0.2
         return Vec3(vanilla.x, top, vanilla.z)
     }

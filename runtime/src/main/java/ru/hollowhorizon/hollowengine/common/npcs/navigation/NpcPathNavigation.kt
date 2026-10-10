@@ -152,7 +152,6 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
     }
 
     private fun ahead(currentPath: Path): PathAhead {
-        val npcPath = currentPath as? NpcPath
         val points = arrayListOf(mob.position())
         var length = 0.0
         for (index in currentPath.nextNodeIndex until currentPath.nodeCount) {
@@ -169,7 +168,7 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
                 }
                 return PathAhead(points, stopShort = stopDistance)
             }
-            if (npcPath?.isJumpTo(index + 1) == true) return PathAhead(points, stopShort = 0.0)
+            if (currentPath.isJumpTo(index + 1)) return PathAhead(points, stopShort = 0.0)
             if (length > PLANNING_REACH || !canCutCorner(currentPath.getNode(index).type)) break
         }
         return PathAhead(points, stopShort = null)
@@ -228,7 +227,7 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
         val toEndZ = end.z - mob.z
         val distance = Mth.length(toEndX, toEndZ)
         val behind = distance > MIN_BACKSTEP &&
-                (-Mth.sin(forward) * toEndX + Mth.cos(forward) * toEndZ) / distance < BACKSTEP_COS
+                (-Mth.sin(forward.toDouble()) * toEndX + Mth.cos(forward.toDouble()) * toEndZ) / distance < BACKSTEP_COS
         val reachesEnd = ahead.points.size == currentPath.nodeCount - currentPath.nextNodeIndex + 1
         val flat = ahead.points.all { abs(it.y - mob.y) <= mob.maxUpStep() }
         facing.backstep = if (reachesEnd && flat && ahead.length <= reach && (behind || facing.isBackstepping)) {
@@ -246,8 +245,8 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
      * the last one left rather than from rest, the way the path search tried it.
      */
     override fun followThePath() {
-        val currentPath = path as? NpcPath
-        val index = currentPath?.nextNodeIndex ?: return super.followThePath()
+        val currentPath = path ?: return super.followThePath()
+        val index = currentPath.nextNodeIndex
         val takesOff = currentPath.isJumpTo(index + 1)
         val landed = currentPath.isJumpTo(index)
         if (!takesOff && !landed) {
@@ -304,7 +303,7 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
     /** The jump the step the NPC is on makes over a gap, or null when it walks it. */
     private fun gapJumpOf(currentPath: Path): GapJump? {
         val index = currentPath.nextNodeIndex
-        if (index == 0 || (currentPath as? NpcPath)?.isJumpTo(index) != true) return null
+        if (index == 0 || !currentPath.isJumpTo(index)) return null
         return GapJump(groundPosAtNode(currentPath, index), groundPosAtNode(currentPath, index - 1))
     }
 
@@ -339,12 +338,11 @@ class NpcPathNavigation(level: Level, mob: Mob) : GroundPathNavigation(mob, leve
         if (isProduction || level.isClientSide || mob.tickCount % DEBUG_SYNC_INTERVAL != 0) return
         val steeringTarget = steeringTarget ?: return
         val target = currentPath.target
-        val npcPath = currentPath as? NpcPath
         NpcPathDebugPacket(
             mob.id,
             List(currentPath.nodeCount) { index ->
                 val node = currentPath.getNode(index)
-                NpcPathDebugNode(node.x, node.y, node.z, node.type.name, node.costMalus, npcPath?.isJumpTo(index) == true)
+                NpcPathDebugNode(node.x, node.y, node.z, node.type.name, node.costMalus, currentPath.isJumpTo(index))
             },
             currentPath.nextNodeIndex,
             target.x,

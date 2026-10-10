@@ -19,14 +19,19 @@ class RenderType private constructor(
     val texture: Identifier?,
     val translucent: Boolean,
     val cull: Boolean,
+    private val depthTest: Boolean = true,
 ) {
-    private enum class Kind { ENTITY, LINES }
+    private enum class Kind { ENTITY, LINES, TRIANGLES }
 
     /** Triangles are what the engine produces; vanilla entity types take quads, see [RecordingBufferSource]. */
     val isLines: Boolean get() = kind == Kind.LINES
 
+    /** Lines and solid shapes carry a color and nothing else, which [ImmediateBufferSource] draws with the plain program. */
+    internal val isPlainColor: Boolean get() = kind != Kind.ENTITY
+
     fun vanilla(): VanillaRenderType = when (kind) {
         Kind.LINES -> RenderTypes.lines()
+        Kind.TRIANGLES -> RenderTypes.debugQuads()
         Kind.ENTITY -> {
             val texture = texture ?: error("An entity render type needs a texture")
             when {
@@ -49,8 +54,9 @@ class RenderType private constructor(
             RenderSystem.disableBlend()
         }
         if (cull) RenderSystem.enableCull() else RenderSystem.disableCull()
-        RenderSystem.enableDepthTest()
-        RenderSystem.depthMask(true)
+        if (depthTest) RenderSystem.enableDepthTest() else RenderSystem.disableDepthTest()
+        // debug shapes only ever write color, as their vanilla counterparts do
+        RenderSystem.depthMask(kind == Kind.ENTITY)
     }
 
     fun clearRenderState() {
@@ -64,7 +70,7 @@ class RenderType private constructor(
         get() = if (isLines) VertexFormat.Mode.DEBUG_LINES else VertexFormat.Mode.TRIANGLES
 
     internal val immediateFormat: VertexFormat
-        get() = if (isLines) DefaultVertexFormat.POSITION_COLOR else DefaultVertexFormat.NEW_ENTITY
+        get() = if (isPlainColor) DefaultVertexFormat.POSITION_COLOR else DefaultVertexFormat.NEW_ENTITY
 
     override fun toString() = name
 
@@ -82,8 +88,15 @@ class RenderType private constructor(
         fun entity(texture: Identifier, translucent: Boolean, cull: Boolean) =
             RenderType("hollowengine:entity", Kind.ENTITY, texture, translucent, cull)
 
+        /** Debug lines; they are drawn over what is behind them unless [depthTest] says they belong among it. */
         @JvmStatic
-        fun lines(name: String) = RenderType(name, Kind.LINES, null, true, false)
+        @JvmOverloads
+        fun lines(name: String, depthTest: Boolean = false) = RenderType(name, Kind.LINES, null, true, false, depthTest)
+
+        /** Solid debug shapes, written as triangles. */
+        @JvmStatic
+        @JvmOverloads
+        fun triangles(name: String, depthTest: Boolean = false) = RenderType(name, Kind.TRIANGLES, null, true, false, depthTest)
     }
 }
 
@@ -100,7 +113,8 @@ interface MultiBufferSource {
 /**
  * Draws what the engine writes the moment it is asked to, with the plain programs the engine ships:
  * for the places that already run inside a frame the engine is drawing by hand, such as the UI and
- * the world stages. Only line types are drawn here; entity geometry belongs to the model pipeline.
+ * the world stages. Only plain colored types (lines and solid shapes) are drawn here; entity geometry
+ * belongs to the model pipeline.
  */
 object ImmediateBufferSource : MultiBufferSource.BufferSource {
     private val builders = LinkedHashMap<RenderType, BufferBuilder>()
@@ -120,7 +134,7 @@ object ImmediateBufferSource : MultiBufferSource.BufferSource {
 
     private fun draw(type: RenderType, builder: BufferBuilder) {
         val mesh = builder.build() ?: return
-        val shader = if (type.isLines) ModShaders.POSITION_COLOR else null
+        val shader = if (type.isPlainColor) ModShaders.POSITION_COLOR else null
         if (shader == null) {
             mesh.close()
             return

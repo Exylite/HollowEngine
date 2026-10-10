@@ -23,7 +23,7 @@ object ModEntities : HollowRegistry(HollowEngine.MODID) {
 
     val OBJECT: EntityType<WorldObjectEntity> by register("object") {
         EntityType.Builder.of(::WorldObjectEntity, MobCategory.MISC).sized(0.5f, 0.5f)
-            .fireImmune().clientTrackingRange(10).build("object")
+            .fireImmune().clientTrackingRange(10).build(ResourceKey.create(Registries.ENTITY_TYPE, it))
     }
 }
 

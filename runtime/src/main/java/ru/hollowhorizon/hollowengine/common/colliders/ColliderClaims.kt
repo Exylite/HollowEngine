@@ -51,7 +51,7 @@ internal object ColliderClaims {
         val runtime = AttachmentRegistry.attachments(player).runtime
         runtime.remove(ClaimKey)
 
-        val target = player.serverLevel().getEntity(packet.entityId)?.takeUnless { it.isRemoved } ?: return
+        val target = player.level().getEntity(packet.entityId)?.takeUnless { it.isRemoved } ?: return
         val point = Vec3(packet.x, packet.y, packet.z)
         val eye = player.eyePosition
         val reach = player.entityInteractionRange() + REACH_BUFFER

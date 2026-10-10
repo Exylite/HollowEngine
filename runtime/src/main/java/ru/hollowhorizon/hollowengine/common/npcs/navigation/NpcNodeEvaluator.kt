@@ -187,7 +187,7 @@ class NpcNodeEvaluator(
     }
 
     private fun findWaterBelow(x: Int, fromY: Int, z: Int): Node? {
-        val bottom = maxOf(mob.level().minBuildHeight, fromY - MAX_WATER_DROP)
+        val bottom = maxOf(mob.level().minY, fromY - MAX_WATER_DROP)
         for (y in fromY downTo bottom) {
             when (val type = getCachedPathType(x, y, z)) {
                 PathType.OPEN -> continue

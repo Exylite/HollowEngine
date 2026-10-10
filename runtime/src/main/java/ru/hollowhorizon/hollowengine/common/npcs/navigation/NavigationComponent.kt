@@ -134,7 +134,7 @@ data class JumpSettings(
 
 /** The highest fall [mob] takes for a shorter way: as high as costs it no more than [PathSettings.fallDamage]. */
 internal fun PathSettings.maxFall(mob: LivingEntity): Double {
-    if (mob.type.`is`(EntityTypeTags.FALL_DAMAGE_IMMUNE)) return MAX_FALL
+    if (mob.`is`(EntityTypeTags.FALL_DAMAGE_IMMUNE)) return MAX_FALL
     val multiplier = mob.getAttributeValue(Attributes.FALL_DAMAGE_MULTIPLIER)
     if (multiplier <= 0.0) return MAX_FALL
     val tolerated = floor(fallDamage.toDouble()) / multiplier

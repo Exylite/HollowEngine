@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.colliders
 
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.phys.AABB
 import ru.hollowhorizon.hollowengine.client.models.internal.Model
@@ -43,7 +43,7 @@ object ClientColliderTickPoses {
         if (isPhysical(entity)) tracks.track(entity)?.history.orEmpty() else emptyList()
 
     /** The colliders of [entity] where the frame being drawn shows it. */
-    fun now(entity: Entity): List<EntityCollider> = at(entity, Minecraft.getInstance().timer.getGameTimeDeltaPartialTick(false))
+    fun now(entity: Entity): List<EntityCollider> = at(entity, Minecraft.getInstance().deltaTracker.getGameTimeDeltaPartialTick(false))
 
     fun at(entity: Entity, partialTick: Float): List<EntityCollider> {
         val history = tracks.track(entity)?.history ?: return emptyList()
@@ -71,7 +71,7 @@ object ClientColliderTickPoses {
     /** Made again whenever the rig, the model or its animator are replaced, as after a reload or a save. */
     private fun assetsOf(model: String): ColliderPoseAssets? {
         if (model.isBlank()) return EmptyModel
-        val location = ResourceLocation.tryParse(model) ?: return null
+        val location = Identifier.tryParse(model) ?: return null
         val rig = RigAssets.of(location)
         val loaded = HollowModelManager.getOrCreate(location).value.takeIf { it !== Model.EMPTY } ?: return null
         val animator = HollowModelManager.animatorOf(location)

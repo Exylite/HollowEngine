@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.rig
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.phys.Vec3
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.RigAssets
 import ru.hollowhorizon.hollowengine.common.colliders.ServerColliderAssets
@@ -33,7 +33,7 @@ internal data class RigPartSelection(val bone: String?, val id: String)
  * game if there is one. A dedicated server reads it on its next reload.
  */
 internal fun publishRig(modelId: String, rig: ModelRig) {
-    val location = ResourceLocation.tryParse(modelId) ?: return
+    val location = Identifier.tryParse(modelId) ?: return
     RigAssets.register(location, rig)
     Minecraft.getInstance().singleplayerServer?.execute { ServerColliderAssets.invalidate(modelId) }
 }

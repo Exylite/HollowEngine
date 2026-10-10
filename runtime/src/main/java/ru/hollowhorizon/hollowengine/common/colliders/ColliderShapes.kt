@@ -12,7 +12,7 @@ import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.polymorphic
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionHandle
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionPoints
@@ -40,7 +40,7 @@ class ColliderShapeType<S : ColliderShapeSpec>(
     val serializer: KSerializer<S>,
     val titleKey: String,
 ) {
-    val key: ResourceLocation = id.rl
+    val key: Identifier = id.rl
 }
 
 /** The kinds of shape a collider may have; addons add their own. */

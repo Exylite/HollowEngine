@@ -26,8 +26,8 @@ public class EntityBodyMixin {
     }
 
     @WrapMethod(method = "canBeCollidedWith")
-    private boolean hollowengine$canBeCollidedWith(Operation<Boolean> original) {
-        return BootstrapRuntimeManager.bridge().bodySolid((Entity) (Object) this, original.call());
+    private boolean hollowengine$canBeCollidedWith(Entity other, Operation<Boolean> original) {
+        return BootstrapRuntimeManager.bridge().bodySolid((Entity) (Object) this, original.call(other));
     }
 
     @WrapMethod(method = "collide")

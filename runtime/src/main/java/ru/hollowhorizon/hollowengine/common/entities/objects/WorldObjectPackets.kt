@@ -1,17 +1,22 @@
 package ru.hollowhorizon.hollowengine.common.entities.objects
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.serialization.Serializable
 import net.minecraft.core.registries.Registries
-import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceKey
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.util.Mth
+import net.minecraft.util.ProblemReporter
 import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.EntitySpawnReason
+import net.minecraft.world.entity.EntitySpawnRequest
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.Relative
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.storage.TagValueOutput
 import net.minecraft.world.phys.Vec3
 import org.joml.Quaternionf
 import org.joml.Vector3d
@@ -49,12 +54,12 @@ class SpawnWorldObjectPacket(
 ) : HollowPacket {
     override fun handle(player: Player) {
         if (!player.canEditEntities()) return
-        if (kind != WorldObjectKind.EMPTY && ResourceLocation.tryParse(asset) == null) return
+        if (kind != WorldObjectKind.EMPTY && Identifier.tryParse(asset) == null) return
         val level = player.level()
         val parent = parentId?.let { level.getEntity(it) as? WorldObjectEntity }
 
         val created = WorldObjectEntity(level)
-        created.moveTo(x, y, z, 0f, 0f)
+        created.snapTo(x, y, z, 0f, 0f)
         created set when (kind) {
             WorldObjectKind.MODEL -> Model(asset)
             WorldObjectKind.VFX -> Model("", ModelRig(attachments = listOf(VfxBoneAttachmentSpec(id = "effect", effect = asset))))
@@ -149,10 +154,13 @@ class DuplicateWorldObjectPacket(val entityId: Int) : HollowPacket {
 
     /** A copy of [source] with its components and scripts, put under [parent], the copy of its own parent. */
     private fun duplicate(source: WorldObjectEntity, parent: WorldObjectEntity?): WorldObjectEntity? {
-        val tag = CompoundTag()
-        if (!source.save(tag)) return null
+        val level = source.level()
+        val output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess())
+        if (!source.save(output)) return null
+        val tag = output.buildResult()
         tag.remove("UUID")
-        val copy = EntityType.create(tag, source.level()).orElse(null) as? WorldObjectEntity ?: return null
+        val copy = EntityType.loadEntityRecursive(tag, level, EntitySpawnRequest(EntitySpawnReason.LOAD, false)) { it } as? WorldObjectEntity
+            ?: return null
         parent?.let(copy::attachKeepingLocalPose)
         return copy.takeIf { source.level().addFreshEntity(it) }
     }
@@ -171,7 +179,7 @@ class GoToWorldObjectPacket(val uuid: @Serializable(ForUuid::class) UUID) : Holl
             loaded.level() as ServerLevel to loaded.position()
         } else {
             val favorite = WorldObjectFavorites.of(server)[uuid] ?: return
-            val dimension = ResourceLocation.tryParse(favorite.dimension) ?: return
+            val dimension = Identifier.tryParse(favorite.dimension) ?: return
             val level = server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension)) ?: return
             level to Vec3(favorite.x, favorite.y, favorite.z)
         }
@@ -181,7 +189,7 @@ class GoToWorldObjectPacket(val uuid: @Serializable(ForUuid::class) UUID) : Holl
         val look = target.subtract(standAt)
         val yaw = (Mth.atan2(look.z, look.x) * Mth.RAD_TO_DEG).toFloat() - 90f
         val pitch = (-Mth.atan2(look.y, look.horizontalDistance()) * Mth.RAD_TO_DEG).toFloat()
-        traveler.teleportTo(level, standAt.x, standAt.y, standAt.z, yaw, pitch)
+        traveler.teleportTo(level, standAt.x, standAt.y, standAt.z, emptySet<Relative>(), yaw, pitch, true)
     }
 
     companion object {

@@ -88,7 +88,7 @@ object VfxWorldRenderer {
         VfxDebug.report("collected", frame)
         if (frame.isEmpty) return
 
-        val time = RenderSystem.getShaderGameTime() * SECONDS_PER_DAY
+        val time = RenderSystem.gameTime * SECONDS_PER_DAY
         val view = VfxView.ofCamera(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), time)
         frameView = view
         val main = Minecraft.getInstance().mainRenderTarget

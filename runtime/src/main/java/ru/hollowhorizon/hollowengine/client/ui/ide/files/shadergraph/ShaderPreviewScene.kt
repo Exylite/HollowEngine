@@ -1,7 +1,8 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.shadergraph
 
-import com.mojang.blaze3d.pipeline.TextureTarget
-import com.mojang.blaze3d.platform.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import net.minecraft.client.Minecraft
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -25,7 +26,7 @@ internal class ShaderPreviewScene {
         GlStateManager._bindTexture(source)
         val width = GL33.glGetTexLevelParameteri(GL33.GL_TEXTURE_2D, 0, GL33.GL_TEXTURE_WIDTH).coerceAtLeast(1)
         val height = GL33.glGetTexLevelParameteri(GL33.GL_TEXTURE_2D, 0, GL33.GL_TEXTURE_HEIGHT).coerceAtLeast(1)
-        val target = TextureTarget(width, height, false, Minecraft.ON_OSX)
+        val target = TextureTarget(width, height, false)
         target.setFilterMode(GL33.GL_LINEAR)
 
         val read = GlStateManager.glGenFramebuffers()

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import androidx.compose.runtime.*
 import net.minecraft.client.Minecraft
 import net.minecraft.world.level.Level

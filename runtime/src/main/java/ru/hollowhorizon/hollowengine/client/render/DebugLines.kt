@@ -26,8 +26,11 @@ object DebugLines {
     val PANEL: RenderType = RenderType.lines("hollowengine:debug_panel_lines")
 
     /** Over a preview but behind what is drawn in front of it, as the floor under a model. */
-    val PANEL_DEPTH: RenderType = RenderType.lines("hollowengine:debug_panel_depth_lines")
+    val PANEL_DEPTH: RenderType = RenderType.lines("hollowengine:debug_panel_depth_lines", depthTest = true)
     val BOUND: RenderType = RenderType.lines("hollowengine:debug_bound_lines")
+
+    /** Among the blocks of the level, which hide it where they are in front: paths, for one. */
+    val WORLD: RenderType = RenderType.lines("hollowengine:debug_world_lines", depthTest = true)
 
     fun batch(buffers: MultiBufferSource, poseStack: PoseStack, type: RenderType = OVERLAY): Batch =
         Batch(buffers.getBuffer(type), poseStack.last())

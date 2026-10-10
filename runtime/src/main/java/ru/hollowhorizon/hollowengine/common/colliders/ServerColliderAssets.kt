@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.colliders
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -54,14 +54,14 @@ object ServerColliderAssets : ResourceManagerReloadListener {
     }
 
     private fun load(model: String): Assets {
-        val location = ResourceLocation.tryParse(model)?.takeIf { model.isNotBlank() } ?: return Assets(model, ModelRig.EMPTY) { null }
+        val location = Identifier.tryParse(model)?.takeIf { model.isNotBlank() } ?: return Assets(model, ModelRig.EMPTY) { null }
         val rig = read(location.withSuffix(RIG_SUFFIX)) {
             NBTFormat.deserialize(ModelRig.serializer(), it.loadAsNBT())
         } ?: ModelRig.EMPTY
         return Assets(model, rig) { animatorOf(location, model) }
     }
 
-    private fun animatorOf(location: ResourceLocation, model: String): Animator? {
+    private fun animatorOf(location: Identifier, model: String): Animator? {
         val controller = read(location.withSuffix(METADATA_SUFFIX)) {
             ModelMetadata.parse(it.readBytes().decodeToString(), model)
         }?.animationController
@@ -72,7 +72,7 @@ object ServerColliderAssets : ResourceManagerReloadListener {
         }
     }
 
-    private fun <T> read(location: ResourceLocation, decode: (InputStream) -> T): T? {
+    private fun <T> read(location: Identifier, decode: (InputStream) -> T): T? {
         if (!ModelResourceIO.exists(location)) return null
         return runCatching { ModelResourceIO.open(location).use(decode) }
             .onFailure { HollowEngine.LOGGER.warn("Could not read '{}' for colliders: {}", location, it.message) }

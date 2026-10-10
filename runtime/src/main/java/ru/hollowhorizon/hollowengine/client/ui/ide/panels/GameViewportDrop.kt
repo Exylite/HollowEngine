@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.panels
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.hasPermissions
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue

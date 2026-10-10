@@ -148,15 +148,15 @@ class NpcMoveControl(mob: NpcEntity) : MoveControl<NpcEntity>(mob) {
         var share = stride.share * direction
         val climbing = dy > mob.maxUpStep() + HEIGHT_EPSILON || !mob.onGround() && dy > HEIGHT_EPSILON
         if (climbing) share = max(share, 1.0)
-        if (held == null && off > SIDESTEP_ANGLE) share *= max(0f, Mth.cos(off * Mth.DEG_TO_RAD))
+        if (held == null && off > SIDESTEP_ANGLE) share *= max(0f, Mth.cos((off * Mth.DEG_TO_RAD).toDouble()))
         val input = (speedModifier * mob.getAttributeValue(Attributes.MOVEMENT_SPEED) * sqrt(max(0.0, share))).toFloat()
         mob.speed = input
 
         val yaw = mob.yRot * Mth.DEG_TO_RAD
         val towardX = (dx / distance).toFloat()
         val towardZ = (dz / distance).toFloat()
-        mob.zza = input * (-towardX * Mth.sin(yaw) + towardZ * Mth.cos(yaw))
-        mob.xxa = input * (towardX * Mth.cos(yaw) + towardZ * Mth.sin(yaw))
+        mob.zza = input * (-towardX * Mth.sin(yaw.toDouble()) + towardZ * Mth.cos(yaw.toDouble()))
+        mob.xxa = input * (towardX * Mth.cos(yaw.toDouble()) + towardZ * Mth.sin(yaw.toDouble()))
 
         if (climb(dy, towardX, towardZ, input, if (held == null) off else 0f)) operation = Operation.JUMPING
     }
@@ -181,7 +181,7 @@ class NpcMoveControl(mob: NpcEntity) : MoveControl<NpcEntity>(mob) {
                 turnBody(targetYaw, MAX_BODY_TURN)
                 mob.yHeadRot = rotlerp(mob.yHeadRot, mob.yRot, MAX_HEAD_TURN)
             }
-            headingFactor = max(0f, Mth.cos(Mth.wrapDegrees(targetYaw - mob.yRot) * Mth.DEG_TO_RAD))
+            headingFactor = max(0f, Mth.cos((Mth.wrapDegrees(targetYaw - mob.yRot) * Mth.DEG_TO_RAD).toDouble()))
         }
         mob.speed = (this.speedModifier * mob.getAttributeValue(Attributes.MOVEMENT_SPEED)).toFloat() * headingFactor
         if (stepUp(dy, abs(yawDelta))) operation = Operation.JUMPING

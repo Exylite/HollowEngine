@@ -148,7 +148,7 @@ fun Entity.hurtCollider(name: String, source: DamageSource, amount: Float): Bool
     val (bone, _) = EntityColliders.rig(this)?.colliders?.firstOrNull { it.second.id == name }
         ?: throw IllegalArgumentException("${this.name.string} has no collider named \"$name\"")
     val location = colliders.firstOrNull { it.name == name }?.volume?.center ?: boundingBox.center
-    return hurt(ColliderDamageSource(source, ColliderHit(this, name, bone, location)), amount)
+    return hurtOrSimulate(ColliderDamageSource(source, ColliderHit(this, name, bone, location)), amount)
 }
 
 /** The collider this hit landed on, the crosshair's included, or null when it landed on none. */

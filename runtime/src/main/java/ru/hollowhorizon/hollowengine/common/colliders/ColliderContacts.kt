@@ -35,7 +35,7 @@ internal object ColliderContacts {
     val displacer: Entity? get() = displacedBy.get()
 
     fun isSimulatedHere(entity: Entity): Boolean =
-        if (entity.level().isClientSide) entity.isControlledByLocalInstance && entity is Player else entity !is Player
+        if (entity.level().isClientSide) entity.isLocalInstanceAuthoritative && entity is Player else entity !is Player
 
     fun resolve(entity: Entity) {
         if (entity.noPhysics || entity.isSpectator || !isSimulatedHere(entity)) return

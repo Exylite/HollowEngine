@@ -79,7 +79,7 @@ private fun BodyExtras(scope: ComponentEditorScope) {
     val session = LocalEntityEditorSession.current ?: return
     val body = scope.component as? BodyComponent ?: return
     val modelPath = session.entries.firstNotNullOfOrNull { (it.value as? Model)?.model } ?: return
-    val location = remember(modelPath) { ResourceLocation.tryParse(modelPath) } ?: return
+    val location = remember(modelPath) { Identifier.tryParse(modelPath) } ?: return
     val model by remember(location) { HollowModelManager.getOrCreate(location) }.collectAsState()
     val transform = session.entries.firstNotNullOfOrNull { it.value as? TransformComponent } ?: TransformComponent()
     val fit = remember(model, transform) { fitEntityBox(model, RigAssets.of(location), transform.transform.matrixF) } ?: return

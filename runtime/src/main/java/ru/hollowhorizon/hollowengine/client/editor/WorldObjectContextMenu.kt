@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.editor
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf

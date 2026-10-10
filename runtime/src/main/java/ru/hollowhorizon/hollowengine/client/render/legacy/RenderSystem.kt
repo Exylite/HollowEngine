@@ -31,7 +31,17 @@ object RenderSystem {
     @JvmField var fogColor = floatArrayOf(0f, 0f, 0f, 0f)
     @JvmField var fogShape = 0
     @JvmField var lineWidth = 1f
-    @JvmField var gameTime = 0f
+
+    /** The share of a day gone in game time, which shaders read as `GameTime`; 0 outside a level. */
+    val gameTime: Float
+        get() {
+            val minecraft = Minecraft.getInstance()
+            val ticks = minecraft.level?.gameTime ?: return 0f
+            return ((ticks % GAME_DAY_TICKS) + minecraft.deltaTracker.getGameTimeDeltaPartialTick(false)) / GAME_DAY_TICKS
+        }
+
+    private const val GAME_DAY_TICKS = 24000L
+
     @JvmField val light0 = Vector3f(0.2f, 1.0f, -0.7f).normalize()
     @JvmField val light1 = Vector3f(-0.2f, 1.0f, 0.7f).normalize()
 

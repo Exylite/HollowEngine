@@ -1,26 +1,31 @@
 package ru.hollowhorizon.hollowengine.common.entities.objects
 
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.Tag
+import net.minecraft.core.UUIDUtil
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.util.ExtraCodecs
 import net.minecraft.util.Mth
+import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.InterpolationHandler
 import net.minecraft.world.entity.MoverType
 import net.minecraft.world.level.Explosion
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.entity.EntityInLevelCallback
+import net.minecraft.world.level.storage.ValueInput
+import net.minecraft.world.level.storage.ValueOutput
 import net.minecraft.world.phys.Vec3
 import org.joml.Quaternionf
+import org.joml.Quaternionfc
 import org.joml.Vector3d
 import org.joml.Vector3f
+import org.joml.Vector3fc
 import ru.hollowhorizon.hollowengine.common.attachments.components.bodyComponent
 import ru.hollowhorizon.hollowengine.common.colliders.EntityColliders
 import ru.hollowhorizon.hollowengine.common.registry.ModEntities
-import java.util.Optional
 import java.util.UUID
 
 /**
@@ -35,9 +40,16 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
     private var shownBefore = ObjectPose()
     private var shownSteps = 0
 
-    /** Where a root is moving to on the client, after a position update from the server. */
-    private var positionTarget: Vector3d? = null
-    private var positionSteps = 0
+    /**
+     * Eases a root toward the position the server sent. A child follows its parent and the client's own editor
+     * has the say while it predicts, so updates meant for neither are dropped.
+     */
+    private val positionEasing = object : InterpolationHandler(this, LERP_STEPS) {
+        override fun interpolateTo(position: Vec3, yRot: Float, xRot: Float) {
+            if (parentId != null || tickCount < predictedUntil) return
+            super.interpolateTo(position, yRot, xRot)
+        }
+    }
 
     /** Set while a change must show at once rather than ease in, like one the editor predicts. */
     private var snapping = false
@@ -57,7 +69,19 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
         noPhysics = true
     }
 
-    val parentId: UUID? get() = entityData.get(PARENT).orElse(null)
+    /** The parent's id as the synced text last read; the text is parsed only when it changes. */
+    private var parentText = ""
+    private var parentUuid: UUID? = null
+
+    val parentId: UUID?
+        get() {
+            val text = entityData.get(PARENT)
+            if (text != parentText) {
+                parentText = text
+                parentUuid = if (text.isEmpty()) null else runCatching { UUID.fromString(text) }.getOrNull()
+            }
+            return parentUuid
+        }
 
     /** The parent, when it is loaded on this side. */
     val parent: WorldObjectEntity?
@@ -107,7 +131,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
         snapping = snap
         if (parentId == null) {
             setPos(local.position.x, local.position.y, local.position.z)
-            positionSteps = 0
+            positionEasing.cancel()
         } else {
             entityData.set(OFFSET, Vector3f().set(local.position))
         }
@@ -129,7 +153,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
     fun setParent(newParent: WorldObjectEntity?): Boolean {
         if (newParent != null && (newParent === this || newParent.isDescendantOf(this))) return false
         val world = pose(1f)
-        entityData.set(PARENT, Optional.ofNullable(newParent?.uuid))
+        entityData.set(PARENT, newParent?.uuid?.toString().orEmpty())
         setWorldPose(world, snap = true)
         return true
     }
@@ -139,7 +163,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
      * pose was taken relative to a parent standing exactly where [newParent] stands.
      */
     internal fun attachKeepingLocalPose(newParent: WorldObjectEntity) {
-        entityData.set(PARENT, Optional.of(newParent.uuid))
+        entityData.set(PARENT, newParent.uuid.toString())
     }
 
     /** Whether [ancestor] is above this object, however far up. */
@@ -205,12 +229,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
             shown = localData().interpolated(shown, 1f / shownSteps)
             shownSteps--
         }
-        val target = positionTarget
-        if (positionSteps > 0 && target != null && parentId == null) {
-            val weight = 1.0 / positionSteps
-            setPos(x + (target.x - x) * weight, y + (target.y - y) * weight, z + (target.z - z) * weight)
-            positionSteps--
-        }
+        if (parentId == null && positionEasing.hasActiveInterpolation()) positionEasing.interpolate()
     }
 
     private fun followParent() {
@@ -236,11 +255,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
         scale = Vector3f(entityData.get(SCALE)),
     )
 
-    override fun lerpTo(x: Double, y: Double, z: Double, yRot: Float, xRot: Float, steps: Int) {
-        if (parentId != null || tickCount < predictedUntil) return
-        positionTarget = Vector3d(x, y, z)
-        positionSteps = steps
-    }
+    override fun getInterpolation(): InterpolationHandler = positionEasing
 
     override fun onSyncedDataUpdated(accessor: EntityDataAccessor<*>) {
         super.onSyncedDataUpdated(accessor)
@@ -280,7 +295,7 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
     }
 
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
-        builder.define(PARENT, Optional.empty())
+        builder.define(PARENT, "")
         builder.define(OFFSET, Vector3f())
         builder.define(ROTATION, Quaternionf())
         builder.define(SCALE, Vector3f(1f))
@@ -300,29 +315,31 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
 
     override fun isIgnoringBlockTriggers(): Boolean = true
 
-    override fun canChangeDimensions(from: Level, to: Level): Boolean = false
+    override fun canTeleport(from: Level, to: Level): Boolean = false
 
-    override fun readAdditionalSaveData(tag: CompoundTag) {
-        val data = tag.getCompound(SAVE_KEY)
-        entityData.set(PARENT, Optional.ofNullable(if (data.hasUUID("Parent")) data.getUUID("Parent") else null))
-        data.readVector("Offset")?.let { entityData.set(OFFSET, it) }
-        data.readRotation("Rotation")?.let { entityData.set(ROTATION, it) }
-        data.readVector("Scale")?.let { entityData.set(SCALE, it) }
-        data.readRotation("WorldRotation")?.let { entityData.set(WORLD_ROTATION, it) }
-        data.readVector("WorldScale")?.let { entityData.set(WORLD_SCALE, it) }
+    /** Nothing hurts a placed object; it is removed by the editor, not by damage. */
+    override fun hurtServer(level: ServerLevel, source: DamageSource, damage: Float): Boolean = false
+
+    override fun readAdditionalSaveData(input: ValueInput) {
+        val data = input.childOrEmpty(SAVE_KEY)
+        entityData.set(PARENT, data.read("Parent", UUIDUtil.CODEC).map(UUID::toString).orElse(""))
+        data.read("Offset", ExtraCodecs.VECTOR3F).ifPresent { entityData.set(OFFSET, Vector3f(it)) }
+        data.read("Rotation", ExtraCodecs.QUATERNIONF).ifPresent { entityData.set(ROTATION, Quaternionf(it).normalize()) }
+        data.read("Scale", ExtraCodecs.VECTOR3F).ifPresent { entityData.set(SCALE, Vector3f(it)) }
+        data.read("WorldRotation", ExtraCodecs.QUATERNIONF).ifPresent { entityData.set(WORLD_ROTATION, Quaternionf(it).normalize()) }
+        data.read("WorldScale", ExtraCodecs.VECTOR3F).ifPresent { entityData.set(WORLD_SCALE, Vector3f(it)) }
         shown = localData()
         shownBefore = shown
     }
 
-    override fun addAdditionalSaveData(tag: CompoundTag) {
-        val data = CompoundTag()
-        parentId?.let { data.putUUID("Parent", it) }
-        data.put("Offset", entityData.get(OFFSET).let { newFloatList(it.x, it.y, it.z) })
-        data.put("Rotation", entityData.get(ROTATION).let { newFloatList(it.x, it.y, it.z, it.w) })
-        data.put("Scale", entityData.get(SCALE).let { newFloatList(it.x, it.y, it.z) })
-        data.put("WorldRotation", entityData.get(WORLD_ROTATION).let { newFloatList(it.x, it.y, it.z, it.w) })
-        data.put("WorldScale", entityData.get(WORLD_SCALE).let { newFloatList(it.x, it.y, it.z) })
-        tag.put(SAVE_KEY, data)
+    override fun addAdditionalSaveData(output: ValueOutput) {
+        val data = output.child(SAVE_KEY)
+        parentId?.let { data.store("Parent", UUIDUtil.CODEC, it) }
+        data.store("Offset", ExtraCodecs.VECTOR3F, entityData.get(OFFSET))
+        data.store("Rotation", ExtraCodecs.QUATERNIONF, entityData.get(ROTATION))
+        data.store("Scale", ExtraCodecs.VECTOR3F, entityData.get(SCALE))
+        data.store("WorldRotation", ExtraCodecs.QUATERNIONF, entityData.get(WORLD_ROTATION))
+        data.store("WorldScale", ExtraCodecs.VECTOR3F, entityData.get(WORLD_SCALE))
         if (!level().isClientSide) WorldObjectFavorites.refresh(this)
     }
 
@@ -331,31 +348,19 @@ class WorldObjectEntity(type: EntityType<WorldObjectEntity>, level: Level) : Ent
         if (!level().isClientSide && reason.shouldDestroy()) WorldObjectFavorites.forget(this)
     }
 
-    private fun CompoundTag.readVector(key: String): Vector3f? {
-        val list = floats(key, 3) ?: return null
-        return Vector3f(list.getFloat(0), list.getFloat(1), list.getFloat(2))
-    }
-
-    private fun CompoundTag.readRotation(key: String): Quaternionf? {
-        val list = floats(key, 4) ?: return null
-        return Quaternionf(list.getFloat(0), list.getFloat(1), list.getFloat(2), list.getFloat(3)).normalize()
-    }
-
-    private fun CompoundTag.floats(key: String, size: Int): ListTag? =
-        getList(key, Tag.TAG_FLOAT.toInt()).takeIf { it.size == size }
-
     companion object {
-        private val PARENT: EntityDataAccessor<Optional<UUID>> =
-            SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.OPTIONAL_UUID)
-        private val OFFSET: EntityDataAccessor<Vector3f> =
+        /** The parent's UUID as text, empty without one: 26.x has no UUID serializer for synced data. */
+        private val PARENT: EntityDataAccessor<String> =
+            SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.STRING)
+        private val OFFSET: EntityDataAccessor<Vector3fc> =
             SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.VECTOR3)
-        private val ROTATION: EntityDataAccessor<Quaternionf> =
+        private val ROTATION: EntityDataAccessor<Quaternionfc> =
             SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.QUATERNION)
-        private val SCALE: EntityDataAccessor<Vector3f> =
+        private val SCALE: EntityDataAccessor<Vector3fc> =
             SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.VECTOR3)
-        private val WORLD_ROTATION: EntityDataAccessor<Quaternionf> =
+        private val WORLD_ROTATION: EntityDataAccessor<Quaternionfc> =
             SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.QUATERNION)
-        private val WORLD_SCALE: EntityDataAccessor<Vector3f> =
+        private val WORLD_SCALE: EntityDataAccessor<Vector3fc> =
             SynchedEntityData.defineId(WorldObjectEntity::class.java, EntityDataSerializers.VECTOR3)
 
         private const val SAVE_KEY = "HollowObject"

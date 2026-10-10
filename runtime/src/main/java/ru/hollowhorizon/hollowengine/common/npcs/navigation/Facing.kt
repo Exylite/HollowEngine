@@ -81,7 +81,7 @@ internal class WalkFacing(private val mob: Mob) {
     /** A point straight ahead of the eyes, the body turned to [yaw]. */
     private fun ahead(yaw: Float): Vec3 {
         val radians = yaw * Mth.DEG_TO_RAD
-        return mob.eyePosition.add(-Mth.sin(radians) * LOOK_REACH, 0.0, Mth.cos(radians) * LOOK_REACH)
+        return mob.eyePosition.add(-Mth.sin(radians.toDouble()) * LOOK_REACH, 0.0, Mth.cos(radians.toDouble()) * LOOK_REACH)
     }
 
     private companion object {

@@ -1,6 +1,5 @@
 package ru.hollowhorizon.hollowengine.common.npcs.navigation
 
-import net.minecraft.core.BlockPos
 import net.minecraft.world.entity.Mob
 import net.minecraft.world.level.CollisionGetter
 import net.minecraft.world.level.pathfinder.Node
@@ -10,69 +9,74 @@ import net.minecraft.world.level.pathfinder.WalkNodeEvaluator
 import kotlin.math.abs
 import kotlin.math.max
 
-/** A path whose steps may be jumps over gaps. */
-class NpcPath private constructor(
-    private val nodeList: MutableList<Node>,
-    target: BlockPos,
-    reached: Boolean,
-    private val jumps: BooleanArray,
-) : Path(nodeList, target, reached) {
-    /** Whether the step onto node [index] is a jump over a gap. */
-    fun isJumpTo(index: Int): Boolean = jumps.getOrElse(index) { false }
+/**
+ * A node a path steps onto by jumping over a gap. Vanilla's [Path] cannot be extended, so the flag rides on the
+ * node, which survives a copy of the path.
+ */
+internal class JumpNode(source: Node) : Node(source.x, source.y, source.z) {
+    init {
+        type = source.type
+        costMalus = source.costMalus
+        walkedDistance = source.walkedDistance
+        g = source.g
+        h = source.h
+        f = source.f
+        closed = source.closed
+        cameFrom = source.cameFrom
+    }
+}
 
-    override fun copy(): Path = NpcPath(nodeList, target, canReach(), jumps).also {
-        it.nextNodeIndex = nextNodeIndex
+/** Whether the step onto node [index] of this path is a jump over a gap. */
+internal fun Path.isJumpTo(index: Int): Boolean = index in 0 until nodeCount && getNode(index) is JumpNode
+
+/** Paths whose steps may be jumps over gaps. */
+object NpcPath {
+    /**
+     * [path] as found by the search, its nodes pulled straight in [level] when [straighten] is on. A straight
+     * line never cuts across what [avoid] makes the NPC go around; the steps that jump are [JumpNode]s.
+     */
+    internal fun of(path: Path, level: CollisionGetter, mob: Mob, straighten: Boolean, avoid: AvoidRules?): Path {
+        val nodes = List(path.nodeCount, path::getNode)
+        val jumps = BooleanArray(nodes.size) { it > 0 && isGapJump(nodes[it - 1], nodes[it]) }
+        val kept = if (straighten) {
+            PathStraightening.keep(
+                nodes,
+                jumps,
+                canSkip = { it.type in SKIPPABLE },
+                canWalk = { from, to -> canWalkStraight(level, mob, from, to, avoid) },
+            )
+        } else {
+            nodes.indices.toList()
+        }
+        return Path(
+            kept.mapTo(ArrayList(kept.size)) { if (jumps[it]) nodes[it] as? JumpNode ?: JumpNode(nodes[it]) else nodes[it] },
+            path.target,
+            path.canReach(),
+        )
     }
 
-    companion object {
-        /**
-         * [path] as found by the search, its nodes pulled straight in [level] when [straighten] is on. A straight
-         * line never cuts across what [avoid] makes the NPC go around.
-         */
-        internal fun of(path: Path, level: CollisionGetter, mob: Mob, straighten: Boolean, avoid: AvoidRules?): NpcPath {
-            val nodes = List(path.nodeCount, path::getNode)
-            val jumps = BooleanArray(nodes.size) { it > 0 && isGapJump(nodes[it - 1], nodes[it]) }
-            val kept = if (straighten) {
-                PathStraightening.keep(
-                    nodes,
-                    jumps,
-                    canSkip = { it.type in SKIPPABLE },
-                    canWalk = { from, to -> canWalkStraight(level, mob, from, to, avoid) },
-                )
-            } else {
-                nodes.indices.toList()
-            }
-            return NpcPath(
-                kept.mapTo(ArrayList(kept.size)) { nodes[it] },
-                path.target,
-                path.canReach(),
-                BooleanArray(kept.size) { jumps[kept[it]] },
-            )
-        }
-
-        private fun canWalkStraight(level: CollisionGetter, mob: Mob, from: Node, to: Node, avoid: AvoidRules?): Boolean {
-            val start = NpcNavigationGeometry.nodeCenter(
-                mob,
-                from.x,
-                WalkNodeEvaluator.getFloorLevel(level, from.asBlockPos()),
-                from.z
-            )
-            val end = NpcNavigationGeometry.nodeCenter(
-                mob,
-                to.x,
-                WalkNodeEvaluator.getFloorLevel(level, to.asBlockPos()),
-                to.z
-            )
-            if (start.distanceToSqr(end) > MAX_STRAIGHT * MAX_STRAIGHT) return false
-            return NpcNavigationGeometry.canWalkDirectly(level, mob, start, end) && avoid?.crosses(start, end) != true
-        }
-
-        /** The ground a straight line may cross without the NPC having to stop on it, as doors and hazards make it. */
-        private val SKIPPABLE = setOf(PathType.WALKABLE, PathType.WATER_BORDER, PathType.OPEN)
-
-        /** The longest straight line a path is pulled into, in blocks. */
-        private const val MAX_STRAIGHT = 24.0
+    private fun canWalkStraight(level: CollisionGetter, mob: Mob, from: Node, to: Node, avoid: AvoidRules?): Boolean {
+        val start = NpcNavigationGeometry.nodeCenter(
+            mob,
+            from.x,
+            WalkNodeEvaluator.getFloorLevel(level, from.asBlockPos()),
+            from.z
+        )
+        val end = NpcNavigationGeometry.nodeCenter(
+            mob,
+            to.x,
+            WalkNodeEvaluator.getFloorLevel(level, to.asBlockPos()),
+            to.z
+        )
+        if (start.distanceToSqr(end) > MAX_STRAIGHT * MAX_STRAIGHT) return false
+        return NpcNavigationGeometry.canWalkDirectly(level, mob, start, end) && avoid?.crosses(start, end) != true
     }
+
+    /** The ground a straight line may cross without the NPC having to stop on it, as doors and hazards make it. */
+    private val SKIPPABLE = setOf(PathType.WALKABLE, PathType.WATER_BORDER, PathType.OPEN)
+
+    /** The longest straight line a path is pulled into, in blocks. */
+    private const val MAX_STRAIGHT = 24.0
 }
 
 /** Whether the step from [from] to [to] skips over at least one block: no walking step does. */
