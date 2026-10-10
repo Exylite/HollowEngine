@@ -19,7 +19,7 @@ class NpcAvoidTests {
         override fun getBlockState(pos: BlockPos): BlockState = error("zones do not read blocks")
         override fun getFluidState(pos: BlockPos): FluidState = error("zones do not read blocks")
         override fun getHeight(): Int = 384
-        override fun getMinBuildHeight(): Int = -64
+        override fun getMinY(): Int = -64
     }
 
     private fun rules(vararg zones: Zone, start: BlockPos = BlockPos(0, 64, 0)) =
