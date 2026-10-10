@@ -9,7 +9,9 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityAttachment;
+import net.minecraft.world.entity.EntityAttachments;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -42,6 +44,16 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
         return original.call(frustum, bounds);
     }
 
+    // The nameplate rides above the colliders of an entity that has some, not above its own box.
+    @WrapOperation(
+        method = "extractNameTags(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;FDD)V",
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EntityAttachments;getNullable(Lnet/minecraft/world/entity/EntityAttachment;IF)Lnet/minecraft/world/phys/Vec3;")
+    )
+    private Vec3 nameplateOverColliders(EntityAttachments attachments, EntityAttachment attachment, int index, float yRot,
+                                        Operation<Vec3> original, @Local(argsOnly = true) T entity) {
+        return BootstrapRuntimeManager.bridge().entityNameplateAttachment(entity, original.call(attachments, attachment, index, yRot));
+    }
+
     @Inject(method = "extractNameTags(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;FDD)V", at = @At("TAIL"))
     private void onExtractNameTags(T entity, S state, float partialTicks, double nameTagDistance, double belowNameDistance, CallbackInfo ci) {
         boolean vanillaVisible = state.nameTag != null;
@@ -50,7 +62,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
         if (visible) {
             state.nameTag = getNameTag(entity);
-            state.nameTagAttachment = entity.getAttachments().getNullable(EntityAttachment.NAME_TAG, 0, entity.getYRot(partialTicks));
+            state.nameTagAttachment = BootstrapRuntimeManager.bridge().entityNameplateAttachment(
+                entity, entity.getAttachments().getNullable(EntityAttachment.NAME_TAG, 0, entity.getYRot(partialTicks)));
         } else {
             state.nameTag = null;
             state.scoreText = null;

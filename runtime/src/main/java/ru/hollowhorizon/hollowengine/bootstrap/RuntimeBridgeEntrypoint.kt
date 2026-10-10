@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.audio.SoundBuffer
 import com.mojang.blaze3d.platform.Window
 import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
 import com.mojang.datafixers.util.Either
 import net.minecraft.util.Util
 import net.minecraft.util.profiling.Profiler
@@ -70,6 +71,23 @@ import net.minecraft.world.level.block.SkullBlock
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.BlockHitResult
+import net.minecraft.world.phys.EntityHitResult
+import net.minecraft.world.phys.HitResult
+import net.minecraft.world.phys.Vec3
+import net.minecraft.world.phys.shapes.VoxelShape
+import ru.hollowhorizon.hollowengine.client.colliders.ClientColliderHooks
+import ru.hollowhorizon.hollowengine.client.colliders.ClientColliderPoses
+import ru.hollowhorizon.hollowengine.client.colliders.ColliderDebugRenderer
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderClaims
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderCombat
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderContacts
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderModes
+import ru.hollowhorizon.hollowengine.common.colliders.ColliderPathObstacles
+import ru.hollowhorizon.hollowengine.common.colliders.EntityColliders
+import ru.hollowhorizon.hollowengine.common.colliders.SolidColliders
+import ru.hollowhorizon.hollowengine.common.entities.EntityBodies
+import java.util.function.Predicate
+import java.util.function.Supplier
 import org.joml.Matrix4f
 import ru.hollowhorizon.hollowengine.ConsoleAppender
 import ru.hollowhorizon.hollowengine.LOGGER
@@ -78,6 +96,7 @@ import ru.hollowhorizon.hollowengine.api.ModList
 import ru.hollowhorizon.hollowengine.api.extensions.FakePlayerFactory
 import ru.hollowhorizon.hollowengine.api.extensions.ItemStackHelper
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.EventBridge
+import ru.hollowhorizon.hollowengine.bootstrap.runtime.PathObstacles
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimePlatform
 import ru.hollowhorizon.hollowengine.client.audio.streams.ExtendedSoundConverter
@@ -96,6 +115,7 @@ import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.cutscene.CutsceneCam
 import ru.hollowhorizon.hollowengine.client.ui.script.UiScriptHudHost
 import ru.hollowhorizon.hollowengine.common.ui.HudPlacement
 import ru.hollowhorizon.hollowengine.client.editor.WorldInspector
+import ru.hollowhorizon.hollowengine.client.editor.WorldObjectContextMenu
 import ru.hollowhorizon.hollowengine.client.ui.notification.NotificationOverlay
 import ru.hollowhorizon.hollowengine.client.vfx.render.VfxWorldRenderer
 import ru.hollowhorizon.hollowengine.common.ui.hud.HudLayerRegistry
@@ -180,7 +200,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onPlayerInteractEntity(player: Player, hand: InteractionHand, target: Entity): Boolean {
-        val event = PlayerInteractEvent.EntityInteract(player, hand, target)
+        val collider = ColliderClaims.peek(player, target)?.takeIf { it.spec.modes.interact }?.hit
+        val event = PlayerInteractEvent.EntityInteract(player, hand, target, collider)
         PlayerInteractEvent.EntityInteract.post(event)
         return event.isCanceled
     }
@@ -408,7 +429,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onClientInteractEntity(player: Player, hand: InteractionHand, target: Entity): Boolean {
-        val event = PlayerInteractEvent.EntityInteract(player, hand, target)
+        val collider = ClientColliderHooks.interacted(target)
+        val event = PlayerInteractEvent.EntityInteract(player, hand, target, collider)
         PlayerInteractEvent.EntityInteract.post(event)
         return event.isCanceled
     }
@@ -622,6 +644,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     }
 
     override fun onLevelClosed(level: Level) {
+        LevelEvent.Unload.post(LevelEvent.Unload(level))
         AttachmentRegistry.close(level)
     }
 
@@ -638,6 +661,75 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         EntityEvent.Hurt.post(event)
         return event.isCanceled
     }
+
+    override fun onLivingEntityHurt(entity: LivingEntity, damageSource: DamageSource, amount: Float): Float {
+        val event = EntityEvent.Hurt(entity, damageSource, amount)
+        EntityEvent.Hurt.post(event)
+        return if (event.isCanceled) Float.NaN else event.amount
+    }
+
+    override fun bodyPushable(entity: Entity, vanilla: Boolean): Boolean = EntityBodies.isPushable(entity, vanilla)
+
+    override fun bodyPushesOthers(entity: Entity): Boolean = EntityBodies.pushesOthers(entity)
+
+    override fun bodySolid(entity: Entity, vanilla: Boolean): Boolean = EntityBodies.isSolid(entity, vanilla)
+
+    override fun bodyDimensions(entity: Entity, vanilla: EntityDimensions): EntityDimensions =
+        EntityBodies.dimensions(entity, vanilla)
+
+    override fun collideWithColliders(entity: Entity, movement: Vec3, move: Supplier<Vec3>): Vec3 {
+        val moved = SolidColliders.during(entity, movement, move)
+        if (entity.noPhysics || !ColliderContacts.isSimulatedHere(entity)) return moved
+        val kept = SolidColliders.keepOutOfBlocks(entity, moved)
+        EntityBodies.afterMove(entity, movement, kept)
+        return kept
+    }
+
+    override fun collideShapesWithColliders(movement: Vec3, box: AABB, shapes: List<VoxelShape>, vanilla: Supplier<Vec3>): Vec3 =
+        SolidColliders.collide(movement, box, shapes, vanilla)
+
+    override fun stepHeightsWithColliders(box: AABB, limit: Float, vanilla: FloatArray): FloatArray =
+        SolidColliders.stepHeights(box, limit, vanilla)
+
+    override fun onLivingEntityTickStart(entity: LivingEntity) = ColliderContacts.resolve(entity)
+
+    override fun isSupportedByColliders(entity: Entity): Boolean = SolidColliders.supports(entity)
+
+    override fun isObstructedByColliders(level: Level, shape: VoxelShape): Boolean = SolidColliders.obstructs(level, shape)
+
+    override fun overlapsSolidColliders(entity: Entity, box: AABB): Boolean = SolidColliders.overlaps(entity, box)
+
+    override fun pathObstacles(mob: Mob): PathObstacles? = ColliderPathObstacles.of(mob)
+
+    override fun resolveColliderDamage(entity: Entity, damageSource: DamageSource): DamageSource =
+        ColliderCombat.resolve(entity, damageSource)
+
+    override fun hasColliderTargets(entity: Entity, projectile: Boolean): Boolean =
+        EntityColliders.hasTargets(entity, colliderModes(projectile))
+
+    override fun pickColliders(
+        level: Level, source: Entity?, start: Vec3, end: Vec3, search: AABB,
+        predicate: Predicate<Entity>, maxDistanceSquared: Double, vanilla: EntityHitResult?, projectile: Boolean,
+    ): EntityHitResult? =
+        EntityColliders.pick(level, source, start, end, search, predicate, maxDistanceSquared, vanilla, colliderModes(projectile))
+
+    override fun onPlayerAttack(player: Player, target: Entity, attack: Runnable) =
+        ColliderCombat.attack(player, target, attack)
+
+    override fun onProjectileHit(projectile: Entity, result: HitResult, hit: Runnable) =
+        ColliderCombat.projectileHit(projectile, result, hit)
+
+    override fun colliderReachBounds(player: Player, target: Entity, vanilla: AABB): AABB =
+        ColliderClaims.reachBounds(player, target, vanilla)
+
+    override fun onClientTargetEntity(target: Entity, result: HitResult?) = ClientColliderHooks.claim(result, target)
+
+    override fun renderColliderHitbox(entity: Entity, partialTick: Float): Boolean =
+        ColliderDebugRenderer.renderHitbox(entity, partialTick)
+
+    /** Projectiles land only on colliders that take hits; the crosshair also stops at the clickable ones. */
+    private fun colliderModes(projectile: Boolean): (ColliderModes) -> Boolean =
+        if (projectile) ColliderModes::hit else ColliderModes::isTarget
 
     override fun onEntityChangedDimension(entity: Entity, resultEntity: Entity?, fromLevel: Level, toLevel: Level) {
         if (resultEntity != null) {
@@ -713,6 +805,9 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         RenderEntityNameplateEvent.post(event)
         return event.isVisible
     }
+
+    override fun entityNameplateAttachment(entity: Entity, vanilla: Vec3?): Vec3? =
+        vanilla?.let { ClientColliderPoses.nameplateAttachment(entity, it) }
 
     override fun onCameraSetup(
         gameRenderer: GameRenderer,
@@ -887,6 +982,7 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
     override fun onKeyboardKey(windowPointer: Long, key: Int, scanCode: Int, action: Int, modifiers: Int): Boolean {
         ClientKeyWaitManager.handleKey(key, action)
         if (HollowIdeOverlay.handleKey(key, scanCode, action, modifiers)) return true
+        if (WorldObjectContextMenu.handleKey(key, scanCode, action, modifiers)) return true
         if (TransformGizmoEditor.handleKey(key, scanCode, action, modifiers)) return true
         if (UiScriptHudHost.handleKey(key, scanCode, action, modifiers)) return true
         return false
@@ -918,7 +1014,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         var isGizmoBlocking = false
         if (world != null) {
             WorldInspector.handleMouseMove(world.x, world.y)
-            isGizmoInputCaptured = TransformGizmoEditor.handleMouseMove(world.x, world.y)
+            isGizmoInputCaptured = WorldObjectContextMenu.handleMouseMove(world.x, world.y)
+            isGizmoInputCaptured = isGizmoInputCaptured || TransformGizmoEditor.handleMouseMove(world.x, world.y)
             val (guiX, guiY) = hudPointer(minecraft, world.x, world.y)
             isScriptOverlayCaptured = UiScriptHudHost.handleMouseMove(guiX, guiY)
             isGizmoBlocking = TransformGizmoEditor.shouldBlockScreenInput(world.x, world.y)
@@ -962,7 +1059,8 @@ class RuntimeBridgeEntrypoint : RuntimeBridge {
         if (HollowIdeOverlay.handleMouseButton(x, y, button, action)) return true
         val world = HollowIdeOverlay.worldPointer(x, y) ?: return true
         val (guiX, guiY) = hudPointer(minecraft, world.x, world.y)
-        return TransformGizmoEditor.handleMouseButton(world.x, world.y, button, action) ||
+        return WorldObjectContextMenu.handleMouseButton(world.x, world.y, button, action) ||
+                TransformGizmoEditor.handleMouseButton(world.x, world.y, button, action) ||
                 WorldInspector.pickAt(world.x, world.y, button, action) ||
                 UiScriptHudHost.handleMouseButton(guiX, guiY, button, action) ||
                 TransformGizmoEditor.shouldBlockScreenInput(world.x, world.y)

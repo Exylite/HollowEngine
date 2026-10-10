@@ -7,7 +7,6 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.PathfinderMob
@@ -22,14 +21,12 @@ import net.minecraft.world.level.storage.ValueInput
 import net.minecraft.world.level.storage.ValueOutput
 import ru.hollowhorizon.hollowengine.common.coroutines.coroutineScope
 import ru.hollowhorizon.hollowengine.common.attachments.api.set
-import ru.hollowhorizon.hollowengine.common.attachments.components.HitboxComponent
-import ru.hollowhorizon.hollowengine.common.attachments.components.hitboxComponent
 import ru.hollowhorizon.hollowengine.common.attachments.snapshot.snapshotOf
-import ru.hollowhorizon.hollowengine.common.npcs.HitboxMode
 import ru.hollowhorizon.hollowengine.common.npcs.actions.NpcActionController
 import ru.hollowhorizon.hollowengine.common.npcs.inventory.NpcInventory
 import ru.hollowhorizon.hollowengine.common.npcs.navigation.NpcMoveControl
 import ru.hollowhorizon.hollowengine.common.npcs.navigation.NpcPathNavigation
+import ru.hollowhorizon.hollowengine.common.npcs.navigation.maxDrop
 import ru.hollowhorizon.hollowengine.common.registry.ModEntities
 import ru.hollowhorizon.hollowengine.common.utils.FakePlayer
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -73,6 +70,11 @@ class NpcEntity : PathfinderMob {
 
     override fun createNavigation(pLevel: Level) = NpcPathNavigation(pLevel, this)
 
+    val npcNavigation: NpcPathNavigation get() = navigation as NpcPathNavigation
+
+    /** How far it steps off a ledge, by its navigation settings rather than by its health as mobs do. */
+    override fun getMaxFallDistance(): Int = npcNavigation.settings.path.maxDrop(this)
+
     override fun registerGoals() {
         goalSelector.addGoal(1, FloatGoal(this))
         goalSelector.addGoal(1, MeleeAttackGoal(this, 1.0, false))
@@ -82,18 +84,6 @@ class NpcEntity : PathfinderMob {
     override fun canPickUpLoot() = true
     override fun wantsToPickUp(level: ServerLevel, stack: ItemStack) = false
 
-
-    override fun doPush(pEntity: Entity) {
-        if (hitboxMode != HitboxMode.EMPTY) super.doPush(pEntity)
-    }
-
-    override fun isPushable(): Boolean {
-        return super.isPushable() && hitboxMode == HitboxMode.PULLING
-    }
-
-    override fun canBeCollidedWith(other: Entity?): Boolean {
-        return hitboxMode == HitboxMode.BLOCKING && isAlive
-    }
 
     override fun aiStep() {
         updateSwingTime()
@@ -126,13 +116,6 @@ class NpcEntity : PathfinderMob {
     }
 
     val pickupDistance get() = pickupReach
-
-    var hitboxMode: HitboxMode
-        get() = hitboxComponent?.mode ?: HitboxMode.PULLING
-        set(value) {
-            set(HitboxComponent(value))
-        }
-
 
     fun seat() {
         SeatEntity.seat(this, direction)

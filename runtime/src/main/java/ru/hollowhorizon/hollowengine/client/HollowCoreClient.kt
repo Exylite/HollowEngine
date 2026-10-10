@@ -5,6 +5,7 @@ import net.minecraft.client.KeyMapping
 import net.minecraft.resources.Identifier
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
+import ru.hollowhorizon.hollowengine.client.models.internal.v2.NestedModelAttachment
 import ru.hollowhorizon.hollowengine.client.particles.BedrockParticles
 import ru.hollowhorizon.hollowengine.client.render.RenderManager
 import ru.hollowhorizon.hollowengine.client.vfx.VfxAssets
@@ -35,6 +36,7 @@ object HollowCoreClient {
     init {
         RenderSystem.recordRenderCall(RenderManager::onInitialize)
         VfxBoneBindings.register()
+        NestedModelAttachment.register()
     }
 
     @SubscribeEvent
@@ -57,6 +59,7 @@ object HollowCoreClient {
     @SubscribeEvent
     fun onRegisterRenderers(event: RegisterEntityRenderersEvent) {
         event.registerEntity(ModEntities.NPC_ENTITY, ::EmptyEntityRenderer)
+        event.registerEntity(ModEntities.OBJECT, ::EmptyEntityRenderer)
     }
 
     val KEY_V = KeyMapping("key.v", GLFW.GLFW_KEY_V, KeyMapping.Category.register(Identifier.fromNamespaceAndPath("hollowengine", "main")))

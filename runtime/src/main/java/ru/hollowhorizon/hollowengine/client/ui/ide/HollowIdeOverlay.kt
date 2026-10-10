@@ -10,9 +10,12 @@ import net.minecraft.client.gui.screens.ChatScreen
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
+import ru.hollowhorizon.hollowengine.client.history.UndoKeys
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.docking.*
 import ru.hollowhorizon.hollowengine.client.ui.ide.asset.*
+import ru.hollowhorizon.hollowengine.client.ui.ide.history.HistoryDock
+import ru.hollowhorizon.hollowengine.client.ui.ide.history.IdeHistories
 import ru.hollowhorizon.hollowengine.client.ui.ide.files.HollowIdeImageEditor
 import ru.hollowhorizon.hollowengine.client.ui.ide.files.animator.HollowIdeAnimatorEditor
 import ru.hollowhorizon.hollowengine.client.ui.ide.files.rig.RigEditorPanel
@@ -40,6 +43,7 @@ import ru.hollowhorizon.hollowengine.common.scripting.ide.DefinitionLocation
 import ru.hollowhorizon.hollowengine.common.scripting.ide.InlayAction
 import ru.hollowhorizon.hollowengine.common.scripting.ide.ResourceLocationTargets
 import ru.hollowhorizon.hollowengine.common.scripting.ide.ui.hssColorLiteralText
+import ru.hollowhorizon.hollowengine.common.utils.nbt.TagModuleRevision
 import ru.hollowhorizon.hollowengine.common.utils.DesktopUtil
 import ru.hollowhorizon.hollowengine.common.utils.isProduction
 import java.io.File
@@ -69,6 +73,7 @@ internal const val SceneId = "ide-scene"
 internal const val InspectorId = "ide-inspector"
 internal const val GameViewportId = "ide-game-viewport"
 internal const val GameViewportNodeId = "game-viewport"
+internal const val HistoryId = "ide-history"
 
 private const val LayoutSaveDelayMillis = 600L
 
@@ -148,6 +153,7 @@ object HollowIdeOverlay {
     private var editorAnalysisRevision by mutableStateOf(0)
     private val editorSessions = mutableMapOf<String, HollowIdeEditorSession>()
     private val editorStates = mutableMapOf<String, TextFieldState>()
+    private val histories = IdeHistories(model) { file -> editorStates[file.path]?.history }
     private val fileViews = mutableMapOf<String, HollowIdeFileView>()
     private var fileContextMenu by mutableStateOf<FileContextMenu?>(null)
     private val dragAndDrop = UiDragAndDropState()
@@ -460,9 +466,20 @@ object HollowIdeOverlay {
         }
         if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
             pipeline.await()
-            surface.runtime.keyPressed(key, scanCode, modifiers, repeat = action == GLFW.GLFW_REPEAT)
+            val taken = surface.runtime.keyPressed(key, scanCode, modifiers, repeat = action == GLFW.GLFW_REPEAT)
+            if (!taken && action == GLFW.GLFW_PRESS) historyKey(key, modifiers)
         }
         return true
+    }
+
+    /**
+     * A key nothing in the editor took. Undo and redo go to the history of the focused window, or of the one
+     * focused before, wherever the focus was left: on the inspector, a toolbar, or nowhere.
+     */
+    private fun historyKey(key: Int, modifiers: Int) {
+        if (UndoKeys.direction(key, modifiers) == null) return
+        histories.follow(dock.focusedItemId)
+        UndoKeys.handle(histories.resolve(dock.focusedItemId)?.history, key, modifiers)
     }
 
     fun handleChar(codePoint: Int, modifiers: Int): Boolean {
@@ -564,6 +581,20 @@ object HollowIdeOverlay {
         contributions.start()
         restoreLayout()
         surface.setContent { Content() }
+        TagModuleRevision.observe(::rereadFilesSoon)
+    }
+
+    @Volatile
+    private var rereadPending = false
+
+    /** Reads the open files again once the kinds they are stored as have changed. */
+    private fun rereadFilesSoon() {
+        if (rereadPending) return
+        rereadPending = true
+        Minecraft.getInstance().execute {
+            rereadPending = false
+            model.rereadUnchangedFiles()
+        }
     }
 
     private fun restoreLayout() {
@@ -751,8 +782,11 @@ object HollowIdeOverlay {
                             id = "ide-dock",
                             modifier = Modifier.size(100.percent, 0.px).grow(1f),
                             tabBarActions = { item ->
-                                if (item.id == ProjectTreeId) HollowIdeProjectActions(packaging)
-                                else fileView(item.id)?.let { view -> HollowIdeViewModeSwitch(view, item.id) }
+                                when (item.id) {
+                                    SceneId -> SceneHeaderActions()
+                                    ProjectTreeId -> HollowIdeProjectActions(packaging)
+                                    else -> fileView(item.id)?.let { view -> HollowIdeViewModeSwitch(view, item.id) }
+                                }
                             },
                             content = { item -> DockContent(item) },
                         )
@@ -793,6 +827,8 @@ object HollowIdeOverlay {
         LaunchedEffect(focused) {
             if (focused != null) activeEditorPath = focused
         }
+        val focusedItem = dock.focusedItemId
+        LaunchedEffect(focusedItem) { histories.follow(focusedItem) }
     }
 
     private fun activeEditorFile(): HollowIdeOpenFile? {
@@ -1015,9 +1051,11 @@ object HollowIdeOverlay {
             ConsoleId -> HollowIdeConsolePanel(console, currentProblems())
             TimelineId -> TimelineDock(keyboardActive = dock.focusedItemId == TimelineId)
 
-            SceneId -> SceneDock()
+            SceneId -> SceneDock(onFilterOpened = ::requestSurfaceFocus)
 
             InspectorId -> IdeInspectorDock()
+
+            HistoryId -> HistoryDock(histories, dock.focusedItemId)
 
             GameViewportId -> GameViewportDock(
                 active = isGameViewportActive,

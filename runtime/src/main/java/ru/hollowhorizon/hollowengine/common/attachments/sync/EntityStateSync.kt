@@ -38,6 +38,13 @@ object EntityStateSync {
     private val dirty = Collections.synchronizedSet(LinkedHashSet<Entity>())
     private val deferred = LinkedHashMap<Int, DeferredBatches>()
 
+    private val receivedListeners = ArrayList<(Entity) -> Unit>()
+
+    /** Calls [listener] on the client with every entity a batch from the server was just applied to. */
+    fun onReceived(listener: (Entity) -> Unit) {
+        receivedListeners += listener
+    }
+
     /** Marks [entity]'s synced state as needing a batch. Called for every component and data write. */
     fun markDirty(entity: Entity) {
         if (entity.level().isClientSide) return
@@ -162,6 +169,7 @@ object EntityStateSync {
         }
 
         applyData(entity, packet)
+        receivedListeners.forEach { it(entity) }
     }
 
     /** Creates the client store only when there is actually something to put in it. */

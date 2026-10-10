@@ -9,7 +9,7 @@ import kotlinx.serialization.SerialInfo
  * What the component editor knows about a component beyond its serial form.
  */
 @SerialInfo
-@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 annotation class EditorName(val name: String)
 
 /** The line under a field, or under a component's header. */
@@ -47,6 +47,23 @@ annotation class EditorRange(
 @SerialInfo
 @Target(AnnotationTarget.PROPERTY)
 annotation class EditorBone
+
+/** Edits the field with the editor registered under [id] instead of the one its type would get. */
+@SerialInfo
+@Target(AnnotationTarget.PROPERTY)
+annotation class EditorWidget(val id: String)
+
+/** The field editors the engine registers, by the id [EditorWidget] names them with. */
+object EditorWidgets {
+    /** A list of names of the colliders on the same bone as the attachment, ticked off among those there are. */
+    const val COLLIDERS = "hollowengine:colliders"
+
+    /** The name of one IK target of the rig, picked among those there are. */
+    const val RIG_TARGETS = "hollowengine:rig_targets"
+
+    /** An expression of the animator's language, with its completion and highlighting. */
+    const val ANIMATION_EXPRESSION = "hollowengine:animation_expression"
+}
 
 /** A string field that deserves more than one line. */
 @SerialInfo

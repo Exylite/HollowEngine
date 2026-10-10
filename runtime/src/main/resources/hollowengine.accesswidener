@@ -40,3 +40,5 @@ accessible field net/minecraft/client/particle/ParticleResources spriteSets Ljav
 accessible class net/minecraft/client/particle/ParticleResources$MutableSpriteSet
 accessible field net/minecraft/client/particle/ParticleResources$MutableSpriteSet sprites Ljava/util/List;
 accessible field net/minecraft/client/renderer/GameRenderer guiRenderer Lnet/minecraft/client/gui/render/GuiRenderer;
+
+accessible field net/minecraft/server/level/ServerLevel navigatingMobs Ljava/util/Set;

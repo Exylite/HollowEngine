@@ -15,6 +15,7 @@ import ru.hollowhorizon.hollowengine.client.ui.widgets.UiTextInputFilter
 import ru.hollowhorizon.hollowengine.client.ui.widgets.tooltipOnHover
 import ru.hollowhorizon.hollowengine.client.utils.lang
 import kotlin.math.abs
+import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.TimelineEdits
 
 /** The stylesheet of the timeline window's chrome; lanes and keys are drawn from [TimelineColors]. */
 internal const val TimelineStylesheet = "hollowengine:ui/styles/timeline.hss"
@@ -36,6 +37,7 @@ internal object TimelineIcons {
     const val CURVES = ROOT + "curves.svg"
     const val FRAME = ROOT + "frame.svg"
     const val CAPTURE = ROOT + "capture.svg"
+    const val RECORD = ROOT + "record.svg"
     const val EYE = ROOT + "eye.svg"
     const val EYE_OFF = ROOT + "eye_off.svg"
     const val LOCK = ROOT + "lock.svg"
@@ -57,6 +59,8 @@ class TimelineFeatures(
     val cameraPreview: Boolean = true,
     /** Play, pause and the jumps to either end; a curve with no clock has no use for them. */
     val playback: Boolean = true,
+    /** Auto-keying, for an owner that turns edits into keys while [TimelineController.isRecording] is on. */
+    val record: Boolean = false,
 ) {
     companion object {
         val CUTSCENE = TimelineFeatures()
@@ -138,13 +142,25 @@ internal fun TimelineToolbar(
         // Push the trailing controls to the right edge.
         Box(modifier = Modifier.size(0.px, 1.px).grow(1f))
 
+        if (features.record) {
+            TimelineButton(
+                TimelineIcons.RECORD,
+                "timeline-record",
+                CutsceneLang.RECORD.lang,
+                active = controller.isRecording,
+                tags = listOf("record"),
+            ) {
+                controller.isRecording = !controller.isRecording
+                refresh()
+            }
+        }
         if (features.capture) {
             TimelineButton(TimelineIcons.CAPTURE, "timeline-capture", CutsceneLang.CAPTURE_KEYFRAME.lang) {
                 onCapture()
                 refresh()
             }
-            TimelineSeparator()
         }
+        if (features.record || features.capture) TimelineSeparator()
 
         val curves = controller.viewMode == TimelineViewMode.CURVES
         TimelineButton(
@@ -247,11 +263,12 @@ private fun TimelineButton(
     id: String,
     tooltip: String,
     active: Boolean = false,
+    tags: List<String> = emptyList(),
     onClick: () -> Unit,
 ) {
     Box(
         id = id,
-        tags = if (active) listOf("timeline-button", "active") else listOf("timeline-button"),
+        tags = listOf("timeline-button") + tags + if (active) listOf("active") else emptyList(),
         modifier = Modifier.cursor(UiCursorShape.HAND).tooltipOnHover(tooltip).onClick { event ->
             onClick()
             event.consume()
@@ -537,7 +554,7 @@ private fun trackMenu(controller: TimelineController, row: TimelineRow, refresh:
                     separatorBefore = true,
                     children = RotationMode.entries.map { mode ->
                         UiDropdownItem(rotationModeLabel(mode), checked = type.mode == mode) {
-                            controller.edit("Change rotation basis") { property.setRotationMode(mode) }
+                            controller.edit(TimelineEdits.ROTATION_BASIS) { property.setRotationMode(mode) }
                             refresh()
                         }
                     },

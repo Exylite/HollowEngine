@@ -24,6 +24,9 @@ import kotlin.math.sin
 object DebugLines {
     val OVERLAY: RenderType = RenderType.lines("hollowengine:debug_overlay_lines")
     val PANEL: RenderType = RenderType.lines("hollowengine:debug_panel_lines")
+
+    /** Over a preview but behind what is drawn in front of it, as the floor under a model. */
+    val PANEL_DEPTH: RenderType = RenderType.lines("hollowengine:debug_panel_depth_lines")
     val BOUND: RenderType = RenderType.lines("hollowengine:debug_bound_lines")
 
     fun batch(buffers: MultiBufferSource, poseStack: PoseStack, type: RenderType = OVERLAY): Batch =
@@ -37,31 +40,6 @@ object DebugLines {
             val normal = direction.normed()
             vertex(start, normal, color)
             vertex(end, normal, color)
-        }
-
-        fun bone(start: Vec3f, end: Vec3f, up: Vec3f, color: Int) {
-            val along = end - start
-            val length = along.length()
-            if (length < EPSILON) return
-
-            val axis = along.normed()
-            val right = perpendicular(axis, up)
-            val forward = axis.cross(right, MutableVec3f()).norm()
-
-            val shoulder = start + axis * (length * BONE_SHOULDER)
-            val width = length * BONE_WIDTH
-            val corners = listOf(
-                shoulder + right * width,
-                shoulder + forward * width,
-                shoulder - right * width,
-                shoulder - forward * width,
-            )
-
-            corners.forEachIndexed { index, corner ->
-                line(start, corner, color)
-                line(corner, end, color)
-                line(corner, corners[(index + 1) % corners.size], color)
-            }
         }
 
         fun capsule(start: Vec3f, end: Vec3f, radius: Float, color: Int) {
@@ -162,6 +140,23 @@ object DebugLines {
                 .color(color)
                 .normal(pose.normal(), normal.x, normal.y, normal.z)
         }
+    }
+
+    /**
+     * The four corners around the shoulder of a bone drawn as an octahedron from [start] to [end], turned so one
+     * faces [up]; null for a bone too short to draw.
+     */
+    internal fun boneCorners(start: Vec3f, end: Vec3f, up: Vec3f): List<Vec3f>? {
+        val along = end - start
+        val length = along.length()
+        if (length < EPSILON) return null
+
+        val axis = along.normed()
+        val right = perpendicular(axis, up)
+        val forward = axis.cross(right, MutableVec3f()).norm()
+        val shoulder = start + axis * (length * BONE_SHOULDER)
+        val width = length * BONE_WIDTH
+        return listOf(shoulder + right * width, shoulder + forward * width, shoulder - right * width, shoulder - forward * width)
     }
 
     private fun perpendicular(axis: Vec3f, preferred: Vec3f): Vec3f {

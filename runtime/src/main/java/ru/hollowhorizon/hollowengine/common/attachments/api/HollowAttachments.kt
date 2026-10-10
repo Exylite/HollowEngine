@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import net.minecraft.nbt.CompoundTag
 import ru.hollowhorizon.hollowengine.common.data.NbtDataStore
 import ru.hollowhorizon.hollowengine.common.data.Sync
+import ru.hollowhorizon.hollowengine.common.entities.EntityBodies
+import ru.hollowhorizon.hollowengine.common.entities.objects.WorldObjectEntity
 import ru.hollowhorizon.hollowengine.common.attachments.sync.EntityStateSync
 import ru.hollowhorizon.hollowengine.common.attachments.tracking.MCEntity
 import ru.hollowhorizon.hollowengine.common.scripting.nodes.EntityNodeManager
@@ -90,7 +92,11 @@ class HollowAttachments internal constructor(entity: MCEntity) {
     var lastSyncedOwnerData: CompoundTag = CompoundTag()
 
     init {
-        components.onChange = { EntityStateSync.markDirty(entity) }
+        components.onChange = {
+            EntityStateSync.markDirty(entity)
+            EntityBodies.onComponentsChanged(entity)
+            (entity as? WorldObjectEntity)?.onComponentsChanged()
+        }
     }
 
     /**

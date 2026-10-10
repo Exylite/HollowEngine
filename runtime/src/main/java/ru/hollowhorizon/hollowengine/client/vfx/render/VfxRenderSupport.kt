@@ -7,6 +7,7 @@ import ru.hollowhorizon.hollowengine.client.render.legacy.TextureTarget
 import ru.hollowhorizon.hollowengine.client.render.legacy.depthInternalFormat
 import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
 import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
 import ru.hollowhorizon.hollowengine.client.render.legacy.MeshData
 import ru.hollowhorizon.hollowengine.client.render.legacy.VertexBuffer
 import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
@@ -126,6 +127,10 @@ object VfxShaders {
     fun surface(location: String, surface: VfxSurface): ShaderInstance? =
         if (VfxGraphMaterials.isGraph(location)) VfxGraphMaterials.program(location, surface) else get(location, surface.format)
 
+    /** What a post effect naming [location] draws the frame with: a core shader, or a post effect graph. */
+    fun post(location: String): ShaderInstance? =
+        if (VfxGraphMaterials.isGraph(location)) VfxGraphMaterials.postProgram(location) else get(location, DefaultVertexFormat.POSITION_TEX)
+
     /** Resource packs changed: every shader is read again the next time it is drawn. */
     fun clear() {
         loaded.values.filterNotNull().forEach(ShaderInstance::close)
@@ -203,6 +208,15 @@ object VfxSceneTextures {
 }
 
 /**
+ * What the render system sets on every program, but with the matrices and the clock of this view
+ * rather than the ones it holds, which in the editor preview are the panel's and the paused world's.
+ */
+internal fun VfxView.setDefaultUniforms(shader: ShaderInstance, mode: VertexFormat.Mode) {
+    shader.setDefaultUniforms(mode, modelView, projection, Minecraft.getInstance().window)
+    shader.safeGetUniform("ShaderTime").set(time)
+}
+
+/**
  * Draws a finished buffer with [shader] and the matrices of [view], rather than whatever the render
  * system holds, which in the editor preview is the matrices of the panel.
  */
@@ -210,7 +224,7 @@ internal fun VfxView.drawImmediate(mesh: MeshData, shader: ShaderInstance, prepa
     val buffer = mesh.drawState().format().immediateDrawVertexBuffer
     buffer.bind()
     buffer.upload(mesh)
-    shader.setDefaultUniforms(mesh.drawState().mode(), modelView, projection, Minecraft.getInstance().window)
+    setDefaultUniforms(shader, mesh.drawState().mode())
     prepare(shader)
     shader.apply()
     buffer.draw()

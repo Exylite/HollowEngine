@@ -5,11 +5,13 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.phys.Vec3
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.actor
+import ru.hollowhorizon.hollowengine.common.dialogue.lang.any
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.list
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.number
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.string
 import ru.hollowhorizon.hollowengine.common.entities.NpcEntity
 import ru.hollowhorizon.hollowengine.common.models.AnimationPlayMode
+import ru.hollowhorizon.hollowengine.common.npcs.navigation.Facing
 import ru.hollowhorizon.hollowengine.common.npcs.navigation.MoveOptions
 import ru.hollowhorizon.hollowengine.common.scripting.story.functions.entities.play
 import ru.hollowhorizon.hollowengine.common.scripting.story.functions.entities.playAndWait
@@ -42,8 +44,12 @@ internal object StoryNpcFunctions {
             actor("who"), list("position"),
             number("speed", default = DEFAULT_SPEED), number("distance", default = DEFAULT_DISTANCE),
             number("timeout", default = DEFAULT_WALK_TIMEOUT_MILLIS),
+            any("facing", optional = true),
         ) { args ->
-            args.walk(args.actor("who").name) { npc -> npc.move(args.vec3("position"), args.moveOptions()) }
+            args.walk(args.actor("who").name) { npc ->
+                val points = args.points("position")
+                if (points != null) npc.move(points, args.moveOptions()) else npc.move(args.vec3("position"), args.moveOptions())
+            }
         }
 
         add(
@@ -51,6 +57,7 @@ internal object StoryNpcFunctions {
             actor("who"), actor("target"),
             number("speed", default = DEFAULT_SPEED), number("distance", default = DEFAULT_DISTANCE),
             number("timeout", default = DEFAULT_WALK_TIMEOUT_MILLIS),
+            any("facing", optional = true),
         ) { args ->
             args.walk(args.actor("who").name) { npc -> npc.move(args.entity("target"), args.moveOptions()) }
         }
@@ -125,7 +132,28 @@ internal object StoryNpcFunctions {
     private fun StoryArguments.moveOptions() = MoveOptions(
         speed = number("speed").toDouble(),
         arrivalDistance = number("distance").toDouble(),
+        facing = facing(),
     )
+
+    /** The points of a position written `[[x, y, z], [x, y, z]]`, to walk through in turn; null for one `[x, y, z]`. */
+    private fun StoryArguments.points(name: String): List<Vec3>? {
+        val items = list(name)
+        if (items.firstOrNull() !is StoryList) return null
+        return items.map { item ->
+            val numbers = (item as? StoryList)?.values?.map { (it as? StoryNumber)?.value?.toDouble() }
+            require(numbers != null && numbers.size == 3 && numbers.all { it != null }) {
+                "Argument '$name' must be positions like [[10, 64, 20], [15, 64, 20]]"
+            }
+            Vec3(numbers[0]!!, numbers[1]!!, numbers[2]!!)
+        }
+    }
+
+    /** What `facing=` names to keep facing on the way: a character, or a position like [10, 64, 20]. */
+    private fun StoryArguments.facing(): Facing = when {
+        this["facing"] == null -> Facing.Path
+        actorOrNull("facing") != null -> Facing.at(entity("facing"))
+        else -> Facing.at(vec3("facing"))
+    }
 
     private fun StoryArguments.lookDuration() = millis("time").milliseconds
 

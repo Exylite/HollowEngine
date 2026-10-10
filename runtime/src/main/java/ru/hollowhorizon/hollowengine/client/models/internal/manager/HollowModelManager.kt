@@ -116,6 +116,11 @@ object HollowModelManager : SimplePreparableReloadListener<Map<Identifier, Prepa
         flow: MutableStateFlow<Model>,
         update: PreparedModelUpdate<Model>,
     ) {
+        if (!RenderSystem.isOnRenderThreadOrInit()) {
+            RenderSystem.recordRenderCall { publish(location, flow, update) }
+            return
+        }
+
         val swap = ModelReloadCoordinator.resolveSwap(flow.value, update, Model.EMPTY)
         flow.value = swap.next
         swap.retired?.let(::destroyLater)

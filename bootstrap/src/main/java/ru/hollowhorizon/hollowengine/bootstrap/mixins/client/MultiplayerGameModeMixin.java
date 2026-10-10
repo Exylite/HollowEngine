@@ -11,6 +11,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 
@@ -23,8 +24,15 @@ public class MultiplayerGameModeMixin {
         }
     }
 
+    @Inject(method = "attack", at = @At("HEAD"))
+    private void hollowengine$claimAttack(Player player, Entity target, CallbackInfo ci) {
+        BootstrapRuntimeManager.bridge().onClientTargetEntity(target, null);
+    }
+
+    // 26.x has no separate interactAt: one call carries the hit, so the claim is made right before the interaction event.
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
     private void hollowengine$onInteractEntity(Player player, Entity target, EntityHitResult hitResult, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
+        BootstrapRuntimeManager.bridge().onClientTargetEntity(target, hitResult);
         if (BootstrapRuntimeManager.bridge().onClientInteractEntity(player, hand, target)) {
             cir.setReturnValue(InteractionResult.FAIL);
         }

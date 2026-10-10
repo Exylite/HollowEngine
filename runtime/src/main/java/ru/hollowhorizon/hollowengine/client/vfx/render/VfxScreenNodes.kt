@@ -24,7 +24,12 @@ class VfxPostEffectNode(private val spec: VfxPostEffectSpec, private val node: V
 
     override fun collect(into: VfxDrawList, placement: Matrix4f) {
         if (!node.isActive || spec.shader.isBlank()) return
-        into.posts += VfxPostDraw(spec.shader, uniforms.evaluate(node.context))
+        val origin = node.frame.position
+        into.posts += VfxPostDraw(
+            shader = spec.shader,
+            uniforms = uniforms.evaluate(node.context),
+            position = placement.transformPosition(Vector3f(origin.x, origin.y, origin.z)),
+        )
     }
 }
 
@@ -137,11 +142,14 @@ object VfxSkyRenderer {
 }
 
 /**
- * Draws the full-screen passes of the frame, each over the result of the one before it.
+ * Draws the full-screen passes of the frame, each over the result of the one before it. [view] is the
+ * one the frame was drawn with, which a post effect graph needs to read positions back from the depth.
  */
 object VfxPostProcessor {
-    fun apply(posts: List<VfxPostDraw>, target: RenderTarget) {
+    fun apply(posts: List<VfxPostDraw>, target: RenderTarget, view: VfxView) {
         if (posts.isEmpty()) return
+        val toScreen = Matrix4f(view.projection).mul(view.modelView)
+        val toView = Matrix4f(toScreen).invert()
 
         RenderSystem.disableDepthTest()
         RenderSystem.depthMask(false)
@@ -149,12 +157,19 @@ object VfxPostProcessor {
         RenderSystem.disableCull()
         try {
             posts.forEach { post ->
-                val shader = VfxShaders.get(post.shader, DefaultVertexFormat.POSITION_TEX) ?: return@forEach
+                val shader = VfxShaders.post(post.shader) ?: return@forEach
                 VfxSceneTextures.capture(target)
 
                 VfxScreenQuad.draw(shader) { bound ->
                     VfxSceneTextures.bind(bound)
                     bound.safeGetUniform("ScreenSize").set(target.width.toFloat(), target.height.toFloat())
+                    bound.safeGetUniform("SceneProjMat").set(view.projection)
+                    bound.safeGetUniform("InvViewProjMat").set(toView)
+                    bound.safeGetUniform("ViewProjMat").set(toScreen)
+                    bound.safeGetUniform("ViewEye").set(view.eye.x, view.eye.y, view.eye.z)
+                    val offset = Vector3f(post.position).sub(view.eye)
+                    bound.safeGetUniform("NodeOffset").set(offset.x, offset.y, offset.z)
+                    bound.safeGetUniform("ShaderTime").set(view.time)
                     post.uniforms.apply(bound)
                 }
             }
