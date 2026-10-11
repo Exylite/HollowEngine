@@ -4,7 +4,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.polymorphic
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionHandle
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionPoints
 import ru.hollowhorizon.hollowengine.common.utils.nbt.TagModuleRevision
@@ -21,7 +21,7 @@ class AnimatorStateType<S : AnimationControllerStateSpec>(
     val titleKey: String,
     val createDefault: ((id: String) -> S)? = null,
 ) {
-    val key: ResourceLocation = id.rl
+    val key: Identifier = id.rl
 }
 
 /**
@@ -40,6 +40,15 @@ object AnimatorStateTypes {
                 serializer = ClipStateSpec.serializer(),
                 titleKey = "hollowengine.gui.animator_editor.state_kind_clip",
                 createDefault = { id -> ClipStateSpec(id = id, animation = id) },
+            )
+        )
+        register(
+            AnimatorStateType(
+                id = "hollowengine:animator/state/blend",
+                specClass = BlendStateSpec::class,
+                serializer = BlendStateSpec.serializer(),
+                titleKey = "hollowengine.gui.animator_editor.state_kind_blend",
+                createDefault = { id -> BlendStateSpec(id = id, x = AnimationExpression("horizontal_speed")) },
             )
         )
     }

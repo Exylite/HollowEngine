@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.addons.physics
 
+import net.minecraft.client.gui.components.debug.DebugScreenEntries
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
 import net.minecraft.client.Minecraft
 import ru.hollowhorizon.hollowengine.addons.physics.ragdoll.shape
 import ru.hollowhorizon.hollowengine.addons.physics.world.PhysicsWorlds
@@ -20,12 +22,12 @@ object RagdollDebugRenderer {
         if (event.stage != RenderStage.AFTER_ENTITIES) return
 
         val minecraft = Minecraft.getInstance()
-        if (!minecraft.entityRenderDispatcher.shouldRenderHitBoxes()) return
+        if (!minecraft.debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES)) return
         val level = minecraft.level ?: return
         val world = PhysicsWorlds.find(level) ?: return
         if (world.ragdolls.isEmpty()) return
 
-        val camera = event.camera.position
+        val camera = event.camera.position()
         val buffers = minecraft.renderBuffers().bufferSource()
         val poseStack = event.poseStack
 

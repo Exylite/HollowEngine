@@ -1,9 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.ui.HudPlacement
 import ru.hollowhorizon.hollowengine.common.ui.UiData
@@ -18,7 +19,7 @@ import ru.hollowhorizon.hollowengine.common.ui.hud.HudLayerRegistry
  * of slots. Overlays flagged `aboveScreens` also draw over an open screen.
  */
 object UiScriptHudHost {
-    private val shown = LinkedHashMap<ResourceLocation, ShownOverlay>()
+    private val shown = LinkedHashMap<Identifier, ShownOverlay>()
 
     private class ShownOverlay(
         val definition: UiOverlayDefinition,
@@ -62,7 +63,7 @@ object UiScriptHudHost {
         }
     }
 
-    fun show(id: ResourceLocation, sessionId: Int? = null, initialState: CompoundTag = CompoundTag()) {
+    fun show(id: Identifier, sessionId: Int? = null, initialState: CompoundTag = CompoundTag()) {
         val definition = UiDefinitionRegistry.overlay(id) ?: run {
             HollowEngine.LOGGER.warn("No UI overlay declared with id {}", id)
             return
@@ -70,11 +71,11 @@ object UiScriptHudHost {
         show(definition, sessionId, initialState)
     }
 
-    fun hide(id: ResourceLocation) {
+    fun hide(id: Identifier) {
         hide(id, null)
     }
 
-    fun isShown(id: ResourceLocation): Boolean = id in shown
+    fun isShown(id: Identifier): Boolean = id in shown
 
     fun applyPatch(sessionId: Int, patch: CompoundTag, removed: Collection<String>) {
         onRenderThread {
@@ -113,7 +114,7 @@ object UiScriptHudHost {
     }
 
     /** Draws every overlay anchored at [anchor]/[placement] that is not currently suppressed. */
-    fun render(anchor: ResourceLocation, placement: HudPlacement, nowNanos: Long) {
+    fun render(anchor: Identifier, placement: HudPlacement, nowNanos: Long) {
         dropFinishedExits()
         if (shown.isEmpty()) return
         val screenOpen = Minecraft.getInstance().screen != null
@@ -165,11 +166,11 @@ object UiScriptHudHost {
     }
 
     /** Drops an overlay at once, without its exit animation: a switch between hosts has none to play. */
-    fun drop(id: ResourceLocation) {
+    fun drop(id: Identifier) {
         onRenderThread { hideNow(id) }
     }
 
-    private fun hide(id: ResourceLocation, expectedSurface: UiScriptSurface?) {
+    private fun hide(id: Identifier, expectedSurface: UiScriptSurface?) {
         onRenderThread { beginExit(id, expectedSurface) }
     }
 
@@ -177,13 +178,13 @@ object UiScriptHudHost {
      * Starts the overlay's exit animation. [dropFinishedExits] takes it away once that has played
      * out or drops it right away when it declares no exit duration.
      */
-    private fun beginExit(id: ResourceLocation, expectedSurface: UiScriptSurface? = null) {
+    private fun beginExit(id: Identifier, expectedSurface: UiScriptSurface? = null) {
         val overlay = shown[id] ?: return
         if (expectedSurface != null && overlay.surface !== expectedSurface) return
         if (!overlay.surface.dismiss()) hideNow(id, expectedSurface)
     }
 
-    private fun hideNow(id: ResourceLocation, expectedSurface: UiScriptSurface? = null) {
+    private fun hideNow(id: Identifier, expectedSurface: UiScriptSurface? = null) {
         val overlay = shown[id] ?: return
         if (expectedSurface != null && overlay.surface !== expectedSurface) return
         shown.remove(id)

@@ -1,9 +1,11 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.rendering
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.*
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
@@ -86,22 +88,20 @@ fun groupByMaterial(
 inline fun withInstancingRenderState(body: () -> Unit) {
     val activeTexture = GlStateManager._getActiveTexture()
     val currentVao = GL33.glGetInteger(GL33.GL_VERTEX_ARRAY_BINDING)
-    val currentElementArrayBuffer = GL33.glGetInteger(GL33.GL_ELEMENT_ARRAY_BUFFER_BINDING)
+    val currentArrayBuffer = GL33.glGetInteger(GL33.GL_ARRAY_BUFFER_BINDING)
     val shaderTexture0 = RenderSystem.getShaderTexture(0)
     val shaderTexture1 = RenderSystem.getShaderTexture(1)
     val shaderTexture2 = RenderSystem.getShaderTexture(2)
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE2)
     val texture2 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-    RenderSystem.bindTexture(HollowModelManager.lightTexture.id)
-    RenderSystem.setShaderTexture(2, HollowModelManager.lightTexture.id)
+    RenderSystem.bindTexture(LegacyGl.lightmapTextureId())
+    RenderSystem.setShaderTexture(2, LegacyGl.lightmapTextureId())
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE1)
     val texture1 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
-    Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor()
-    RenderSystem.bindTexture(RenderSystem.getShaderTexture(1))
-    RenderSystem.setShaderTexture(1, RenderSystem.getShaderTexture(1))
-    Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor()
+    RenderSystem.bindTexture(LegacyGl.overlayTextureId())
+    RenderSystem.setShaderTexture(1, LegacyGl.overlayTextureId())
 
     RenderSystem.activeTexture(GL33.GL_TEXTURE0)
     val texture0 = GlStateManager.TEXTURES[GlStateManager.activeTexture].binding
@@ -121,7 +121,7 @@ inline fun withInstancingRenderState(body: () -> Unit) {
         RenderSystem.activeTexture(activeTexture)
 
         RenderSystem.glBindVertexArray(currentVao)
-        RenderSystem.glBindBuffer(GL33.GL_ELEMENT_ARRAY_BUFFER, currentElementArrayBuffer)
+        RenderSystem.glBindBuffer(GL33.GL_ARRAY_BUFFER, currentArrayBuffer)
 
         GlStateManager._glUseProgram(0)
     }

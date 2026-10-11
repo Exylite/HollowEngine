@@ -1,16 +1,20 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferBuilder
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
 import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import ru.hollowhorizon.hollowengine.client.ui.UiInsets
 import ru.hollowhorizon.hollowengine.client.ui.UiMatrix4
 import ru.hollowhorizon.hollowengine.client.ui.shape.Shape
 import ru.hollowhorizon.hollowengine.client.ui.shape.UiPathPoint
-import net.minecraft.client.renderer.ShaderInstance
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
 import ru.hollowhorizon.hollowengine.client.ui.style.UiFilterChain
 import ru.hollowhorizon.hollowengine.client.ui.style.UiFilterEffect
 import ru.hollowhorizon.hollowengine.client.ui.style.UiImageFit
@@ -81,7 +85,7 @@ internal object UiTextureEffects {
         opacity: Float,
         flipY: Boolean,
         fit: UiImageFit = UiImageFit.STRETCH,
-        texture: ResourceLocation? = null,
+        texture: Identifier? = null,
         filter: UiFilterChain = UiFilterChain.Empty,
         slice: UiInsets = UiInsets.Zero,
         textureWidth: Float = width,
@@ -124,7 +128,7 @@ internal object UiTextureEffects {
     }
 
     fun drawTexturedQuads(
-        texture: ResourceLocation,
+        texture: Identifier,
         quads: List<UiTexturedQuad>,
         filter: UiFilterChain = UiFilterChain.Empty,
     ) {
@@ -293,7 +297,7 @@ internal object UiTextureEffects {
         val hasMask = maskRadius > 0f
         if (filter.effects.isEmpty() && !hasMask && !alphaMask && !opaqueSource || effectShader == null) {
             // Nothing the effect shader would do differently; the plain path is cheaper.
-            RenderSystem.setShader(GameRenderer::getPositionTexColorShader)
+            RenderSystem.setShader(ModShaders.POSITION_TEX_COLOR)
             configureUiBlend()
             return
         }
@@ -483,7 +487,7 @@ internal object UiTextureEffects {
         buffer: BufferBuilder,
         transform: UiMatrix4,
         placement: ImagePlacement,
-        texture: ResourceLocation?,
+        texture: Identifier?,
         fit: UiImageFit,
         slice: UiInsets,
         flipY: Boolean,

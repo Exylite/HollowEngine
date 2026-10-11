@@ -1,5 +1,8 @@
 package ru.hollowhorizon.hollowengine.common.slots
 
+import net.minecraft.world.level.storage.TagValueOutput
+import net.minecraft.world.level.storage.TagValueInput
+import net.minecraft.util.ProblemReporter
 import net.minecraft.core.HolderLookup
 import net.minecraft.core.NonNullList
 import net.minecraft.nbt.CompoundTag
@@ -148,12 +151,14 @@ class SimpleSlotSource(size: Int) : SlotSource {
     fun fillEmpty() = items.fill(ItemStack.EMPTY)
 
     fun saveItems(tag: CompoundTag, registries: HolderLookup.Provider) {
-        ContainerHelper.saveAllItems(tag, items, registries)
+        val output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries)
+        ContainerHelper.saveAllItems(output, items)
+        tag.merge(output.buildResult())
     }
 
     fun loadItems(tag: CompoundTag, registries: HolderLookup.Provider, size: Int) {
         items = NonNullList.withSize(size, ItemStack.EMPTY)
-        ContainerHelper.loadAllItems(tag, items, registries)
+        ContainerHelper.loadAllItems(TagValueInput.create(ProblemReporter.DISCARDING, registries, tag), items)
     }
 
     private fun requireSlot(slot: Int) {

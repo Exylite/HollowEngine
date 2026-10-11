@@ -124,11 +124,8 @@ val generateAddonModMetadata = tasks.register("generateAddonModMetadata") {
                     mapOf(
                         "pack" to mapOf(
                             "description" to displayName,
-                            "pack_format" to resourcePackFormat,
-                            "supported_formats" to listOf(
-                                minOf(resourcePackFormat, dataPackFormat),
-                                maxOf(resourcePackFormat, dataPackFormat),
-                            ),
+                            "min_format" to minOf(resourcePackFormat, dataPackFormat),
+                            "max_format" to maxOf(resourcePackFormat, dataPackFormat),
                         ),
                     ),
                 ),

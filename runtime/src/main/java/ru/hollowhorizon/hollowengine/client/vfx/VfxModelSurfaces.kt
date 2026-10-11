@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.vfx
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.internal.Model
 import ru.hollowhorizon.hollowengine.client.models.internal.NodeDefinition
@@ -127,7 +127,7 @@ object VfxModelSurfaces {
     fun clear() = requests.clear()
 
     private fun load(model: String, request: Request) {
-        val location = ResourceLocation.tryParse(model) ?: return
+        val location = Identifier.tryParse(model) ?: return
         scopeAsync {
             try {
                 request.surface = VfxModelSurface.of(HollowModelManager.loadModel(location))

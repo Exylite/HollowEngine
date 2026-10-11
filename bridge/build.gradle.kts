@@ -3,7 +3,7 @@ import org.gradle.jvm.tasks.Jar
 plugins {
     java
     id("architectury-plugin")
-    id("dev.architectury.loom")
+    id("dev.architectury.loom-no-remap")
 }
 
 val modId: String by properties
@@ -12,7 +12,6 @@ val modGroup: String by properties
 val minecraftVersion: String by rootProject.properties
 val enabledPlatforms = (rootProject.property("enabledPlatforms") as String).split(',').map(String::trim).toTypedArray()
 val fabricLoaderVersion: String by rootProject.properties
-val parchmentVersion: String by rootProject.properties
 
 group = modGroup
 version = modVersion
@@ -24,10 +23,12 @@ repositories {
     mavenCentral()
     maven("https://maven.fabricmc.net/")
     maven("https://maven.architectury.dev/")
-    maven("https://maven.parchmentmc.org")
     maven("https://repo.spongepowered.org/repository/maven-public/")
     mavenLocal()
     flatDir { dirs(rootProject.file("libs")) }
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
 }
 
 architectury {
@@ -36,22 +37,21 @@ architectury {
 
 loom {
     silentMojangMappingsLicense()
-    mixin.useLegacyMixinAp.set(true)
-    mixin.add(sourceSets.named("main").get(), "$modId.bridge.refmap.json")
+
+    val accessWidener = rootProject.file("runtime/src/main/resources/$modId.accesswidener")
+    if (accessWidener.exists()) {
+        accessWidenerPath.set(accessWidener)
+    }
 }
 
 dependencies {
     "minecraft"("com.mojang:minecraft:$minecraftVersion")
-    "mappings"(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentVersion")
-    })
 
-    modImplementation("lib:iris-fabric:1.8.14-beta.1+mc1.21.1-devpatch")
-    modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+    implementation("maven.modrinth:iris:1.11.4+26.2-fabric")
+    implementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
 
     compileOnly("org.spongepowered:mixin:0.8.7")
-    compileOnly("io.github.llamalad7:mixinextras-common:0.4.1")
+    compileOnly("io.github.llamalad7:mixinextras-common:0.5.5")
     compileOnly("org.jetbrains:annotations:24.1.0")
 }
 
@@ -68,4 +68,18 @@ tasks.named<ProcessResources>("processResources") {
 
 tasks.named<Jar>("jar") {
     archiveClassifier.set("")
+}
+
+// Without remapping Loom has no named jar of its own, but dependents still ask for the Mojang-named
+// classes by this configuration.
+configurations.create("namedElements") {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    configurations.findByName("api")?.let { extendsFrom(it) }
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_API))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+    }
+    outgoing.artifact(tasks.named<Jar>("jar"))
 }

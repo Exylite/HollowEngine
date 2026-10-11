@@ -116,7 +116,7 @@ class NodeEditor internal constructor(private val script: NodeScript) {
         bound = true
 
         script.onLoadHandlers += { context ->
-            val tag = context.tag.getCompound(PropertiesTag)
+            val tag = context.tag.getCompoundOrEmpty(PropertiesTag)
             properties.values.forEach { it.load(tag) }
         }
         script.onSaveHandlers += { context ->

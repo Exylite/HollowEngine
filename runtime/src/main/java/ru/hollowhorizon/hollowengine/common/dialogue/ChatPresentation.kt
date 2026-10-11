@@ -49,7 +49,7 @@ class ChatPresentation(
         for (option in options) {
             val line: MutableComponent = Component.literal("  ▶ ").withStyle { style: Style ->
                 style.withColor(ChatFormatting.AQUA)
-                    .withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hollowengine dialogue choose ${option.index}"))
+                    .withClickEvent(ClickEvent.RunCommand("/hollowengine dialogue choose ${option.index}"))
             }
             line.appendFormatted(FormattedTextParser.parse(option.text))
             session.onlineParticipants.forEach { it.sendSystemMessage(line) }
@@ -77,7 +77,7 @@ class ChatPresentation(
             .append("hollowengine.dialogue.advance".mcTranslate)
             .withStyle { style: Style ->
                 style.withColor(ChatFormatting.GRAY)
-                    .withClickEvent(ClickEvent(ClickEvent.Action.RUN_COMMAND, "/hollowengine dialogue advance"))
+                    .withClickEvent(ClickEvent.RunCommand("/hollowengine dialogue advance"))
             }
         session.onlineParticipants.forEach { it.sendSystemMessage(prompt) }
     }

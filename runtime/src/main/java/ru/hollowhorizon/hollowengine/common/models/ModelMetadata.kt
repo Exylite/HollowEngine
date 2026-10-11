@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.common.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.peanuuutz.tomlkt.Toml
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.utils.nbt.ForResourceLocation
@@ -31,7 +31,7 @@ data class ModelMetadata(
 
     /** The animator this model wears; a `.animator` file, or an id registered from code. */
     @SerialName("animation-controller")
-    val animationController: @Serializable(ForResourceLocation::class) ResourceLocation? = null,
+    val animationController: @Serializable(ForResourceLocation::class) Identifier? = null,
 
     /**
      * New name for a material of the model, keyed by the name it already has.

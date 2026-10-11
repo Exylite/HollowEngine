@@ -2,7 +2,6 @@
 import dev.architectury.plugin.ArchitectPluginExtension
 import me.modmuss50.mpp.ReleaseType
 import net.fabricmc.loom.api.LoomGradleExtensionAPI
-import net.fabricmc.loom.task.RemapJarTask
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -12,7 +11,7 @@ plugins {
     base
     idea
     id("architectury-plugin") apply false
-    id("dev.architectury.loom") apply false
+    id("dev.architectury.loom-no-remap") apply false
     id("com.gradleup.shadow") apply false
     id("me.modmuss50.mod-publish-plugin")
     kotlin("jvm") apply false
@@ -32,12 +31,11 @@ fun Project.configureHollowAddon() {
     plugins.apply("org.jetbrains.kotlin.plugin.serialization")
     plugins.apply("org.jetbrains.kotlin.plugin.compose")
     plugins.apply("architectury-plugin")
-    plugins.apply("dev.architectury.loom")
+    plugins.apply("dev.architectury.loom-no-remap")
 
     val modVersion = rootProject.property("modVersion") as String
     val modGroup = rootProject.property("modGroup") as String
     val minecraftVersion = rootProject.property("minecraftVersion") as String
-    val parchmentVersion = rootProject.property("parchmentVersion") as String
     val fabricLoaderVersion = rootProject.property("fabricLoaderVersion") as String
     val kotlinVersion = rootProject.property("kotlinVersion") as String
     val serializationVersion = rootProject.property("serializationVersion") as String
@@ -51,8 +49,7 @@ fun Project.configureHollowAddon() {
         mavenCentral()
         maven("https://maven.fabricmc.net/")
         maven("https://maven.architectury.dev/")
-        maven("https://maven.parchmentmc.org")
-        maven("https://maven.blamejared.com/")
+            maven("https://maven.blamejared.com/")
         maven("https://jitpack.io")
         maven("https://maven.google.com/")
         flatDir { dirs(rootProject.file("libs")) }
@@ -93,11 +90,7 @@ fun Project.configureHollowAddon() {
 
     dependencies {
         add("minecraft", "com.mojang:minecraft:$minecraftVersion")
-        add("mappings", loom.layered {
-            officialMojangMappings()
-            parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentVersion")
-        })
-        add("modCompileOnly", "net.fabricmc:fabric-loader:$fabricLoaderVersion")
+        add("compileOnly", "net.fabricmc:fabric-loader:$fabricLoaderVersion")
         add("compileOnly", project(path = ":runtime", configuration = "namedElements"))
         add("testImplementation", project(path = ":runtime", configuration = "namedElements"))
         add("compileOnly", "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
@@ -114,20 +107,16 @@ fun Project.configureHollowAddon() {
         archiveClassifier.set("classes-named")
         include("**/*.class")
     }
-    tasks.named<RemapJarTask>("remapJar") {
-        enabled = false
-    }
-
     apply(from = rootProject.file("gradle/addon-packaging.gradle.kts"))
 
     tasks.matching { it.name.startsWith("transformProduction") }.configureEach {
         enabled = false
     }
     tasks.withType<KotlinCompile>().configureEach {
-        compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+        compilerOptions.jvmTarget.set(JvmTarget.JVM_25)
     }
     tasks.withType<JavaCompile>().configureEach {
-        options.release.set(21)
+        options.release.set(25)
     }
     tasks.withType<Test>().configureEach {
         val sandbox = layout.buildDirectory.dir("test-workdir")
@@ -228,7 +217,7 @@ publishMods {
         accessToken.set(tokenProvider("publish.curseforge.token", "curseforgeToken", "CURSEFORGE_TOKEN", "CURSEFORGE_API_KEY"))
         projectId.set(curseforgeProjectId)
         minecraftVersions.add(minecraftVersion)
-        javaVersions.add(JavaVersion.VERSION_21)
+        javaVersions.add(JavaVersion.VERSION_25)
         clientRequired.set(true)
         serverRequired.set(true)
     }

@@ -17,7 +17,7 @@ import java.util.function.BiConsumer;
 public class FabricNetworkManager implements NetworkManager {
     @Override
     public <T extends CustomPacketPayload> void registerClient(CustomPacketPayload.@NotNull Type<T> type, @NotNull StreamCodec<RegistryFriendlyByteBuf, T> codec, @NotNull BiConsumer<T, Player> consumer) {
-        PayloadTypeRegistry.playS2C().register(type, codec);
+        PayloadTypeRegistry.clientboundPlay().register(type, codec);
         if (FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) {
             ClientPlayNetworking.registerGlobalReceiver(type, (payload, context) -> consumer.accept(payload, context.player()));
         }
@@ -25,7 +25,7 @@ public class FabricNetworkManager implements NetworkManager {
 
     @Override
     public <T extends CustomPacketPayload> void registerServer(CustomPacketPayload.@NotNull Type<T> type, @NotNull StreamCodec<RegistryFriendlyByteBuf, T> codec, @NotNull BiConsumer<T, Player> consumer) {
-        PayloadTypeRegistry.playC2S().register(type, codec);
+        PayloadTypeRegistry.serverboundPlay().register(type, codec);
         ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> consumer.accept(payload, context.player()));
     }
 }

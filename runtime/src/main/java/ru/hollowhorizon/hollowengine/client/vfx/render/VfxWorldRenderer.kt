@@ -1,6 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.common.utils.compat.mainRenderTarget
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import net.minecraft.client.Minecraft
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL33
@@ -19,11 +20,17 @@ import ru.hollowhorizon.hollowengine.common.events.client.render.RenderStage
  */
 @ClientOnly
 object VfxWorldRenderer {
+    /** The shader game time of the render system is the share of a day gone, and a day is this many seconds. */
+    private const val SECONDS_PER_DAY = 1200f
+
     private val frame = VfxDrawList()
     private val shake = FloatArray(3)
 
     /** The view of the frame, while its surfaces wait for the shader pack to finish. */
     private var deferred: VfxView? = null
+
+    /** The view the effects of the frame were drawn with, which its post effects read the depth back with. */
+    private var frameView: VfxView? = null
 
     @SubscribeEvent
     fun onRenderLevel(event: RenderLevelStageEvent) {
@@ -34,7 +41,8 @@ object VfxWorldRenderer {
     @SubscribeEvent(10)
     fun onLevelDone(event: RenderLevelStageEvent) {
         if (event.stage != RenderStage.AFTER_LEVEL || deferred != null || frame.posts.isEmpty()) return
-        VfxPostProcessor.apply(frame.posts, Minecraft.getInstance().mainRenderTarget)
+        val view = frameView ?: return
+        VfxPostProcessor.apply(frame.posts, Minecraft.getInstance().mainRenderTarget, view)
         frame.posts.clear()
     }
 
@@ -46,7 +54,7 @@ object VfxWorldRenderer {
         val main = Minecraft.getInstance().mainRenderTarget
         main.bindWrite(true)
         VfxFrameRenderer.renderSurfaces(frame, view, main)
-        VfxPostProcessor.apply(frame.posts, main)
+        VfxPostProcessor.apply(frame.posts, main, view)
         frame.posts.clear()
     }
 
@@ -58,11 +66,12 @@ object VfxWorldRenderer {
     }
 
     private fun drawEffects(event: RenderLevelStageEvent) {
-        val camera = event.camera.position
+        val camera = event.camera.position()
         val scene = VfxScenes.current()
         val bones = VfxBoneBindings.drain(camera)
         frame.clear()
         deferred = null
+        frameView = null
         if (scene == null && bones.isEmpty()) {
             shake.fill(0f)
             return
@@ -76,9 +85,12 @@ object VfxWorldRenderer {
         }
         bones.forEach { binding -> binding.instance.collect(frame, binding.placement) }
         frame.shake.copyInto(shake)
+        VfxDebug.report("collected", frame)
         if (frame.isEmpty) return
 
-        val view = VfxView.ofCamera(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix())
+        val time = RenderSystem.gameTime * SECONDS_PER_DAY
+        val view = VfxView.ofCamera(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), time)
+        frameView = view
         val main = Minecraft.getInstance().mainRenderTarget
         val depthWrite = GL33.glGetBoolean(GL33.GL_DEPTH_WRITEMASK)
         try {

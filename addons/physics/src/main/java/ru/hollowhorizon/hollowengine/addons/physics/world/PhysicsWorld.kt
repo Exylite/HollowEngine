@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.addons.physics.world
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import com.github.stephengold.joltjni.*
 import net.minecraft.world.level.Level
 import ru.hollowhorizon.hollowengine.HollowEngine

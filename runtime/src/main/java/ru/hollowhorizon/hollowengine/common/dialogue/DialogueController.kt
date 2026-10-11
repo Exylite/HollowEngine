@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.dialogue
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.withPermission
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -218,7 +220,7 @@ class DialogueController(
     /** Restores a position previously written by [save]; the next [start] continues from it. */
     fun load(key: String, tag: CompoundTag) {
         check(!isRunning) { "Cannot load into a running dialogue" }
-        restored = if (tag.contains(key)) StoryCheckpoint.load(tag.getCompound(key)) else null
+        restored = if (tag.contains(key)) StoryCheckpoint.load(tag.getCompoundOrEmpty(key)) else null
     }
 
     /** Current position, or null when nothing is in progress. */

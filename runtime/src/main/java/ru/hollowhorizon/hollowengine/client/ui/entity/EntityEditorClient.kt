@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.entity
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.client.editor.WorldInspector
 import ru.hollowhorizon.hollowengine.client.utils.mc

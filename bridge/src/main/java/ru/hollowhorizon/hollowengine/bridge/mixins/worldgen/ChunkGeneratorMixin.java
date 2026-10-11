@@ -36,7 +36,7 @@ public abstract class ChunkGeneratorMixin {
             return placement.getLocatePos(chunk);
         }
 
-        ChunkAccess access = level.getChunk(chunk.x, chunk.z, ChunkStatus.STRUCTURE_STARTS);
+        ChunkAccess access = level.getChunk(chunk.x(), chunk.z(), ChunkStatus.STRUCTURE_STARTS);
         StructureStart start = structureManager.getStartForStructure(SectionPos.bottomOf(access), structure.value(), access);
         if (start == null || !start.isValid()) return null;
 

@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.ide
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.files.DirectoryManager
 import ru.hollowhorizon.hollowengine.common.utils.HollowJavaUtils
 import java.io.File
@@ -70,8 +70,8 @@ object ResourceLocationTargets {
         return if (readable) Target.RESOURCE else Target.MISSING
     }
 
-    private fun parse(location: String): ResourceLocation? =
-        runCatching { ResourceLocation.parse(location.trim()) }.getOrNull()
+    private fun parse(location: String): Identifier? =
+        runCatching { Identifier.parse(location.trim()) }.getOrNull()
 
     private fun localPath(location: String): Path? {
         val parsed = parse(location) ?: return null

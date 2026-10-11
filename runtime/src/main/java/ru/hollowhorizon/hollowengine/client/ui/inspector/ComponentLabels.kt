@@ -5,17 +5,17 @@ package ru.hollowhorizon.hollowengine.client.ui.inspector
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.SerialDescriptor
 import net.minecraft.locale.Language
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.attachments.editor.*
 
 /**
  * What a field or a component is called, and how it wants to be edited.
  */
 internal object ComponentLabels {
-    fun componentKey(id: ResourceLocation): String =
+    fun componentKey(id: Identifier): String =
         "hollowengine.component.${id.namespace}.${id.path.replace('/', '.')}"
 
-    fun componentName(id: ResourceLocation, descriptor: SerialDescriptor): String {
+    fun componentName(id: Identifier, descriptor: SerialDescriptor): String {
         descriptor.annotations.filterIsInstance<EditorName>().firstOrNull()?.let { return translate(it.name) }
         return translateOrNull(componentKey(id)) ?: prettify(id.path.substringAfterLast('/'))
     }
@@ -26,13 +26,18 @@ internal object ComponentLabels {
     fun componentIcon(descriptor: SerialDescriptor): String? =
         descriptor.annotations.filterIsInstance<EditorIcon>().firstOrNull()?.icon
 
-    fun fieldName(owner: ResourceLocation?, descriptor: SerialDescriptor, index: Int): String {
+    fun fieldName(owner: Identifier?, descriptor: SerialDescriptor, index: Int): String {
         val annotations = descriptor.getElementAnnotations(index)
         annotations.filterIsInstance<EditorName>().firstOrNull()?.let { return translate(it.name) }
         val name = descriptor.getElementName(index)
         val key = owner?.let { "${componentKey(it)}.${name}" }
         return key?.let(::translateOrNull) ?: prettify(name)
     }
+
+    /** What a value of an enum is called: its [EditorName] when it has one, its own name otherwise. */
+    fun enumValueName(descriptor: SerialDescriptor, index: Int): String =
+        descriptor.getElementAnnotations(index).filterIsInstance<EditorName>().firstOrNull()?.let { translate(it.name) }
+            ?: prettify(descriptor.getElementName(index))
 
     fun fieldDescription(descriptor: SerialDescriptor, index: Int): String? =
         descriptor.getElementAnnotations(index).filterIsInstance<EditorDescription>().firstOrNull()
@@ -50,6 +55,9 @@ internal object ComponentLabels {
 
     fun isBone(descriptor: SerialDescriptor, index: Int): Boolean =
         descriptor.getElementAnnotations(index).any { it is EditorBone }
+
+    fun widget(descriptor: SerialDescriptor, index: Int): String? =
+        descriptor.getElementAnnotations(index).filterIsInstance<EditorWidget>().firstOrNull()?.id
 
     fun isMultiline(descriptor: SerialDescriptor, index: Int): Boolean =
         descriptor.getElementAnnotations(index).any { it is EditorMultiline }

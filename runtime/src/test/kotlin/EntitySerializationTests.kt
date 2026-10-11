@@ -1,6 +1,6 @@
 
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.phys.Vec3
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ class EntitySerializationTests {
     private val looseId = "test:loose_component".rl
     private val lookAtId = "hollowengine:look_at_target".rl
     private val patrolId = "hollowengine:patrol_path".rl
-    private val registeredForTest = mutableSetOf<ResourceLocation>()
+    private val registeredForTest = mutableSetOf<Identifier>()
 
     @AfterEach
     fun cleanup() {
@@ -180,7 +180,7 @@ class EntitySerializationTests {
         ensureRegistered(patrolId, PatrolPathComponent::class, PatrolPathComponent.serializer())
     }
 
-    private fun <T : Any> ensureRegistered(id: ResourceLocation, type: kotlin.reflect.KClass<T>, serializer: kotlinx.serialization.KSerializer<T>) {
+    private fun <T : Any> ensureRegistered(id: Identifier, type: kotlin.reflect.KClass<T>, serializer: kotlinx.serialization.KSerializer<T>) {
         if (ComponentDescriptorRegistry.descriptorOrNull(id) != null) return
         ComponentDescriptorRegistry.register(
             ComponentDescriptor(

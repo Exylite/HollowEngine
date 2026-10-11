@@ -1,8 +1,6 @@
 package ru.hollowhorizon.hollowengine.neoforge.mixins.client;
 
 import net.minecraft.client.Camera;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockGetter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,8 +10,8 @@ import ru.hollowhorizon.hollowengine.bridge.mixins.client.CameraInvoker;
 
 @Mixin(Camera.class)
 public class CameraMixin {
-    @Inject(method = "setup", at = @At("RETURN"))
-    private void onSetup(BlockGetter blockGetter, Entity entity, boolean detached, boolean inverseView, float partialTick, CallbackInfo ci) {
+    @Inject(method = "alignWithEntity", at = @At("RETURN"))
+    private void onSetup(float partialTick, CallbackInfo ci) {
         var override = BootstrapRuntimeManager.bridge().getCameraOverride(partialTick);
 
         if (override.active()) {

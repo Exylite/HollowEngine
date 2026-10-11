@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.asset
 
 import androidx.compose.runtime.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.network.*
 import java.io.ByteArrayOutputStream
 
@@ -69,7 +69,7 @@ internal object RemoteServerAssetState {
                 val directory = AssetDirectory(entry.namespace, entry.path)
                 directories[directory.key] = directory
             } else {
-                val location = ResourceLocation.tryBuild(entry.namespace, entry.path) ?: return@forEach
+                val location = Identifier.tryBuild(entry.namespace, entry.path) ?: return@forEach
                 files[location.toString()] = AssetFile(location, entry.sourcePackId)
             }
         }

@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.bootstrap.mixins.tags;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagLoader;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +23,7 @@ public class TagLoaderMixin {
     private String directory;
 
     @Inject(method = "build(Ljava/util/Map;)Ljava/util/Map;", at = @At("HEAD"))
-    private void hollowengine$load(Map<ResourceLocation, List<TagLoader.EntryWithSource>> value, CallbackInfoReturnable<Map<ResourceLocation, Collection<?>>> cir) {
+    private void hollowengine$load(Map<Identifier, List<TagLoader.EntryWithSource>> value, CallbackInfoReturnable<Map<Identifier, Collection<?>>> cir) {
         BuiltInRegistries.REGISTRY.stream()
                 .filter(t -> Registries.tagsDirPath(t.key()).equals(directory))
                 .findFirst()

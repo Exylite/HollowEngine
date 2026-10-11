@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.scripting.ui
 
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.ui.*
 import ru.hollowhorizon.hollowengine.common.ui.hud.VanillaHudLayers
 import ru.hollowhorizon.hollowengine.common.ui.net.UiSurfaceKind
@@ -27,12 +27,12 @@ import kotlin.reflect.KClass
  */
 abstract class UiScript {
     fun screen(id: String, body: UiScreenBuilder.() -> Unit) {
-        val location = ResourceLocation.parse(id)
+        val location = Identifier.parse(id)
         UiDefinitionRegistry.register(UiScreenBuilder(location).apply(body).build())
     }
 
     fun overlay(id: String, body: UiOverlayBuilder.() -> Unit) {
-        val location = ResourceLocation.parse(id)
+        val location = Identifier.parse(id)
         UiDefinitionRegistry.register(UiOverlayBuilder(location).apply(body).build())
     }
 
@@ -52,7 +52,7 @@ abstract class UiScript {
      * server writes to one place and never learns which host is currently mounted.
      */
     fun surface(id: String, body: UiSurfaceBuilder.() -> Unit) {
-        val location = ResourceLocation.parse(id)
+        val location = Identifier.parse(id)
         UiDefinitionRegistry.register(UiSurfaceBuilder(location).apply(body).build())
     }
 }
@@ -61,7 +61,7 @@ abstract class UiScript {
  * What every declared host has in common. Composable body, whether it recomposes per frame, and
  * the room it asks for its exit animation.
  */
-sealed class UiHostBuilder(protected val id: ResourceLocation) {
+sealed class UiHostBuilder(protected val id: Identifier) {
     /** Recomposes the host every frame; enable only for content that tracks live game state. */
     var rebuildEveryFrame: Boolean = false
 
@@ -80,7 +80,7 @@ sealed class UiHostBuilder(protected val id: ResourceLocation) {
         body ?: error("UI $kind '$id' declares no content { } block")
 }
 
-class UiScreenBuilder internal constructor(id: ResourceLocation) : UiHostBuilder(id) {
+class UiScreenBuilder internal constructor(id: Identifier) : UiHostBuilder(id) {
     /** Narration title; also what the game shows for the screen. */
     var title: String = id.path
 
@@ -146,7 +146,7 @@ class UiScreenBuilder internal constructor(id: ResourceLocation) : UiHostBuilder
  * the overlay's anchor and the screen's title, escape handling and scale, because the same surface
  * really is both at different moments.
  */
-class UiSurfaceBuilder internal constructor(id: ResourceLocation) : UiHostBuilder(id) {
+class UiSurfaceBuilder internal constructor(id: Identifier) : UiHostBuilder(id) {
     var title: String = id.path
     var closeOnEscape: Boolean = true
     var pausesGame: Boolean = false
@@ -202,7 +202,7 @@ class UiSurfaceBuilder internal constructor(id: ResourceLocation) : UiHostBuilde
     }
 }
 
-class UiOverlayBuilder internal constructor(id: ResourceLocation) : UiHostBuilder(id) {
+class UiOverlayBuilder internal constructor(id: Identifier) : UiHostBuilder(id) {
     /**
      * The HUD layer this overlay draws next to; see [VanillaHudLayers]. Accepts bare vanilla names
      * (`"crosshair"`) as well as fully qualified ids.

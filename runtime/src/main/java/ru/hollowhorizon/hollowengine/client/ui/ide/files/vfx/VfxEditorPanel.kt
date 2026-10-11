@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.files.vfx
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.lwjgl.glfw.GLFW
@@ -25,6 +25,8 @@ import ru.hollowhorizon.hollowengine.client.ui.widgets.UiKeyInput
 import ru.hollowhorizon.hollowengine.client.utils.lang
 import ru.hollowhorizon.hollowengine.common.vfx.VfxProperty
 import kotlin.time.Duration.Companion.milliseconds
+import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.TimelineEdits
+import ru.hollowhorizon.hollowengine.client.history.UndoKeys
 
 private const val AutoSaveDelayMillis = 900L
 
@@ -104,6 +106,7 @@ internal fun VfxEditorPanel(file: HollowIdeOpenFile) {
                 session.commit()
                 session.applyListing()
             },
+            recordable = true,
         )
     }
 
@@ -157,20 +160,30 @@ private fun Toolbar(state: VfxEditorState) {
 }
 
 /** What editor is looking at, as opposed to what it is editing. */
-internal class VfxEditorState(document: HollowIdeVfxDocument) {
+internal class VfxEditorState(private val document: HollowIdeVfxDocument) : VfxInspectorState(), VfxNodeSelection {
     val preview = VfxPreviewState()
     val session = VfxTimelineSession(document, preview).also { it.timeline.isPlaying = true }
 
-    var selected by mutableStateOf<String?>(null)
+    init {
+        document.onEdit = session::recordEdit
+    }
+
+    /** A drag in the viewport: one step back in the file, the keys it records included. */
+    fun beginGesture() {
+        document.beginGesture()
+        session.timeline.beginHistoryTransaction(TimelineEdits.RECORD_KEYS)
+    }
+
+    /** The timeline's keys go in while the file's step is still open, so both go back together. */
+    fun endGesture() {
+        session.timeline.commitHistoryTransaction()
+        document.endGesture()
+    }
+
+    override var selected by mutableStateOf<String?>(null)
         private set
     val expanded = mutableStateListOf<String>()
     var rootExpanded by mutableStateOf(true)
-
-    /** Which inspector sections are open, kept here so they survive switching between nodes. */
-    private val sections = mutableStateMapOf<String, Boolean>()
-
-    /** The material of the selected surface on its own, in the material section of the inspector. */
-    val materialPreview = materialPreviewState()
 
     /** The shape handle being dragged, with node as it was when drag started. */
     var drag: VfxGizmoHandle? = null
@@ -181,19 +194,26 @@ internal class VfxEditorState(document: HollowIdeVfxDocument) {
     var transformDrag: VfxTransformDrag? = null
     var hoveredHandle by mutableStateOf<GizmoHandleId?>(null)
 
+    /** A transform from the keyboard under way, and where the pointer last was: where the next one starts. */
+    var keyboard by mutableStateOf<VfxKeyboardTransform?>(null)
+    var pointerX = 0f
+    var pointerY = 0f
+
     /** What dragged handle is set to right now, drawn beside it. */
     var readout by mutableStateOf<VfxGizmoReadout?>(null)
 
-    fun isSectionOpen(key: String): Boolean = sections[key] ?: false
-
-    fun toggleSection(key: String) {
-        sections[key] = !isSectionOpen(key)
-    }
-
-    fun select(id: String?) {
+    override fun select(id: String?) {
+        if (keyboard != null) {
+            keyboard = null
+            endGesture()
+        }
         selected = id
         id?.let(session::touch)
         session.timeline.clearSelection()
+    }
+
+    override fun reveal(parent: String?) {
+        if (parent == null) rootExpanded = true else if (parent !in expanded) expanded.add(parent)
     }
 
     fun focusProperty(nodeId: String, property: VfxProperty) = session.focus(nodeId, property)
@@ -207,12 +227,12 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
     val preview = state.preview
     val node = selected?.let { document.effect.node(it) }
     val runtime = selected?.let { preview.instance?.node(it) }
-    val driven = selected?.let { vfxDrivenLookup(document, preview, it) } ?: { null }
+    val driven = selected?.let { vfxDrivenLookup(document, state, it) } ?: { null }
 
     val gizmoKey = listOf(
         preview.yaw, preview.pitch, preview.distance, preview.targetX, preview.targetY, preview.targetZ,
         preview.viewportWidth, preview.viewportHeight, preview.time, preview.showShape, preview.revision, node,
-        state.gizmoModes,
+        state.gizmoModes, state.session.timeline.isRecording,
     )
     val gizmo = remember(gizmoKey) {
         if (node == null) VfxGizmo.EMPTY else VfxGizmos.build(preview, node, runtime, preview.showShape, driven)
@@ -232,7 +252,15 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
             preview.viewportWidth = rect.width
             preview.viewportHeight = rect.height
         }.input(hoverable = true, draggable = true).cursor(UiCursorShape.HAND).focus()
-            .onKeyInput { input -> if (handleHistoryKeys(document, input)) input.consume() }.onPress { event ->
+            .onKeyInput { input ->
+                if (handleTransformKeys(document, state, driven, input) || handleHistoryKeys(document, input)) input.consume()
+            }.onPress { event ->
+                state.pointerX = event.localX
+                state.pointerY = event.localY
+                if (clickDuringKeyboardTransform(document, state, event.button)) {
+                    event.consume()
+                    return@onPress
+                }
                 val left = event.button == GLFW.GLFW_MOUSE_BUTTON_LEFT
                 val handle = if (left) gizmo.handleAt(event.localX, event.localY) else null
                 val moving = if (left && handle == null && node != null && runtime != null) {
@@ -243,7 +271,7 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
                 state.drag = handle
                 state.transformDrag = moving
                 state.readout = null
-                if (handle != null || moving != null) document.beginGesture() else preview.beginCameraDrag()
+                if (handle != null || moving != null) state.beginGesture() else preview.beginCameraDrag()
             }.onDrag { event ->
                 val handle = state.drag
                 val moving = state.transformDrag
@@ -269,11 +297,17 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
                 }
                 event.consume()
             }.onRelease {
-                if (state.drag != null || state.transformDrag != null) document.endGesture()
+                if (state.drag != null || state.transformDrag != null) state.endGesture()
                 state.drag = null
                 state.transformDrag = null
                 state.readout = null
             }.onHover { event ->
+                state.pointerX = event.localX
+                state.pointerY = event.localY
+                if (state.keyboard != null) {
+                    moveKeyboardTransform(document, state, event.modifiers)
+                    return@onHover
+                }
                 val over = transform.pick(handles, event.localX, event.localY)?.id
                 if (over != state.hoveredHandle) state.hoveredHandle = over
             }.onScroll { event ->
@@ -285,11 +319,20 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
     ) {
         Box(
             modifier = Modifier.size(100.percent, 100.percent).inputTransparent()
-                .drawBehind(key = listOf(gizmo, handles, state.drag?.id, state.hoveredHandle)) {
+                .drawBehind(key = listOf(gizmo, handles, state.drag?.id, state.hoveredHandle, state.keyboard)) {
                     drawGizmo(gizmo, state.drag?.id)
-                    transform.draw(this, handles, state.hoveredHandle, state.transformDrag)
+                    val keyboard = state.keyboard
+                    if (keyboard != null) keyboard.keyboard.draw(this)
+                    else transform.draw(this, handles, state.hoveredHandle, state.transformDrag)
                 },
         )
+        state.keyboard?.let { keyboard ->
+            Text(
+                keyboard.keyboard.hint,
+                tags = listOf("vfx-gizmo-readout"),
+                modifier = Modifier.position(8.px, 32.px).inputTransparent(),
+            )
+        }
         state.readout?.let { readout ->
             Text(
                 formatNumber(readout.value),
@@ -300,15 +343,8 @@ private fun Viewport(document: HollowIdeVfxDocument, state: VfxEditorState, sele
     }
 }
 
-private fun handleHistoryKeys(document: HollowIdeVfxDocument, input: UiKeyInput): Boolean {
-    if (input.repeat || !input.control) return false
-    return when (input.key) {
-        GLFW.GLFW_KEY_Z if input.shift -> document.redo()
-        GLFW.GLFW_KEY_Z -> document.undo()
-        GLFW.GLFW_KEY_Y -> document.redo()
-        else -> false
-    }
-}
+private fun handleHistoryKeys(document: HollowIdeVfxDocument, input: UiKeyInput): Boolean =
+    !input.repeat && UndoKeys.handle(document.history, input.key, input.modifiers)
 
 /** The number beside the handle being dragged. */
 internal class VfxGizmoReadout(val x: Float, val y: Float, val value: Float)

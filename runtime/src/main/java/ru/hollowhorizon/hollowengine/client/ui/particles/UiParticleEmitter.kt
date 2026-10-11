@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.particles
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import kotlin.random.Random
 
@@ -70,7 +70,7 @@ data class UiParticleEmitter(
     val spawn: UiParticle.(UiParticleSpawnScope) -> Unit,
     val update: UiParticle.(deltaSeconds: Float) -> Unit = {},
 ) {
-    internal val location: ResourceLocation by lazy { ResourceLocation.parse(particle) }
+    internal val location: Identifier by lazy { Identifier.parse(particle) }
 
     init {
         require(particle.isNotBlank()) { "Particle id must not be blank" }

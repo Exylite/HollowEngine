@@ -16,7 +16,7 @@ A block is registered with the `block` function. It creates both the block and t
 ```kotlin
 val RUBY_BLOCK by block("ruby_block") {
     Block(
-        BlockBehaviour.Properties.of()
+        it
             .strength(5f, 6f) // Hardness and blast resistance
             .requiresCorrectToolForDrops() // Nothing drops without a suitable tool
             .sound(SoundType.METAL)
@@ -24,7 +24,9 @@ val RUBY_BLOCK by block("ruby_block") {
 }
 ```
 
-By default the block gets a cube model that looks the same from every side, and the item looks like the block. Item properties can be passed separately: `block("ruby_block", itemProperties = Item.Properties().fireResistant()) { ... }`.
+The lambda receives `BlockBehaviour.Properties` that already carry the block's id (the game refuses a block without one), so build on `it` instead of `BlockBehaviour.Properties.of()`.
+
+By default the block gets a cube model that looks the same from every side, and the item looks like the block. Item properties can be passed separately: `block("ruby_block", configureItem = { it.fireResistant() }) { ... }`.
 
 ## Texture and name
 
@@ -111,7 +113,7 @@ If the block is not a plain cube (different sides or a complex shape), pass `mod
 
 ```kotlin
 val RUBY_LAMP by block("ruby_lamp", model = null) {
-    Block(BlockBehaviour.Properties.of().lightLevel { 15 })
+    Block(it.lightLevel { 15 })
 }
 ```
 

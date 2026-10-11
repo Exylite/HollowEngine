@@ -1,9 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.pipeline.RenderTarget
+import ru.hollowhorizon.hollowengine.common.utils.compat.renderBuffers
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderTarget
 import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.client.renderer.texture.OverlayTexture
 import net.minecraft.util.Mth
 import org.joml.Matrix4f
@@ -35,10 +36,15 @@ object VfxFrameRenderer {
     fun renderSurfaces(list: VfxDrawList, view: VfxView, target: RenderTarget) {
         if (list.readsScene) VfxSceneTextures.capture(target)
 
+        VfxDebug.report("frame", list)
         VfxSkyRenderer.render(list.skies, view)
+        VfxDebug.check("sky")
         VfxMeshRenderer.render(list.meshes, view)
+        VfxDebug.check("meshes")
         VfxRibbonRenderer.render(list.ribbons, view)
+        VfxDebug.check("ribbons")
         VfxQuadRenderer.render(list.quads, view)
+        VfxDebug.check("quads")
 
         if (list.glows && VfxGlow.begin(target)) {
             VfxMeshRenderer.renderGlow(view)
@@ -94,7 +100,7 @@ object VfxFrameRenderer {
                     RenderContext(
                         stack = stack,
                         source = source,
-                        light = if (draw.spec.emissive) LightTexture.FULL_BRIGHT else particles.light[slot],
+                        light = if (draw.spec.emissive) LightCoordsUtil.FULL_BRIGHT else particles.light[slot],
                         overlay = OverlayTexture.NO_OVERLAY,
                         allowInstancing = true,
                     )
@@ -112,7 +118,7 @@ object VfxFrameRenderer {
 /**
  * The view of the game camera, whose space is camera-relative world space.
  */
-fun VfxView.Companion.ofCamera(modelView: Matrix4f, projection: Matrix4f): VfxView {
+fun VfxView.Companion.ofCamera(modelView: Matrix4f, projection: Matrix4f, time: Float): VfxView {
     val screenToWorld = Matrix4f(projection).mul(modelView).invert()
     val center = screenToWorld.transformProject(Vector3f(0f, 0f, 0.5f))
     return VfxView(
@@ -121,5 +127,6 @@ fun VfxView.Companion.ofCamera(modelView: Matrix4f, projection: Matrix4f): VfxVi
         right = screenToWorld.transformProject(Vector3f(1f, 0f, 0.5f)).sub(center).normalize(),
         up = screenToWorld.transformProject(Vector3f(0f, 1f, 0.5f)).sub(center).normalize(),
         eye = Vector3f(),
+        time = time,
     )
 }

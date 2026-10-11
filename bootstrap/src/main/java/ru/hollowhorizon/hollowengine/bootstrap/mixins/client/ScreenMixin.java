@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.bootstrap.mixins.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,12 +11,12 @@ import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 
 @Mixin(Screen.class)
 public class ScreenMixin {
-    @Inject(method = "init(Lnet/minecraft/client/Minecraft;II)V", at = @At("HEAD"))
-    private void hollowengine$beforeInit(Minecraft minecraft, int width, int height, CallbackInfo ci) {
+    @Inject(method = "init(II)V", at = @At("HEAD"))
+    private void hollowengine$beforeInit(int width, int height, CallbackInfo ci) {
         var screen = (Screen) (Object) this;
         var redirected = BootstrapRuntimeManager.bridge().onScreenOpen(screen);
         if (screen != redirected) {
-            Minecraft.getInstance().setScreen(redirected);
+            Minecraft.getInstance().gui.setScreen(redirected);
         }
     }
 
@@ -25,22 +25,22 @@ public class ScreenMixin {
         BootstrapRuntimeManager.bridge().onScreenClose((Screen) (Object) this);
     }
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void hollowengine$onRenderPre(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
+    private void hollowengine$onRenderPre(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (BootstrapRuntimeManager.bridge().onScreenRenderPre((Screen) (Object) this, guiGraphics, mouseX, mouseY, partialTick)) {
             ci.cancel();
         }
     }
 
     @Inject(
-            method = "renderWithTooltip",
+            method = "extractRenderStateWithTooltipAndSubtitles",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/screens/Screen;render(Lnet/minecraft/client/gui/GuiGraphics;IIF)V",
+                    target = "Lnet/minecraft/client/gui/screens/Screen;extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V",
                     shift = At.Shift.AFTER
             )
     )
-    private void hollowengine$onRenderPost(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+    private void hollowengine$onRenderPost(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         BootstrapRuntimeManager.bridge().onScreenRenderPost((Screen) (Object) this, guiGraphics, mouseX, mouseY, partialTick);
     }
 }

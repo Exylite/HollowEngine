@@ -69,10 +69,15 @@ object CommonEnvironment {
         CacheCleanup.retain(directory, names)
     }
 
-    /** The mappings shipped in the compiler addon. Reading them touches no game class. */
+    /**
+     * The mappings shipped in the compiler addon, one `mappings-<minecraft version>.tiny` per jar.
+     * Reading them touches no game class. Since the game ships with its own names they are empty.
+     */
     fun loadMappings(compilerJar: File): Mappings {
         JarFile(compilerJar).use { jar ->
-            val file = jar.getJarEntry("mappings-1.21.1.tiny")
+            val file = jar.entries().asSequence().firstOrNull {
+                !it.isDirectory && it.name.startsWith("mappings-") && it.name.endsWith(".tiny")
+            } ?: error("${compilerJar.name} carries no mappings-<version>.tiny")
             return MappingsLoader.loadMappings(jar.getInputStream(file))
         }
     }

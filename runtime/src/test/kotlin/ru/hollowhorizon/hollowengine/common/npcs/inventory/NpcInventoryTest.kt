@@ -1,12 +1,11 @@
 package ru.hollowhorizon.hollowengine.common.npcs.inventory
 
-import net.minecraft.SharedConstants
+import ru.hollowhorizon.hollowengine.testing.MinecraftTestBootstrap
 import net.minecraft.core.RegistryAccess
 import net.minecraft.core.component.DataComponents
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.chat.Component
-import net.minecraft.server.Bootstrap
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import ru.hollowhorizon.hollowengine.common.npcs.items.ItemMatchMode
@@ -23,8 +22,7 @@ import kotlin.test.assertTrue
 class NpcInventoryTest {
     @BeforeTest
     fun bootstrapRegistries() {
-        SharedConstants.tryDetectVersion()
-        Bootstrap.bootStrap()
+        MinecraftTestBootstrap.init()
     }
 
     @Test

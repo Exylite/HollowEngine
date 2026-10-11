@@ -5,7 +5,7 @@ package ru.hollowhorizon.hollowengine.common.compat.util
 import com.google.common.collect.Sets
 import mezz.jei.api.recipe.IRecipeManager
 import mezz.jei.api.recipe.category.IRecipeCategory
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.item.crafting.RecipeManager
 import java.util.stream.Collectors
 
@@ -23,17 +23,17 @@ val IRecipeManager.hiddenCategories: Set<IRecipeCategory<*>>
         return Sets.difference(allCategories, visibleCategories)
     }
 
-val <T> IRecipeCategory<T>.recipeCategoryId: ResourceLocation
+val <T : Any> IRecipeCategory<T>.recipeCategoryId: Identifier
     get() = this.recipeType.uid
 
-fun <T> IRecipeCategory<T>.hide(manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.hide(manager: IRecipeManager) {
     manager.hideRecipeCategory(this.recipeType)
 }
 
-fun <T> IRecipeCategory<T>.unhide(manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.unhide(manager: IRecipeManager) {
     manager.unhideRecipeCategory(this.recipeType)
 }
 
-fun <T> IRecipeCategory<T>.hideWithin(recipe: T, manager: IRecipeManager) {
+fun <T : Any> IRecipeCategory<T>.hideWithin(recipe: T, manager: IRecipeManager) {
     manager.hideRecipes(this.recipeType, listOf(recipe))
 }

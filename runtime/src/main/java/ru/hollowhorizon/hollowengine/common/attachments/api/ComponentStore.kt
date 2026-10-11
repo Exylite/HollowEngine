@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.api
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.common.attachments.components.ComponentDescriptorRegistry
 import ru.hollowhorizon.hollowengine.common.attachments.snapshot.EntitySnapshot
@@ -9,7 +9,7 @@ import ru.hollowhorizon.hollowengine.common.attachments.snapshot.EntitySnapshot
  * The components attached to one entity.
  */
 class ComponentStore internal constructor() {
-    private val components = LinkedHashMap<ResourceLocation, Component>()
+    private val components = LinkedHashMap<Identifier, Component>()
 
     @Volatile
     private var cachedSnapshot: EntitySnapshot? = null
@@ -23,10 +23,10 @@ class ComponentStore internal constructor() {
     val isEmpty: Boolean get() = components.isEmpty()
 
     /** Read-only view for callers that only look things up; never invalidates the snapshot cache. */
-    val readOnly: Map<ResourceLocation, Component> get() = components
+    val readOnly: Map<Identifier, Component> get() = components
 
     /** Mutable view. Every mutating path drops the cached snapshot. */
-    fun asMutableMap(): MutableMap<ResourceLocation, Component> = View()
+    fun asMutableMap(): MutableMap<Identifier, Component> = View()
 
     fun snapshot(entity: Entity): EntitySnapshot? {
         if (components.isEmpty()) return null
@@ -48,9 +48,9 @@ class ComponentStore internal constructor() {
         invalidate()
     }
 
-    fun copyOf(): Map<ResourceLocation, Component> = LinkedHashMap(components)
+    fun copyOf(): Map<Identifier, Component> = LinkedHashMap(components)
 
-    fun putAll(source: Map<ResourceLocation, Component>) {
+    fun putAll(source: Map<Identifier, Component>) {
         components.putAll(source)
         invalidate()
     }
@@ -65,14 +65,14 @@ class ComponentStore internal constructor() {
         onChange?.invoke()
     }
 
-    private inner class View : AbstractMutableMap<ResourceLocation, Component>() {
-        override val entries: MutableSet<MutableMap.MutableEntry<ResourceLocation, Component>>
+    private inner class View : AbstractMutableMap<Identifier, Component>() {
+        override val entries: MutableSet<MutableMap.MutableEntry<Identifier, Component>>
             get() = EntrySet()
 
-        override fun put(key: ResourceLocation, value: Component): Component? =
+        override fun put(key: Identifier, value: Component): Component? =
             components.put(key, value).also { invalidate() }
 
-        override fun remove(key: ResourceLocation): Component? {
+        override fun remove(key: Identifier): Component? {
             val previous = components.remove(key) ?: return null
             invalidate()
             return previous
@@ -83,9 +83,9 @@ class ComponentStore internal constructor() {
             invalidate()
         }
 
-        override fun containsKey(key: ResourceLocation): Boolean = components.containsKey(key)
+        override fun containsKey(key: Identifier): Boolean = components.containsKey(key)
 
-        override fun get(key: ResourceLocation): Component? = components[key]
+        override fun get(key: Identifier): Component? = components[key]
 
         override val size: Int get() = components.size
     }
@@ -94,24 +94,24 @@ class ComponentStore internal constructor() {
      * Backed by the real entry set rather than a copy, so `keys.removeIf { .. }` and `setValue` reach
      * the underlying map and invalidate the cache when they do.
      */
-    private inner class EntrySet : AbstractMutableSet<MutableMap.MutableEntry<ResourceLocation, Component>>() {
+    private inner class EntrySet : AbstractMutableSet<MutableMap.MutableEntry<Identifier, Component>>() {
         override val size: Int get() = components.size
 
-        override fun add(element: MutableMap.MutableEntry<ResourceLocation, Component>): Boolean {
+        override fun add(element: MutableMap.MutableEntry<Identifier, Component>): Boolean {
             val previous = components.put(element.key, element.value)
             invalidate()
             return previous != element.value
         }
 
-        override fun iterator(): MutableIterator<MutableMap.MutableEntry<ResourceLocation, Component>> {
+        override fun iterator(): MutableIterator<MutableMap.MutableEntry<Identifier, Component>> {
             val delegate = components.entries.iterator()
-            return object : MutableIterator<MutableMap.MutableEntry<ResourceLocation, Component>> {
+            return object : MutableIterator<MutableMap.MutableEntry<Identifier, Component>> {
                 override fun hasNext(): Boolean = delegate.hasNext()
 
-                override fun next(): MutableMap.MutableEntry<ResourceLocation, Component> {
+                override fun next(): MutableMap.MutableEntry<Identifier, Component> {
                     val entry = delegate.next()
-                    return object : MutableMap.MutableEntry<ResourceLocation, Component> {
-                        override val key: ResourceLocation get() = entry.key
+                    return object : MutableMap.MutableEntry<Identifier, Component> {
+                        override val key: Identifier get() = entry.key
                         override val value: Component get() = entry.value
                         override fun setValue(newValue: Component): Component =
                             entry.setValue(newValue).also { invalidate() }
@@ -126,7 +126,7 @@ class ComponentStore internal constructor() {
         }
     }
 
-    private fun idOf(component: Component): ResourceLocation =
+    private fun idOf(component: Component): Identifier =
         ComponentDescriptorRegistry.idFor(component::class)
             ?: error("Component descriptor not found for ${component::class.qualifiedName}")
 }
@@ -135,5 +135,5 @@ class ComponentStore internal constructor() {
  * Drops the components whose descriptor marks them as lost on death. Takes a plain map rather than a
  * store, because a respawn also has to filter the set cached for a player that is already removed.
  */
-fun Map<ResourceLocation, Component>.withoutLooseOnDeath(): Map<ResourceLocation, Component> =
+fun Map<Identifier, Component>.withoutLooseOnDeath(): Map<Identifier, Component> =
     filterNot { (_, component) -> ComponentDescriptorRegistry.isLooseOnDeath(component) }

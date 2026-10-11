@@ -1,5 +1,7 @@
 package ru.hollowhorizon.hollowengine.addons.mcp.client
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.screen
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import com.mojang.blaze3d.platform.NativeImage
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withContext
@@ -87,7 +89,7 @@ object FrameCapture {
 
     private fun complete(request: Request, minecraft: Minecraft) {
         pending = null
-        request.image.complete(Screenshot.takeScreenshot(minecraft.mainRenderTarget))
+        Screenshot.takeScreenshot(minecraft.gameRenderer.mainRenderTarget()) { request.image.complete(it) }
     }
 
     private const val WAIT_HEADING = "hollowengine_mcp.wait.heading"

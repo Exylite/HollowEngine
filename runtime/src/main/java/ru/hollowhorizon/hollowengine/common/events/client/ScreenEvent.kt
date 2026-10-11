@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.events.client
 
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import ru.hollowhorizon.hollowengine.common.events.Cancellable
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
@@ -12,7 +12,7 @@ open class ScreenEvent(var screen: Screen): ClientEvent {
     }
     open class Render(screen: Screen): ScreenEvent(screen) {
         /** Before the screen draws anything; cancelling it takes the screen's own drawing away. */
-        class Pre(screen: Screen, val guiGraphics: GuiGraphics, val mouseX: Int, val mouseY: Int, val partialTick: Float): Render(screen), Cancellable {
+        class Pre(screen: Screen, val guiGraphics: GuiGraphicsExtractor, val mouseX: Int, val mouseY: Int, val partialTick: Float): Render(screen), Cancellable {
             companion object: EventHandler<Pre>()
             override var isCanceled = false
         }
@@ -22,7 +22,7 @@ open class ScreenEvent(var screen: Screen): ClientEvent {
          * of them: slots, labels and item tooltips. Drawing here lands above the screen's dimming and
          * still under a tooltip.
          */
-        class Post(screen: Screen, val guiGraphics: GuiGraphics, val mouseX: Int, val mouseY: Int, val partialTick: Float): Render(screen) {
+        class Post(screen: Screen, val guiGraphics: GuiGraphicsExtractor, val mouseX: Int, val mouseY: Int, val partialTick: Float): Render(screen) {
             companion object: EventHandler<Post>()
         }
     }

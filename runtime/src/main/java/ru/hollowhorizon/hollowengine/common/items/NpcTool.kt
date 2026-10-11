@@ -1,8 +1,8 @@
 package ru.hollowhorizon.hollowengine.common.items
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.displayClientMessage
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
@@ -21,15 +21,14 @@ import ru.hollowhorizon.hollowengine.common.registry.ModItems
 import ru.hollowhorizon.hollowengine.common.registry.ModTabs
 import net.minecraft.network.chat.Component as ChatComponent
 
-class NpcTool : Item(Properties().stacksTo(1)), CreativeTab {
+class NpcTool(properties: Properties) : Item(properties.stacksTo(1)), CreativeTab {
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
-        val stack = player.getItemInHand(hand)
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
         if (hand != InteractionHand.MAIN_HAND || !player.isShiftKeyDown) {
-            return InteractionResultHolder.pass(stack)
+            return InteractionResult.PASS
         }
         if (level.isClientSide) openEditor(player, player)
-        return InteractionResultHolder.success(stack)
+        return InteractionResult.SUCCESS
     }
 
     override fun useOn(context: UseOnContext): InteractionResult {
@@ -39,7 +38,7 @@ class NpcTool : Item(Properties().stacksTo(1)), CreativeTab {
 
         if (player.isShiftKeyDown) {
             if (level.isClientSide) openEditor(player, player)
-            return InteractionResult.sidedSuccess(level.isClientSide)
+            return InteractionResult.SUCCESS
         }
         if (!player.canEditEntities()) {
             if (level.isClientSide) denied(player)
@@ -49,11 +48,11 @@ class NpcTool : Item(Properties().stacksTo(1)), CreativeTab {
         if (!level.isClientSide) {
             val pos = context.clickedPos.relative(context.clickedFace)
             val npc = NpcEntity(level)
-            npc.moveTo(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5, player.yRot + 180f, 0f)
+            npc.snapTo(pos.x + 0.5, pos.y.toDouble(), pos.z + 0.5, player.yRot + 180f, 0f)
             npc set Model()
             level.addFreshEntity(npc)
         }
-        return InteractionResult.sidedSuccess(level.isClientSide)
+        return InteractionResult.SUCCESS
     }
 
     override fun tab() = ModTabs.HOLLOW_ENGINE

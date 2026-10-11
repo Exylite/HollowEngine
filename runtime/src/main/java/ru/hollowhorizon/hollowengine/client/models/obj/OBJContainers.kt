@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.models.obj
 
 import ru.hollowhorizon.hollowengine.common.utils.math.Vec2f
 import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.internal.Material
 import ru.hollowhorizon.hollowengine.client.models.internal.Mesh
 import ru.hollowhorizon.hollowengine.client.models.internal.NodeDefinition
@@ -71,9 +71,9 @@ data class OBJMaterial(var name: String) {
     var a: Float = 1.0f
     var hasTexture: Boolean = false
     var linear: Boolean = false
-    var texture: ResourceLocation? = null
-    var normalTexture: ResourceLocation? = null
-    var specularTexture: ResourceLocation? = null
+    var texture: Identifier? = null
+    var normalTexture: Identifier? = null
+    var specularTexture: Identifier? = null
 }
 
 class OBJFace(lines: Array<String>) {

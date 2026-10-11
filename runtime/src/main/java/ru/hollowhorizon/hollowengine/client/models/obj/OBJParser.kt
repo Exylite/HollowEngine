@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.obj
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.internal.ModelSpace
 import ru.hollowhorizon.hollowengine.client.models.internal.Material
 import ru.hollowhorizon.hollowengine.client.models.internal.Model
@@ -15,8 +15,8 @@ import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
 import ru.hollowhorizon.hollowengine.common.utils.rl
 
 class OBJModel(
-    private var location: ResourceLocation,
-    private var mtlLocation: ResourceLocation? = null,
+    private var location: Identifier,
+    private var mtlLocation: Identifier? = null,
     private val side: ModelSide = ModelSide.CLIENT,
 ) {
     private val vertices = mutableListOf<Vec3f>()
@@ -218,13 +218,13 @@ class OBJModel(
     private fun Array<String>.dropFirst(amount: Int = 1) = drop(amount).toTypedArray()
     private fun processMaterialName(name: String): String = name.replace("[/|\\\\]+".toRegex(), "-")
 
-    private fun ResourceLocation.open() =
+    private fun Identifier.open() =
         when (side) {
             ModelSide.CLIENT -> stream
             ModelSide.SERVER -> ModelResourceIO.open(this)
         }
 
-    private fun ResourceLocation.exists(): Boolean =
+    private fun Identifier.exists(): Boolean =
         when (side) {
             ModelSide.CLIENT -> true
             ModelSide.SERVER -> ModelResourceIO.exists(this)

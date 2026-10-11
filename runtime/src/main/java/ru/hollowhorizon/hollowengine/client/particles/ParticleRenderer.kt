@@ -25,7 +25,7 @@ object ParticleRenderer {
         if (!system.hasAnythingToRender()) return
 
         val camera = event.camera
-        val position = camera.position
+        val position = camera.position()
         val rotation = camera.rotation()
 
         system.render(
@@ -33,7 +33,7 @@ object ParticleRenderer {
             Vec3f(position.x.toFloat(), position.y.toFloat(), position.z.toFloat()),
             QuatF(rotation.x(), rotation.y(), rotation.z(), rotation.w()),
             ParticleVertexConsumerProvider,
-            camera.entity.uuid,
+            (camera.entity()?.uuid ?: java.util.UUID(0L, 0L)),
             Minecraft.getInstance().options.cameraType == CameraType.FIRST_PERSON,
         )
     }

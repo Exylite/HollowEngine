@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.models.gltf
 
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.ModelSide
 import ru.hollowhorizon.hollowengine.client.utils.stream
@@ -12,10 +12,10 @@ import ru.hollowhorizon.hollowengine.common.utils.decodeToString
 import ru.hollowhorizon.hollowengine.common.utils.inflate
 import ru.hollowhorizon.hollowengine.common.utils.json.JsonFormat
 import ru.hollowhorizon.hollowengine.common.utils.nbt.ListOrSingle
-import ru.hollowhorizon.hollowengine.common.utils.rl
+import java.nio.file.Path
 import java.util.*
 
-suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLIENT): Result<GltfFile> {
+suspend fun loadGltf(location: Identifier, side: ModelSide = ModelSide.CLIENT): Result<GltfFile> {
     val data = Uint8Buffer(location.readModelBytes(side))
 
     return try {
@@ -27,7 +27,6 @@ suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLI
             else -> error("Invalid gltf file type: $type ($filePath)")
         }
 
-        val modelBasePath = if (filePath.contains('/')) filePath.substringBeforeLast('/') else "."
         gltfFile.let { m ->
             coroutineScope {
                 withContext(Dispatchers.IO) {
@@ -47,15 +46,14 @@ suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLI
                                     else -> throw IllegalStateException("Unknown data format: $uri")
                                 }
                                 return@async
-                            } else {
-                                "${location.namespace}:$modelBasePath/$uri"
-                            }
-                            it.data = Uint8Buffer(bufferUri.rl.readModelBytes(side))
+                            } else resolveGltfResource(location, uri)
+                            it.data = Uint8Buffer(bufferUri.readModelBytes(side))
                         }
                     }.awaitAll()
                     m.images.filter { it.uri != null }.forEach {
-                        if (it.uri?.startsWith("data:") == false) it.uri =
-                            "${location.namespace}:$modelBasePath/${it.uri}"
+                        if (it.uri?.startsWith("data:") == false) {
+                            it.uri = resolveGltfResource(location, it.uri!!).toString()
+                        }
                     }
                     m.updateReferences()
                 }
@@ -67,7 +65,15 @@ suspend fun loadGltf(location: ResourceLocation, side: ModelSide = ModelSide.CLI
     }
 }
 
-private fun ResourceLocation.readModelBytes(side: ModelSide): ByteArray =
+/** Resolves a relative glTF URI against the model folder; resource paths may not contain `..` segments. */
+private fun resolveGltfResource(model: Identifier, uri: String): Identifier {
+    val parent = Path.of(model.path).parent ?: Path.of("")
+    val path = parent.resolve(uri).normalize()
+    require(!path.isAbsolute && !path.startsWith("..")) { "glTF resource escapes its namespace: $uri" }
+    return Identifier.fromNamespaceAndPath(model.namespace, path.toString().replace('\\', '/').lowercase(Locale.ROOT))
+}
+
+private fun Identifier.readModelBytes(side: ModelSide): ByteArray =
     when (side) {
         ModelSide.CLIENT -> stream.readBytes()
         ModelSide.SERVER -> ModelResourceIO.open(this).use { it.readBytes() }

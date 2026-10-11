@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.utils
 
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import java.io.FileNotFoundException
 import java.io.InputStream
 
@@ -17,7 +17,7 @@ object HollowJavaUtils {
      * @throws FileNotFoundException If the resource cannot be found.
      */
     @JvmStatic
-    fun getResource(location: ResourceLocation): InputStream {
+    fun getResource(location: Identifier): InputStream {
         return try {
             Minecraft.getInstance().resourceManager.getResource(location).orElseThrow().open()
         } catch (e: Exception) {

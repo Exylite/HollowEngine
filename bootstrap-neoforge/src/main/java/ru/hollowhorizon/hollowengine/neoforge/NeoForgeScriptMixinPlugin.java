@@ -38,14 +38,14 @@ public final class NeoForgeScriptMixinPlugin extends ScriptMixinConfigPlugin {
     @Override
     protected void configureRuntime(RuntimeBridge bridge) {
         bridge.setPlatform(RuntimePlatform.NEOFORGE);
-        bridge.setProduction(FMLEnvironment.production);
+        bridge.setProduction(FMLEnvironment.isProduction());
         bridge.setClient(isPhysicalClient());
         bridge.initModList(new NeoForgeModList());
     }
 
     @Override
     protected boolean isPhysicalClient() {
-        return FMLEnvironment.dist.isClient();
+        return FMLEnvironment.getDist().isClient();
     }
 
     @Override

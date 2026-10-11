@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.style
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.HollowUiResourceAccess
 
 /** Reads the text of a stylesheet an `@import` names, or null when there is none. */
@@ -14,7 +14,7 @@ fun interface HssImportReader {
  */
 object HssImports {
     var reader: HssImportReader = HssImportReader { location ->
-        val id = ResourceLocation.tryParse(location) ?: return@HssImportReader null
+        val id = Identifier.tryParse(location) ?: return@HssImportReader null
         runCatching { HollowUiResourceAccess.readText(id) }.getOrNull()
             ?: HssImports::class.java.getResourceAsStream("/assets/${id.namespace}/${id.path}")
                 ?.bufferedReader()?.use { it.readText() }

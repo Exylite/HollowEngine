@@ -10,10 +10,32 @@ import ru.hollowhorizon.hollowengine.client.shadergraph.ShaderPinType.VEC4
 /** The kinds of node the engine ships, in the order the add menu lists them. */
 object ShaderNodeLibrary {
     const val SURFACE_OUTPUT = "hollowengine:output/surface"
+    const val POST_OUTPUT = "hollowengine:output/post"
     const val PROPERTY = "hollowengine:input/property"
     const val EXPRESSION = ShaderMathNodes.EXPRESSION
+    const val REROUTE = "hollowengine:reroute"
+    const val REROUTE_INPUT = "In"
+    const val REROUTE_OUTPUT = "Out"
 
-    val all: List<ShaderNodeType> by lazy { inputs() + uv() + texture() + output() + ShaderMathNodes.all + ShaderNormalNodes.all }
+    val all: List<ShaderNodeType> by lazy {
+        inputs() + uv() + texture() + output() + ShaderMathNodes.all + ShaderNormalNodes.all + ShaderRayNodes.all + reroute()
+    }
+
+    /** What a new graph of [target] starts as. */
+    fun default(target: ShaderTarget): ShaderGraph = when (target) {
+        ShaderTarget.SURFACE -> defaultSurface()
+        ShaderTarget.POST -> defaultPost()
+    }
+
+    /** What a new post effect starts as: the frame passed through untouched. */
+    fun defaultPost() = ShaderGraph(
+        target = ShaderTarget.POST,
+        nodes = listOf(
+            ShaderGraphNode("scene", "hollowengine:input/scene_color", x = -300f, y = 0f),
+            ShaderGraphNode("output", POST_OUTPUT, x = -60f, y = 0f),
+        ),
+        links = listOf(ShaderGraphLink("scene", "RGB", "output", PostOutputs.COLOR)),
+    )
 
     /**
      * What a new surface graph starts as: the material texture times the particle color, which is what
@@ -44,6 +66,7 @@ object ShaderNodeLibrary {
         engineInput("normal", ShaderInput.NORMAL, "Normal"),
         engineInput("view_direction", ShaderInput.VIEW_DIRECTION, "Direction"),
         engineInput("screen_uv", ShaderInput.SCREEN_UV, "UV", "coordinates"),
+        engineInput("node_position", ShaderInput.NODE_POSITION, "Position", "coordinates"),
 
         shaderNode("hollowengine:input/vertex_color", INPUT) {
             group("surface")
@@ -171,6 +194,16 @@ object ShaderNodeLibrary {
         return if (linked) flip("($uv)") else "${ShaderInput.FRAME_UV.glsl}(${flip(ShaderInput.UV.glsl)})"
     }
 
+    /**
+     * A point a link passes through, to lead it around other nodes: whatever comes in goes out as it
+     * is, a texture too. The editor draws it as a dot and leaves it out of the categories of the add menu.
+     */
+    private fun reroute() = shaderNode(REROUTE, INPUT) {
+        noPreview()
+        val value = input(REROUTE_INPUT, 0f, type = ShaderPinType.PASS)
+        output(REROUTE_OUTPUT, typeOf = { input(REROUTE_INPUT)?.let(ShaderPinType::of) }) { value.code }
+    }
+
     private fun output() = listOf(
         shaderNode(SURFACE_OUTPUT, OUTPUT) {
             master(ShaderTarget.SURFACE, SurfaceOutputs.VERTEX_OFFSET)
@@ -179,6 +212,11 @@ object ShaderNodeLibrary {
             input(SurfaceOutputs.EMISSION, 0f, 0f, 0f, type = VEC3, color = true)
             input(SurfaceOutputs.ALPHA_CLIP, 0f, type = FLOAT)
             input(SurfaceOutputs.VERTEX_OFFSET, 0f, 0f, 0f, type = VEC3)
+        },
+        shaderNode(POST_OUTPUT, OUTPUT) {
+            master(ShaderTarget.POST)
+            input(PostOutputs.COLOR, 1f, 1f, 1f, type = VEC3, color = true)
+            input(PostOutputs.ALPHA, 1f, type = FLOAT)
         },
     )
 
@@ -216,6 +254,17 @@ object SurfaceOutputs {
 
     /** Blocks the vertex moves by, in the space of the view. */
     const val VERTEX_OFFSET = "Vertex Offset"
+}
+
+/**
+ * The inputs of the post output node. They are named as the surface ones are, so switching a graph
+ * between the two keeps what is linked into them.
+ */
+object PostOutputs {
+    const val COLOR = SurfaceOutputs.COLOR
+
+    /** How much of the frame the color replaces: 0 leaves the frame as it was. */
+    const val ALPHA = SurfaceOutputs.ALPHA
 }
 
 /** The uniform a property reads, named so it cannot clash with anything of the engine's. */

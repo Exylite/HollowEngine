@@ -1,35 +1,22 @@
 package ru.hollowhorizon.hollowengine.client.audio.streams
 
-import net.minecraft.resources.FileToIdConverter
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.Resource
 import net.minecraft.server.packs.resources.ResourceManager
-import ru.hollowhorizon.hollowengine.common.utils.rl
 
-object ExtendedSoundConverter : FileToIdConverter("sounds", ".ogg") {
-    override fun idToFile(id: ResourceLocation): ResourceLocation {
-        if (id.path.let { it.endsWith(".mp3") || it.endsWith(".wav") || it.endsWith(".ogg") }) {
-            return id.withPath("sounds/" + id.path)
-        }
-        return super.idToFile(id)
-    }
+/**
+ * What the game's sound lister cannot do: sounds are only ever `.ogg` to it, while the engine also
+ * plays `.mp3` and `.wav`, named with their extension in the sound id.
+ */
+object ExtendedSoundConverter {
+    private val extra = listOf(".mp3", ".wav")
 
-    override fun fileToId(file: ResourceLocation): ResourceLocation {
-        if (file.path.let { it.endsWith(".mp3") || it.endsWith(".wav") || it.endsWith(".ogg") }) {
-            return "${file.namespace}:${file.path.substringAfter("sounds/")}".rl
-        }
-        return super.fileToId(file)
-    }
+    private fun names(path: String) = path.endsWith(".ogg") || extra.any(path::endsWith)
 
-    override fun listMatchingResources(resourceManager: ResourceManager): MutableMap<ResourceLocation, Resource> {
-        return resourceManager.listResources(
-            "sounds"
-        ) { it.path.let { it.endsWith(".ogg") || it.endsWith(".mp3") || it.endsWith(".wav") } }
-    }
+    /** The file for an id that names its own extension, null for the ids the game handles itself. */
+    fun fileOf(id: Identifier): Identifier? = if (names(id.path)) id.withPath("sounds/" + id.path) else null
 
-    override fun listMatchingResourceStacks(resourceManager: ResourceManager): MutableMap<ResourceLocation, MutableList<Resource>> {
-        return resourceManager.listResourceStacks(
-            "sounds"
-        ) { it.path.let { it.endsWith(".ogg") || it.endsWith(".mp3") || it.endsWith(".wav") } }
-    }
+    /** The `.mp3` and `.wav` files of every pack, keyed by file location as the game keys the `.ogg` ones. */
+    fun listExtra(resourceManager: ResourceManager): Map<Identifier, Resource> =
+        resourceManager.listResources("sounds") { location -> extra.any { location.path.endsWith(it) } }
 }

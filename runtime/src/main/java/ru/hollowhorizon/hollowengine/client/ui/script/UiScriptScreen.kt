@@ -1,8 +1,9 @@
 package ru.hollowhorizon.hollowengine.client.ui.script
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.setScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.nbt.CompoundTag
 import ru.hollowhorizon.hollowengine.client.slots.ClientSlots
@@ -63,16 +64,16 @@ class UiScriptScreen(
 
     override fun guiScale(): UiGuiScale = definition.guiScale
 
-    override fun render(graphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+    override fun extractRenderState(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, partialTick: Float) {
         if (exit.isFinished()) {
             mc.setScreen(null)
             return
         }
-        super.render(graphics, mouseX, mouseY, partialTick)
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick)
         exit.markDrawn()
     }
 
-    override fun renderAfterUi(graphics: GuiGraphics, mouseX: Int, mouseY: Int) {
+    override fun renderAfterUi(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int) {
         if (hasSlots()) SlotTooltips.render(graphics, mouseX, mouseY)
     }
 

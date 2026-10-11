@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.vfx
 
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.LightLayer
@@ -21,7 +21,7 @@ interface VfxEnvironment {
         val EMPTY = object : VfxEnvironment {
             override fun isSolid(x: Double, y: Double, z: Double) = false
 
-            override fun lightAt(x: Double, y: Double, z: Double) = LightTexture.FULL_BRIGHT
+            override fun lightAt(x: Double, y: Double, z: Double) = LightCoordsUtil.FULL_BRIGHT
         }
     }
 }
@@ -51,8 +51,8 @@ class VfxWorldEnvironment(private val level: Level) : VfxEnvironment {
 
     override fun lightAt(x: Double, y: Double, z: Double): Int {
         cursor.set(floor(x).toInt(), floor(y).toInt(), floor(z).toInt())
-        if (!level.hasChunkAt(cursor)) return LightTexture.FULL_BRIGHT
-        return LightTexture.pack(
+        if (!level.hasChunkAt(cursor)) return LightCoordsUtil.FULL_BRIGHT
+        return LightCoordsUtil.pack(
             level.getBrightness(LightLayer.BLOCK, cursor),
             level.getBrightness(LightLayer.SKY, cursor),
         )
@@ -65,7 +65,7 @@ class VfxWorldEnvironment(private val level: Level) : VfxEnvironment {
 class VfxPlaneEnvironment(private val floorY: Double = 0.0) : VfxEnvironment {
     override fun isSolid(x: Double, y: Double, z: Double): Boolean = y < floorY
 
-    override fun lightAt(x: Double, y: Double, z: Double): Int = LightTexture.FULL_BRIGHT
+    override fun lightAt(x: Double, y: Double, z: Double): Int = LightCoordsUtil.FULL_BRIGHT
 }
 
 /**

@@ -4,13 +4,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.EventBridge;
@@ -38,8 +38,8 @@ public class NeoForgeEvents {
         modBus.addListener(NeoForgeEvents::registerTabContents);
     }
 
-    private static void registerReloadListeners(AddReloadListenerEvent event) {
-        EVENTS.onRegisterServerReloadListeners(event::addListener);
+    private static void registerReloadListeners(AddServerReloadListenersEvent event) {
+        EVENTS.onRegisterServerReloadListeners(listener -> event.addListener(ReloadListenerIds.idFor(listener), listener));
     }
 
     private static void registerAttributes(EntityAttributeCreationEvent event) {
@@ -67,7 +67,7 @@ public class NeoForgeEvents {
     }
 
     private static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        var server = event.getEntity().getServer();
+        var server = event.getEntity().level().getServer();
         if (server == null) return;
         var from = server.getLevel(event.getFrom());
         var to = server.getLevel(event.getTo());
@@ -75,14 +75,14 @@ public class NeoForgeEvents {
     }
 
     private static void registerEntityLifecycle(EntityJoinLevelEvent event) {
-        if (!event.getLevel().isClientSide) EVENTS.onEntityLoad(event.getEntity());
+        if (!event.getLevel().isClientSide()) EVENTS.onEntityLoad(event.getEntity());
     }
 
     private static void onServerTick(ServerTickEvent.Post event) {
         EVENTS.onServerTick(event.getServer());
     }
 
-    private static void onBlockBreak(BlockEvent.BreakEvent event) {
+    private static void onBlockBreak(BreakBlockEvent event) {
         if (event.getLevel().isClientSide()) return;
         var cancel = EVENTS.onBlockBreak((Level) event.getLevel(), event.getPos(), event.getState(), (ServerPlayer) event.getPlayer());
         if (cancel) event.setCanceled(true);

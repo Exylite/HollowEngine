@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.common.models
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.bedrock.BedrockModelLoader
 import ru.hollowhorizon.hollowengine.client.models.fbx.FbxModelLoader
 import ru.hollowhorizon.hollowengine.client.models.gltf.GltfModelLoader
@@ -48,7 +48,7 @@ object ServerModelAnimationMetadata {
             }
         }
 
-    private fun loaderFor(location: ResourceLocation): ModelLoader? =
+    private fun loaderFor(location: Identifier): ModelLoader? =
         loaders.firstOrNull { loader ->
             loader.supportedFormats.any { format ->
                 location.path.endsWith(".$format", ignoreCase = true)

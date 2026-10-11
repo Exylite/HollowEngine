@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import org.lwjgl.opengl.GL11
 import ru.hollowhorizon.hollowengine.client.ui.BeginLayerCommand
 import ru.hollowhorizon.hollowengine.client.ui.PopupNode

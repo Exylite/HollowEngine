@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL20
@@ -144,7 +144,7 @@ internal class UiPathTileComputeDispatcher : AutoCloseable {
         private const val InputBinding = 5
         private const val IndirectBinding = 6
         private const val VertexBinding = 7
-        private val ComputeShaderPath = ResourceLocation.fromNamespaceAndPath(
+        private val ComputeShaderPath = Identifier.fromNamespaceAndPath(
             HollowEngine.MODID,
             "shaders/ui/path_tile.csh",
         )

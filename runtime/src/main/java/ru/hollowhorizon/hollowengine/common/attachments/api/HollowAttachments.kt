@@ -1,13 +1,15 @@
 package ru.hollowhorizon.hollowengine.common.attachments.api
 
 import kotlinx.coroutines.CoroutineScope
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.common.coroutines.EntityScope
 import androidx.compose.runtime.mutableStateMapOf
 import net.minecraft.nbt.CompoundTag
 import ru.hollowhorizon.hollowengine.common.data.NbtDataStore
 import ru.hollowhorizon.hollowengine.common.data.Sync
+import ru.hollowhorizon.hollowengine.common.entities.EntityBodies
+import ru.hollowhorizon.hollowengine.common.entities.objects.WorldObjectEntity
 import ru.hollowhorizon.hollowengine.common.attachments.sync.EntityStateSync
 import ru.hollowhorizon.hollowengine.common.attachments.tracking.MCEntity
 import ru.hollowhorizon.hollowengine.common.scripting.nodes.EntityNodeManager
@@ -81,7 +83,7 @@ class HollowAttachments internal constructor(entity: MCEntity) {
     var syncVersion: Long = 0L
 
     /** What the clients tracking this entity were last told, so a batch can carry only the difference. */
-    var lastSyncedComponents: Map<ResourceLocation, Component> = emptyMap()
+    var lastSyncedComponents: Map<Identifier, Component> = emptyMap()
 
     /** The [Sync.TRACKING] data every tracking client was last told, for the same reason. */
     var lastSyncedData: CompoundTag = CompoundTag()
@@ -90,7 +92,11 @@ class HollowAttachments internal constructor(entity: MCEntity) {
     var lastSyncedOwnerData: CompoundTag = CompoundTag()
 
     init {
-        components.onChange = { EntityStateSync.markDirty(entity) }
+        components.onChange = {
+            EntityStateSync.markDirty(entity)
+            EntityBodies.onComponentsChanged(entity)
+            (entity as? WorldObjectEntity)?.onComponentsChanged()
+        }
     }
 
     /**

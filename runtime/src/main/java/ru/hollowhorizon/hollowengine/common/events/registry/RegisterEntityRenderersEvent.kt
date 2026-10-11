@@ -19,11 +19,11 @@ class RegisterEntityRenderersEvent(private val consumer: (EntityType<out Entity>
     }
 }
 
-class RegisterBlockEntityRenderersEvent(private val consumer: (BlockEntityType<out BlockEntity>, BlockEntityRendererProvider<BlockEntity>) -> Unit) :
+class RegisterBlockEntityRenderersEvent(private val consumer: (BlockEntityType<out BlockEntity>, BlockEntityRendererProvider<BlockEntity, *>) -> Unit) :
     ClientEvent, StartupEvent {
     companion object : EventHandler<RegisterBlockEntityRenderersEvent>()
 
-    fun <T : BlockEntity> registerEntity(entity: BlockEntityType<out T>, provider: BlockEntityRendererProvider<T>) {
-        consumer(entity, provider as BlockEntityRendererProvider<BlockEntity>)
+    fun <T : BlockEntity> registerEntity(entity: BlockEntityType<out T>, provider: BlockEntityRendererProvider<T, *>) {
+        consumer(entity, provider as BlockEntityRendererProvider<BlockEntity, *>)
     }
 }

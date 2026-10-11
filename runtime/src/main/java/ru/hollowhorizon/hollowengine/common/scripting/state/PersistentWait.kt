@@ -58,7 +58,7 @@ internal suspend fun waitPersistent(
     require(ticks >= 0) { "Persistent wait duration cannot be negative" }
     val key = waitKey(GAME_TIME_KIND, name)
     val deadline = if (tag.contains(key)) {
-        tag.getLong(key)
+        tag.getLongOr(key, 0L)
     } else {
         addExact(currentTick(), ticks.toLong()).also { tag.putLong(key, it) }
     }
@@ -75,7 +75,7 @@ internal suspend fun waitUntil(
     pause: suspend (Long) -> Unit,
 ) {
     val key = waitKey(REAL_TIME_KIND, name)
-    val deadline = if (tag.contains(key)) tag.getLong(key) else requestedDeadline.also { tag.putLong(key, it) }
+    val deadline = if (tag.contains(key)) tag.getLongOr(key, 0L) else requestedDeadline.also { tag.putLong(key, it) }
 
     while (true) {
         val remaining = deadline - nowMillis()

@@ -1,11 +1,11 @@
 package ru.hollowhorizon.hollowengine.common.structure
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.structure.PoolBuilder.Companion.build
 import ru.hollowhorizon.hollowengine.common.structure.StructureSetBuilder.Companion.build
 import ru.hollowhorizon.hollowengine.common.utils.rl
 
-class StructureBuilder(val structureType: String, val id: ResourceLocation) {
+class StructureBuilder(val structureType: String, val id: Identifier) {
     private val mcBiomes: MutableList<String> = mutableListOf()
     private val pools: MutableList<String> = mutableListOf()
     private var structureSet: String = ""
@@ -98,7 +98,7 @@ class StructureBuilder(val structureType: String, val id: ResourceLocation) {
 
     fun build() {
         fixBeforeBuild()
-        val poolIds = mutableMapOf<ResourceLocation, String>()
+        val poolIds = mutableMapOf<Identifier, String>()
         pools.forEachIndexed { index, pool ->
             poolIds["${id.namespace}:${id.path}/$index".rl] = pool
         }

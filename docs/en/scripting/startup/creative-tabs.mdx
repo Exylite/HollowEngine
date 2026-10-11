@@ -13,11 +13,11 @@ New items do not appear on any creative mode tab by themselves. Let's create a t
 
 ```kotlin
 val RUBY by register("ruby") {
-    Item(Item.Properties())
+    Item(itemProperties(it))
 }
 
 val RUBY_BLOCK by block("ruby_block") {
-    Block(BlockBehaviour.Properties.of().strength(5f, 6f).sound(SoundType.METAL))
+    Block(it.strength(5f, 6f).sound(SoundType.METAL))
 }
 
 val GEMS by creativeTab("gems") {

@@ -1,6 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.objects.entities
 
-import net.minecraft.client.gui.GuiGraphics
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
+import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
 import net.minecraft.world.InteractionHand
@@ -46,13 +47,13 @@ class TestEntity(type: EntityType<TestEntity>, world: Level) : PathfinderMob(typ
         }
     }
 
-    override fun interactAt(player: Player, vec: Vec3, hand: InteractionHand): InteractionResult {
+    override fun interact(player: Player, hand: InteractionHand, location: Vec3): InteractionResult {
         if (level().isClientSide) {
             object : Screen(Component.empty()) {
-                override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+                override fun extractRenderState(guiGraphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, partialTick: Float) {
                 }
             }.open()
         }
-        return super.interactAt(player, vec, hand)
+        return super.interact(player, hand, location)
     }
 }

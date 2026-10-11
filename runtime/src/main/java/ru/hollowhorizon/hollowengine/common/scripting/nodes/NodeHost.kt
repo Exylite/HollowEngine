@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.nodes
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.CoroutineScope
 import net.minecraft.server.MinecraftServer
 import net.minecraft.world.entity.Entity

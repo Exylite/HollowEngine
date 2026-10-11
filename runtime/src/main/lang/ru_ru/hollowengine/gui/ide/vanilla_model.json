@@ -7,5 +7,6 @@
   "error.not_json_model": "%s не является JSON-моделью Minecraft.",
   "error.empty_baked_model": "Модель %s не создала запечённую геометрию.",
   "error.missing_model": "Модель %s отсутствует.",
-  "error.invalid_asset_path": "Некорректный путь к ассету: %s"
+  "error.invalid_asset_path": "Некорректный путь к ассету: %s",
+  "error.preview_unavailable": "Предпросмотр ванильных моделей пока недоступен на этой версии Minecraft."
 }

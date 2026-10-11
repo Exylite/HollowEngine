@@ -1,21 +1,19 @@
 package ru.hollowhorizon.hollowengine.neoforge;
 
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.*;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 import ru.hollowhorizon.hollowengine.bootstrap.impl.BootstrapRuntimeManager;
+import ru.hollowhorizon.hollowengine.bootstrap.impl.LevelStageDispatcher;
+import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge.RenderLevelStage;
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.EventBridge;
 import ru.hollowhorizon.hollowengine.bootstrap.runtime.RuntimeBridge;
 
-import java.io.IOException;
-import java.util.function.Consumer;
 
 public class NeoForgeClientEvents {
     private static final RuntimeBridge bridge = BootstrapRuntimeManager.bridge();
@@ -30,25 +28,31 @@ public class NeoForgeClientEvents {
         forgeBus.addListener(NeoForgeClientEvents::onRenderOverlayPost);
         forgeBus.addListener(NeoForgeClientEvents::onRenderHudPost);
         forgeBus.addListener(NeoForgeClientEvents::onCameraSetup);
+        forgeBus.addListener(NeoForgeClientEvents::onRenderArm);
+        forgeBus.addListener((RenderLevelStageEvent.AfterSky event) -> stage(event, RenderLevelStage.AFTER_SKY));
+        forgeBus.addListener((RenderLevelStageEvent.AfterOpaqueBlocks event) -> stage(event,
+            RenderLevelStage.AFTER_SOLID_BLOCKS, RenderLevelStage.AFTER_CUTOUT_MIPPED_BLOCKS, RenderLevelStage.AFTER_CUTOUT_BLOCKS));
+        forgeBus.addListener((RenderLevelStageEvent.AfterOpaqueFeatures event) -> stage(event,
+            RenderLevelStage.AFTER_ENTITIES, RenderLevelStage.AFTER_BLOCK_ENTITIES));
+        forgeBus.addListener((RenderLevelStageEvent.AfterTranslucentBlocks event) -> stage(event,
+            RenderLevelStage.AFTER_TRANSLUCENT_BLOCKS, RenderLevelStage.AFTER_TRIPWIRE_BLOCKS));
+        forgeBus.addListener((RenderLevelStageEvent.AfterTranslucentParticles event) -> stage(event, RenderLevelStage.AFTER_PARTICLES));
+        forgeBus.addListener((RenderLevelStageEvent.AfterWeather event) -> stage(event, RenderLevelStage.AFTER_WEATHER));
+        forgeBus.addListener((RenderLevelStageEvent.AfterLevel event) -> stage(event, RenderLevelStage.AFTER_LEVEL));
 
-        modBus.addListener(NeoForgeClientEvents::registerShaders);
         modBus.addListener(NeoForgeClientEvents::registerRenderers);
         modBus.addListener(NeoForgeClientEvents::registerKeyMappings);
         modBus.addListener(NeoForgeClientEvents::registerReloadListeners);
 
     }
 
-    private static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
-        events.onRegisterClientReloadListeners(event::registerReloadListener);
+    private static void registerReloadListeners(AddClientReloadListenersEvent event) {
+        events.onRegisterClientReloadListeners(listener -> event.addListener(ReloadListenerIds.idFor(listener), listener));
     }
 
     @SuppressWarnings("unchecked")
     private static void registerClientCommands(RegisterClientCommandsEvent event) {
         events.onClientCommandRegistration((CommandDispatcher<SharedSuggestionProvider>) (Object) event.getDispatcher(), event.getBuildContext());
-    }
-
-    private static void registerShaders(RegisterShadersEvent event) {
-        events.onRegisterShaders(new NeoForgeShaders(event));
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -84,18 +88,21 @@ public class NeoForgeClientEvents {
         bridge.onRenderHudPost(Minecraft.getInstance().getWindow(), event.getGuiGraphics(), event.getPartialTick().getGameTimeDeltaPartialTick(false));
     }
 
+    private static void onRenderArm(RenderArmEvent<?> event) {
+        if (!(event.getAvatar() instanceof AbstractClientPlayer player)) return;
+        if (bridge.onRenderArm(event.getPoseStack(), event.getSubmitNodeCollector(), event.getLightCoords(), player, event.getArm())) {
+            event.setCanceled(true);
+        }
+    }
+
+    private static void stage(RenderLevelStageEvent event, RenderLevelStage... stages) {
+        LevelStageDispatcher.fire(event.getLevelRenderer(), event.getLevelRenderState(), event.getPoseStack(), stages);
+    }
+
     private static void onCameraSetup(ViewportEvent.ComputeCameraAngles event) {
         var setup = bridge.onCameraSetup(event.getRenderer(), event.getCamera(), event.getYaw(), event.getPitch(), event.getRoll(), (float) event.getPartialTick());
         event.setYaw(setup.yaw());
         event.setPitch(setup.pitch());
         event.setRoll(setup.roll());
-    }
-
-    private record NeoForgeShaders(RegisterShadersEvent event) implements EventBridge.ShaderRegistration {
-        @Override
-        public void register(ResourceLocation id, VertexFormat vertexFormat, Consumer<ShaderInstance> loadCallback) throws IOException {
-            var shader = new ShaderInstance(event.getResourceProvider(), id, vertexFormat);
-            event.registerShader(shader, loadCallback);
-        }
     }
 }

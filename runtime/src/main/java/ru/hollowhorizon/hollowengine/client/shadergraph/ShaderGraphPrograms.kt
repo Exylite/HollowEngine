@@ -1,14 +1,14 @@
 package ru.hollowhorizon.hollowengine.client.shadergraph
 
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.ShaderInstance
-import net.minecraft.resources.ResourceLocation
+import ru.hollowhorizon.hollowengine.client.render.legacy.ShaderInstance
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.Resource
 import net.minecraft.server.packs.resources.ResourceProvider
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -38,7 +38,7 @@ object ShaderGraphPrograms {
             stages.forEach { (extension, source) -> put("shaders/core/$FOLDER/$name.$extension", source) }
         }
         val provider = ResourceProvider { wanted ->
-            val text = files[wanted.path].takeIf { wanted.namespace == ResourceLocation.DEFAULT_NAMESPACE }
+            val text = files[wanted.path].takeIf { wanted.namespace == Identifier.DEFAULT_NAMESPACE }
             if (text != null) {
                 Optional.of(Resource(pack) { ByteArrayInputStream(text.toByteArray()) })
             } else {

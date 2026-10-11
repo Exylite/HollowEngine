@@ -1,6 +1,5 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.animator
 
-import net.minecraft.client.Minecraft
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
@@ -10,15 +9,21 @@ import kotlin.math.abs
 
 /**
  * Fills [context] with what an animation expression can read this frame.
+ *
+ * [gameTicks] is the level clock; without an entity, as in a preview, the caller says which clock it runs on.
  */
-fun fillAnimationVariables(context: AnimatorEvaluationContext, entity: Entity?, partialTick: Float) {
-    val gameTime = Minecraft.getInstance().level?.gameTime?.toFloat() ?: 0f
-
+fun fillAnimationVariables(
+    context: AnimatorEvaluationContext,
+    entity: Entity?,
+    partialTick: Float,
+    gameTicks: Long = entity?.level()?.gameTime ?: 0L,
+) {
     context.temporaries.clear()
     context.entity = entity
     context.partialTick = partialTick
-    context.gameTime = gameTime + partialTick
-    context.time = (entity?.tickCount?.toFloat() ?: gameTime) + partialTick
+    context.gameTicks = gameTicks
+    context.gameTime = gameTicks.toFloat() + partialTick
+    context.time = (entity?.tickCount?.toFloat() ?: gameTicks.toFloat()) + partialTick
     context.data = entity?.let { AttachmentRegistry.entityDataOrNull(it)?.numericPaths() }.orEmpty()
 
     if (entity == null) return
@@ -43,12 +48,12 @@ fun fillAnimationVariables(context: AnimatorEvaluationContext, entity: Entity?, 
 
 internal fun localForwardSpeed(velocity: Vec3, yaw: Float): Float {
     val yawRad = yaw * Mth.DEG_TO_RAD
-    return velocity.x.toFloat() * -Mth.sin(yawRad) + velocity.z.toFloat() * Mth.cos(yawRad)
+    return velocity.x.toFloat() * -Mth.sin(yawRad.toDouble()) + velocity.z.toFloat() * Mth.cos(yawRad.toDouble())
 }
 
 internal fun localSideSpeed(velocity: Vec3, yaw: Float): Float {
     val yawRad = yaw * Mth.DEG_TO_RAD
-    return velocity.x.toFloat() * Mth.cos(yawRad) + velocity.z.toFloat() * Mth.sin(yawRad)
+    return velocity.x.toFloat() * Mth.cos(yawRad.toDouble()) + velocity.z.toFloat() * Mth.sin(yawRad.toDouble())
 }
 
 internal fun signedLocomotionSpeed(horizontalSpeed: Float, localForwardSpeed: Float): Float =

@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.recipe
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.location
 import androidx.compose.runtime.Composable
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
@@ -175,7 +176,7 @@ private fun ResultInspector(session: RecipeEditorSession, binding: RecipeSlotBin
 private fun idCompletions(tag: Boolean) = UiCompletionContributor { context ->
     val prefix = context.text.take(context.caret.coerceIn(0, context.text.length)).removePrefix("#").lowercase()
     val ids = if (tag) {
-        BuiltInRegistries.ITEM.getTagNames().map { it.location().toString() }.toList()
+        BuiltInRegistries.ITEM.getTags().map { it.key().location().toString() }.toList()
     } else {
         ItemIds
     }

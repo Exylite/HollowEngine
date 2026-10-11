@@ -4,7 +4,7 @@ package ru.hollowhorizon.hollowengine.common.network
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.serializer
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
@@ -40,7 +40,7 @@ interface HollowPacket : CustomPacketPayload {
     companion object {
         @OptIn(InternalSerializationApi::class)
         fun nameFor(packet: KClass<*>): String {
-            packet.serializer().descriptor.serialName.lowercase().filter { ResourceLocation.validPathChar(it) }
+            packet.serializer().descriptor.serialName.lowercase().filter { Identifier.validPathChar(it) }
                 .let { return if (it.contains(':')) it else "hollowengine:$it" }
         }
         fun nameFor(packet: Class<*>) = nameFor(packet.kotlin)

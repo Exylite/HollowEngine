@@ -1,10 +1,10 @@
 package ru.hollowhorizon.hollowengine.client.vfx.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.BufferBuilder
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.Tesselator
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferBuilder
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.common.registry.ModShaders
 import ru.hollowhorizon.hollowengine.common.vfx.VfxBlend

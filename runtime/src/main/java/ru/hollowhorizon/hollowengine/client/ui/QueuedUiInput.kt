@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.window
 import net.minecraft.client.Minecraft
 import org.lwjgl.glfw.GLFW
 

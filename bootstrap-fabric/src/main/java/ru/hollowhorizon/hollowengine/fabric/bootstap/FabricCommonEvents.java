@@ -1,15 +1,14 @@
 package ru.hollowhorizon.hollowengine.fabric.bootstap;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityLevelChangeEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
 import net.fabricmc.fabric.api.networking.v1.EntityTrackingEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
@@ -35,8 +34,7 @@ public final class FabricCommonEvents {
     }
 
     private static void registerReloadListeners() {
-        var helper = ResourceManagerHelper.get(PackType.SERVER_DATA);
-        EVENTS.onRegisterServerReloadListeners(registration -> helper.registerReloadListener(new DelegatedReloadListener(registration)));
+        EVENTS.onRegisterServerReloadListeners(listener -> DelegatedReloadListener.register(PackType.SERVER_DATA, listener));
     }
 
     private static void registerAttributes() {
@@ -64,7 +62,7 @@ public final class FabricCommonEvents {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
             EVENTS.onPlayerLeave(handler.player)
         );
-        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register(EVENTS::onPlayerChangeDimension);
+        ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register(EVENTS::onPlayerChangeDimension);
     }
 
     private static void registerEntityLifecycle() {
@@ -82,7 +80,7 @@ public final class FabricCommonEvents {
     }
 
     private static void registerTabContents() {
-        ItemGroupEvents.MODIFY_ENTRIES_ALL.register((tab, entries) ->
+        CreativeModeTabEvents.MODIFY_OUTPUT_ALL.register((tab, entries) ->
             EVENTS.onBuildTabContents(
                 tab,
                 BuiltInRegistries.CREATIVE_MODE_TAB.getResourceKey(tab)

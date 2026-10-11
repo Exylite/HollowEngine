@@ -1,10 +1,16 @@
 package ru.hollowhorizon.hollowengine.client.particles
 
-import com.mojang.blaze3d.platform.GlStateManager
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
-import net.minecraft.client.renderer.GameRenderer
-import net.minecraft.client.renderer.RenderType
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
+
+import ru.hollowhorizon.hollowengine.client.render.legacy.GlStateManager
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import com.mojang.blaze3d.vertex.VertexConsumer
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL33
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.HollowModelManager
@@ -20,9 +26,9 @@ object ParticleVertexConsumerProvider : VertexConsumerProvider {
 
         val prevCull = GL11.glIsEnabled(GL11.GL_CULL_FACE)
         RenderSystem.setShaderTexture(0, texture.id)
-        RenderSystem.setShaderTexture(2, HollowModelManager.lightTexture.id)
+        RenderSystem.setShaderTexture(2, LegacyGl.lightmapTextureId())
         val old = RenderSystem.getShader()
-        RenderSystem.setShader(GameRenderer::getParticleShader)
+        RenderSystem.setShader(ModShaders.PARTICLE)
 
 
         RenderSystem.disableCull()
@@ -46,12 +52,10 @@ object ParticleVertexConsumerProvider : VertexConsumerProvider {
         }
 
 
-        RenderSystem.setShader { old }
+        RenderSystem.setShader(old)
 
         if (!prevCull) GlStateManager._disableCull()
         RenderSystem.defaultBlendFunc()
-
-        RenderType.PARTICLES_TARGET.clearRenderState()
 
     }
 }

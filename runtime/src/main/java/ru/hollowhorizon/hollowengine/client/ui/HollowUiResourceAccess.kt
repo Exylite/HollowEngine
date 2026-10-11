@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.files.DirectoryManager
 import ru.hollowhorizon.hollowengine.common.utils.HollowJavaUtils
 import java.io.InputStreamReader
@@ -14,11 +14,11 @@ import java.util.concurrent.atomic.AtomicLong
 object HollowUiResourceAccess {
     private const val VersionCacheNanos = 250_000_000L
 
-    private val textCache = ConcurrentHashMap<ResourceLocation, TextCacheEntry>()
-    private val versionCache = ConcurrentHashMap<ResourceLocation, VersionCacheEntry>()
+    private val textCache = ConcurrentHashMap<Identifier, TextCacheEntry>()
+    private val versionCache = ConcurrentHashMap<Identifier, VersionCacheEntry>()
     private val revisions = AtomicLong()
 
-    fun readText(location: ResourceLocation): String {
+    fun readText(location: Identifier): String {
         val version = version(location)
         textCache[location]?.takeIf { it.version == version }?.let { return it.text }
         return readTextUncached(location).also { text ->
@@ -26,7 +26,7 @@ object HollowUiResourceAccess {
         }
     }
 
-    fun version(location: ResourceLocation): Long {
+    fun version(location: Identifier): Long {
         val now = System.nanoTime()
         versionCache[location]?.takeIf { now - it.checkedAtNanos <= VersionCacheNanos }?.let { return it.version }
         return versionCache.compute(location) { _, previous ->
@@ -52,7 +52,7 @@ object HollowUiResourceAccess {
         versionCache.clear()
     }
 
-    private fun readTextUncached(location: ResourceLocation): String {
+    private fun readTextUncached(location: Identifier): String {
         val local = localPath(location)
         if (Files.isRegularFile(local)) {
             return Files.newBufferedReader(local, Charsets.UTF_8).use { it.readText() }
@@ -62,7 +62,7 @@ object HollowUiResourceAccess {
         }
     }
 
-    private fun localPath(location: ResourceLocation) =
+    private fun localPath(location: Identifier) =
         DirectoryManager.HOLLOW_ENGINE.resolve("assets").resolve(location.namespace).resolve(location.path)
 
     private data class TextCacheEntry(

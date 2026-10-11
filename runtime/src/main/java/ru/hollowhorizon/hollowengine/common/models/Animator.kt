@@ -71,6 +71,7 @@ data class ClipAnimationLayerSpec(
     val removeOnEnd: Boolean = playMode == AnimationPlayMode.Once,
     val removeAtGameTime: Long? = null,
     val stopAtGameTime: Long? = null,
+    val startGameTime: Long? = null,
 ) : AnimatorLayerSpec() {
     override fun withCommon(
         id: String,
@@ -174,7 +175,14 @@ abstract class AnimationControllerStateSpec {
 
     /** Every expression this state evaluates, so the animator bakes them all in one pass. */
     open fun expressions(): List<AnimationExpression> = emptyList()
+
+    /** Whether the server has to run this state too. */
+    open val runsOnServer: Boolean get() = false
 }
+
+/** Whether any state of this animator has to run on the server; see [AnimationControllerStateSpec.runsOnServer]. */
+fun Animator.runsOnServer(): Boolean =
+    layers.any { layer -> layer is AnimationControllerLayerSpec && layer.states.any { it.runsOnServer } }
 
 /** Plays one clip for as long as the controller stays in the state. */
 @Serializable

@@ -2,6 +2,7 @@ package ru.hollowhorizon.hollowengine.bootstrap.mixins.kool;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import net.minecraft.client.input.MouseButtonInfo;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,8 +28,10 @@ public class MouseHandlerMixin {
     /** Set while a redirected move is being replayed, so the replay is not redirected again. */
     @Unique private boolean hollowengine$redirecting;
 
-    @Inject(method = "onPress", at = @At("HEAD"), cancellable = true)
-    private void onPress(long windowPointer, int button, int action, int modifiers, CallbackInfo ci) {
+    @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
+    private void onPress(long windowPointer, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
+        int button = buttonInfo.button();
+        int modifiers = buttonInfo.modifiers();
         double windowX = hollowengine$hasWindowPosition ? hollowengine$windowX : xpos;
         double windowY = hollowengine$hasWindowPosition ? hollowengine$windowY : ypos;
         if (BootstrapRuntimeManager.bridge().onMousePress(minecraft, windowX, windowY, windowPointer, button, action, modifiers)) {

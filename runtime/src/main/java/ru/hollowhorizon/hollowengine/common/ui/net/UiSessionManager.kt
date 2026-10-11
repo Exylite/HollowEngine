@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.ui.net
 
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import java.util.concurrent.ConcurrentHashMap
@@ -17,7 +17,7 @@ object UiSessionManager {
 
     fun open(
         player: ServerPlayer,
-        surface: ResourceLocation,
+        surface: Identifier,
         kind: UiSurfaceKind,
         initialState: CompoundTag,
         body: UiSession.() -> Unit,
@@ -41,7 +41,7 @@ object UiSessionManager {
      */
     fun openHeadless(
         player: ServerPlayer,
-        surface: ResourceLocation,
+        surface: Identifier,
         body: UiSession.() -> Unit,
     ): UiSession {
         val session = UiSession(nextId.getAndIncrement(), player, surface, UiSurfaceKind.SCREEN)

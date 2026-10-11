@@ -20,7 +20,7 @@ public class ServerPlayerGameModeMixin {
         if (BootstrapRuntimeManager.bridge().onPlayerUseItemOn(player, hand, hitResult)) cir.cancel();
     }
 
-    @Inject(method = "useItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;getCount()I"), cancellable = true)
+    @Inject(method = "useItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;getCount()I", ordinal = 0), cancellable = true)
     private void hollowengine$onRightClickItem(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         if (BootstrapRuntimeManager.bridge().onPlayerUseItem(player, hand, stack)) cir.cancel();
     }

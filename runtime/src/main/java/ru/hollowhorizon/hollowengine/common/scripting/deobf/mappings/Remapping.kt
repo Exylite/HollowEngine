@@ -306,6 +306,9 @@ fun remapJars(
     to: String = "intermediary",
     classpath: List<File> = listOf(),
 ) = runBlocking {
+    // the game ships with its own names, and with nothing to rename the jars are used as they are
+    if (mappings.classes.isEmpty()) return@runBlocking inputs
+
     if (!outputDir.exists()) outputDir.mkdirs()
 
     val cache = hashMapOf<String, ByteArray?>()

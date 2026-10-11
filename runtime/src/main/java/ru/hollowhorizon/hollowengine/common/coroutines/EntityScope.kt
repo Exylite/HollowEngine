@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.coroutines
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.server
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import net.minecraft.client.Minecraft

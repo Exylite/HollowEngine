@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.bedrock
 
 import ru.hollowhorizon.hollowengine.common.utils.math.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.internal.*
 import ru.hollowhorizon.hollowengine.client.models.internal.animations.AnimationData
@@ -19,7 +19,7 @@ object BedrockModelLoader : ModelLoader {
 
     private var index = 0
 
-    override suspend fun load(location: ResourceLocation, side: ModelSide): Model {
+    override suspend fun load(location: Identifier, side: ModelSide): Model {
         val modelData = location.open(side).use { JsonFormat.decodeFromStream<BedrockFile>(it) }
         val parsedModel = convertGeometry(modelData, location, side)
 
@@ -41,7 +41,7 @@ object BedrockModelLoader : ModelLoader {
         return modelWithAnim
     }
 
-    private fun convertGeometry(file: BedrockFile, location: ResourceLocation, side: ModelSide): Model {
+    private fun convertGeometry(file: BedrockFile, location: Identifier, side: ModelSide): Model {
         val scenes = file.geometries.map { geometry ->
             Scene(
                 listOf(
@@ -56,7 +56,7 @@ object BedrockModelLoader : ModelLoader {
         return Model(0, scenes, emptySet(), emptyList())
     }
 
-    private fun BedrockFile.Geometry.convertNodes(location: ResourceLocation, side: ModelSide): List<NodeDefinition> {
+    private fun BedrockFile.Geometry.convertNodes(location: Identifier, side: ModelSide): List<NodeDefinition> {
         val material = Material(
             name = "texture",
             color = description.color,
@@ -278,13 +278,13 @@ object BedrockModelLoader : ModelLoader {
         }
     }
 
-    private fun ResourceLocation.open(side: ModelSide) =
+    private fun Identifier.open(side: ModelSide) =
         when (side) {
             ModelSide.CLIENT -> stream
             ModelSide.SERVER -> ModelResourceIO.open(this)
         }
 
-    private fun ResourceLocation.exists(side: ModelSide): Boolean =
+    private fun Identifier.exists(side: ModelSide): Boolean =
         when (side) {
             ModelSide.CLIENT -> exists()
             ModelSide.SERVER -> ModelResourceIO.exists(this)

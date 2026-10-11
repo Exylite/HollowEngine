@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.ui.hud
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -12,24 +12,24 @@ import java.util.concurrent.ConcurrentHashMap
  * a layer stays hidden until every owner has released it.
  */
 object HudLayerRegistry {
-    private val hidden = ConcurrentHashMap<ResourceLocation, MutableSet<String>>()
+    private val hidden = ConcurrentHashMap<Identifier, MutableSet<String>>()
 
-    fun hide(layer: ResourceLocation, owner: String = DefaultOwner) {
+    fun hide(layer: Identifier, owner: String = DefaultOwner) {
         hidden.computeIfAbsent(layer) { ConcurrentHashMap.newKeySet() } += owner
     }
 
-    fun show(layer: ResourceLocation, owner: String = DefaultOwner) {
+    fun show(layer: Identifier, owner: String = DefaultOwner) {
         val owners = hidden[layer] ?: return
         owners -= owner
         if (owners.isEmpty()) hidden.remove(layer)
     }
 
-    fun isHidden(layer: ResourceLocation): Boolean = hidden.containsKey(layer)
+    fun isHidden(layer: Identifier): Boolean = hidden.containsKey(layer)
 
-    val hiddenLayers: Set<ResourceLocation> get() = hidden.keys.toSet()
+    val hiddenLayers: Set<Identifier> get() = hidden.keys.toSet()
 
     /** Replaces everything [owner] hides with [layers]; used to apply a server's hide list wholesale. */
-    fun setHidden(layers: Collection<ResourceLocation>, owner: String) {
+    fun setHidden(layers: Collection<Identifier>, owner: String) {
         hidden.keys.toList().forEach { layer -> if (layer !in layers) show(layer, owner) }
         layers.forEach { layer -> hide(layer, owner) }
     }

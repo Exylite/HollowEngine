@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.widgets
 
 import androidx.compose.runtime.*
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import ru.hollowhorizon.hollowengine.api.VideoApi
 import ru.hollowhorizon.hollowengine.api.VideoPlaybackOptions
 import ru.hollowhorizon.hollowengine.api.VideoPlayer

@@ -90,7 +90,7 @@ class AnimatorStateTypesTests {
         val unknown = assertIs<UnknownAnimatorStateSpec>(controller.states[1])
         assertEquals(AddonStateId, unknown.typeId)
         assertEquals("limp", unknown.id)
-        assertEquals(980f, unknown.payload.getFloat("density"))
+        assertEquals(980f, unknown.payload.getFloatOr("density", 0f))
 
         assertEquals(stored, NBTFormat.serialize<Animator, Tag>(withoutAddon))
 
@@ -111,6 +111,6 @@ class AnimatorStateTypesTests {
         val renamed = assertIs<UnknownAnimatorStateSpec>(controller.states[1].withId("knocked_down"))
 
         assertEquals("knocked_down", renamed.id)
-        assertEquals(980f, renamed.payload.getFloat("density"))
+        assertEquals(980f, renamed.payload.getFloatOr("density", 0f))
     }
 }

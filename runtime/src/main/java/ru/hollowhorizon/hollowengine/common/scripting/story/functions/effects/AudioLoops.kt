@@ -4,7 +4,7 @@ package ru.hollowhorizon.hollowengine.common.scripting.story.functions.effects
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.Level
@@ -87,7 +87,7 @@ fun Level.stopLoop(id: String) = players().filterIsInstance<ServerPlayer>().forE
 @Serializable
 class StartSoundLoopPacket(
     private val id: String = "",
-    private val location: ResourceLocation = "hollowengine:missing".rl,
+    private val location: Identifier = "hollowengine:missing".rl,
     private val volume: Float = 1f,
     private val pitch: Float = 1f,
     private val fadeIn: Float = 1f,

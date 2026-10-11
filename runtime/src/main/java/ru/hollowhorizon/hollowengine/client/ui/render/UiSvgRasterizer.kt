@@ -5,7 +5,7 @@ import com.github.weisj.jsvg.parser.LoaderContext
 import com.github.weisj.jsvg.parser.SVGLoader
 import com.github.weisj.jsvg.view.ViewBox
 import com.mojang.blaze3d.platform.NativeImage
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.HollowUiResourceAccess
 import java.awt.Component
 import java.awt.RenderingHints
@@ -20,11 +20,11 @@ internal object UiSvgRasterizer {
     private val loader = SVGLoader()
     private val documents = ConcurrentHashMap<SvgDocumentKey, ParsedSvgDocument>()
 
-    fun intrinsicSize(location: ResourceLocation, revision: Long): Pair<Float, Float> {
+    fun intrinsicSize(location: Identifier, revision: Long): Pair<Float, Float> {
         return document(location, revision).intrinsicSize
     }
 
-    fun rasterize(location: ResourceLocation, revision: Long, width: Int, height: Int): NativeImage {
+    fun rasterize(location: Identifier, revision: Long, width: Int, height: Int): NativeImage {
         val document = document(location, revision).document
         val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
         val graphics = image.createGraphics()
@@ -42,7 +42,7 @@ internal object UiSvgRasterizer {
         return NativeImage.read(ByteArrayInputStream(output.toByteArray()))
     }
 
-    private fun document(location: ResourceLocation, revision: Long): ParsedSvgDocument {
+    private fun document(location: Identifier, revision: Long): ParsedSvgDocument {
         return documents.computeIfAbsent(SvgDocumentKey(location, revision)) {
             val source = HollowUiResourceAccess.readText(location)
             val input = ByteArrayInputStream(source.toByteArray(Charsets.UTF_8))
@@ -55,7 +55,7 @@ internal object UiSvgRasterizer {
 }
 
 private data class SvgDocumentKey(
-    val location: ResourceLocation,
+    val location: Identifier,
     val revision: Long,
 )
 
@@ -72,6 +72,6 @@ private fun SVGDocument.intrinsicSize(): Pair<Float, Float> {
     return width to height
 }
 
-private fun ResourceLocation.toSvgUri(): URI {
+private fun Identifier.toSvgUri(): URI {
     return URI.create("hollowengine-svg://${namespace}/${path}")
 }

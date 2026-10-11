@@ -98,7 +98,7 @@ class AnimatorLayerTypesTests {
         assertEquals(AddonLayerId, unknown.typeId)
         assertEquals("addon-layer", unknown.id)
         assertEquals("data.ragdoll", unknown.weight.source)
-        assertEquals(7.25f, unknown.payload.getFloat("stiffness"))
+        assertEquals(7.25f, unknown.payload.getFloatOr("stiffness", 0f))
 
         assertEquals(stored, NBTFormat.serialize<Animator, Tag>(withoutAddon))
 
@@ -120,7 +120,7 @@ class AnimatorLayerTypesTests {
 
         assertEquals("renamed", renamed.id)
         assertEquals(3, renamed.priority)
-        assertEquals(7.25f, renamed.payload.getFloat("stiffness"))
+        assertEquals(7.25f, renamed.payload.getFloatOr("stiffness", 0f))
         assertEquals("data.ragdoll", renamed.weight.source)
     }
 }

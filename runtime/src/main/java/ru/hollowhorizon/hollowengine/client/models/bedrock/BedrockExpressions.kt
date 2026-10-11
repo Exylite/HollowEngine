@@ -11,7 +11,9 @@ import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.animal.FlyingAnimal
+import net.minecraft.world.entity.animal.bee.Bee
+import net.minecraft.world.entity.animal.parrot.Parrot
+import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.entity.BlockEntity
 import org.lwjgl.glfw.GLFW
 import ru.hollowhorizon.hollowengine.HollowEngine
@@ -91,7 +93,7 @@ class LivingEntityQuery(val entity: LivingEntity) : Query {
     override val vertical_speed: Float get() = entity.deltaMovement.y.toFloat() * 20f
     override val health: Float get() = entity.health
     override val max_health: Float get() = entity.maxHealth
-    override val is_flying: Boolean get() = entity is FlyingAnimal && entity.isFlying
+    override val is_flying: Boolean get() = (entity is Bee && entity.isFlying) || (entity is Parrot && entity.isFlying) || (entity is Player && entity.abilities.flying)
     override val fall_ticks: Float get() = entity.fallFlyingTicks.toFloat()
     override val is_swimming: Boolean get() = entity.isSwimming
     override val is_in_water: Boolean get() = entity.isInWater

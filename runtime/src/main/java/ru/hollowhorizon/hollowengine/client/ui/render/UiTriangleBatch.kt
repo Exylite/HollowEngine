@@ -1,11 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.BufferUploader
-import com.mojang.blaze3d.vertex.DefaultVertexFormat
-import com.mojang.blaze3d.vertex.Tesselator
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
+
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
 import com.mojang.blaze3d.vertex.VertexConsumer
-import com.mojang.blaze3d.vertex.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
 import net.minecraft.client.renderer.GameRenderer
 import ru.hollowhorizon.hollowengine.client.ui.UiColor
 import ru.hollowhorizon.hollowengine.client.ui.UiMatrix4
@@ -73,7 +75,7 @@ internal fun drawBatchedTriangles(batch: UiTriangleBatch) {
         RenderSystem.disableCull()
         RenderSystem.enableBlend()
         configureUiBlend()
-        RenderSystem.setShader(GameRenderer::getPositionColorShader)
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR)
         batch.writeTo(buffer)
         BufferUploader.drawWithShader(buffer.buildOrThrow())

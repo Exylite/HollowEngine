@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.registry
 
 import net.minecraft.core.Registry
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.api.AutoModelType
 import ru.hollowhorizon.hollowengine.api.RegistryHolder
 import ru.hollowhorizon.hollowengine.api.RegistryProvider
@@ -15,7 +15,7 @@ object CommonRegistryProvider : RegistryProvider<Any> {
     }
 
     override fun register(
-        location: ResourceLocation,
+        location: Identifier,
         registry: Registry<Any>?,
         model: AutoModelType?,
         generator: Supplier<Any>,

@@ -10,7 +10,7 @@ import net.minecraft.core.component.DataComponentPatch
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
 import net.minecraft.resources.RegistryOps
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
@@ -166,13 +166,13 @@ class RecipePick(val stack: ItemStack, val tag: String? = null) {
 }
 
 internal fun itemOf(id: String): Item? =
-    ResourceLocation.tryParse(id)?.let { BuiltInRegistries.ITEM.getOptional(it).orElse(null) }
+    Identifier.tryParse(id)?.let { BuiltInRegistries.ITEM.getOptional(it).orElse(null) }
 
 internal fun stackOf(id: String): ItemStack? = itemOf(id)?.let(::ItemStack)
 
 internal fun tagItems(id: String): List<ItemStack> {
-    val location = ResourceLocation.tryParse(id.removePrefix("#")) ?: return emptyList()
-    return BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, location))
+    val location = Identifier.tryParse(id.removePrefix("#")) ?: return emptyList()
+    return BuiltInRegistries.ITEM.get(TagKey.create(Registries.ITEM, location))
         .map { set -> set.map { ItemStack(it.value()) } }.orElse(emptyList())
 }
 

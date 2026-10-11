@@ -17,20 +17,22 @@ Create a file ending in `.mixin.kts` under `hollowengine/scripts`, for example `
 
 ```kotlin
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 
-mixin<Player> {
+mixin<LivingEntity> {
     method("jumpFromGround") {
         after {
-            if (!self.level().isClientSide) {
-                self.displayClientMessage(Component.literal("The player jumped"), true)
+            val player = self as? Player
+            if (player != null && !player.level().isClientSide) {
+                player.sendOverlayMessage(Component.literal("The player jumped"))
             }
         }
     }
 }
 ```
 
-`mixin<Player>` selects the class, `method("jumpFromGround")` selects a method declared by that class, and `after` runs the body before every exit from the method. Inside the body, `self` has the `Player` type.
+`mixin<LivingEntity>` selects the class, `method("jumpFromGround")` selects a method declared by that class, and `after` runs the body before every exit from the method. Inside the body, `self` has the `LivingEntity` type, so the body first checks that it is a player (`Player` does not declare `jumpFromGround` itself).
 
 Compiling a new or edited mixin script requires an up-to-date Kotlin compiler addon. An exported addon can carry precompiled scripts, so end users do not need the compiler in that case.
 
@@ -90,9 +92,9 @@ The `T` type on a call operation names the owner of the called method, while `R`
 
 ```kotlin
 mixin<Player> {
-    method("jumpFromGround") {
+    method("attack") {
         replaceCall<Player>("causeFoodExhaustion") { _, _ ->
-            // Do not call proceed(), so jumping consumes no hunger.
+            // Do not call proceed(), so attacking consumes no hunger.
             null
         }
     }
@@ -161,7 +163,7 @@ For more control, operations corresponding directly to Mixin and MixinExtras are
 The simple points are `HEAD`, `RETURN`, and `TAIL`. Use `call` and `field` for calls and field reads:
 
 ```kotlin
-inject("jumpFromGround") {
+inject("causeFallDamage") {
     at(call<Player>("awardStat", shift = Shift.AFTER))
     code {
         // Runs immediately after awardStat.
@@ -197,28 +199,33 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.HollowEngine
 
-mixin<Player> {
+mixin<LivingEntity> {
     method("jumpFromGround") {
         after {
-            if (!self.level().isClientSide) {
-                val count = countJump(self)
-                self.displayClientMessage(Component.literal("Jump #$count"), true)
+            val player = self as? Player
+            if (player != null && !player.level().isClientSide) {
+                val count = countJump(player)
+                player.sendOverlayMessage(Component.literal("Jump #$count"))
             }
         }
+    }
 
-        beforeCall<Player>("awardStat") {
-            if (!self.level().isClientSide) {
-                HollowEngine.LOGGER.info("{} is about to get the jump stat", self.name.string)
-            }
-        }
-
-        replaceCall<Player>("causeFoodExhaustion") { _, _ -> null }
+    modifyReturnValue<Float>("getJumpPower()F") {
+        code { original -> if (self is Player) original * jumpBoost else original }
     }
 }
 
-mixin<LivingEntity> {
-    modifyReturnValue<Float>("getJumpPower()F") {
-        code { original -> if (self is Player) original * jumpBoost else original }
+mixin<Player> {
+    method("causeFallDamage") {
+        beforeCall<Player>("awardStat") {
+            if (!self.level().isClientSide) {
+                HollowEngine.LOGGER.info("{} is about to get the fall stat", self.name.string)
+            }
+        }
+    }
+
+    method("attack") {
+        replaceCall<Player>("causeFoodExhaustion") { _, _ -> null }
     }
 }
 ```

@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.attachments.binding
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.Entity
 import ru.hollowhorizon.hollowengine.common.attachments.api.Component
 import ru.hollowhorizon.hollowengine.common.attachments.components.*
@@ -66,7 +66,7 @@ fun <T : Snapshot> T.withOrReplace(component: Component, nodeId: UUID? = null): 
     if (nodeId != null && nodeId != ROOT_COMPONENT_ID) return this
     val id = ComponentDescriptorRegistry.idFor(component::class)
         ?: error("Component descriptor not found for ${component::class.qualifiedName}")
-    val merged = LinkedHashMap<ResourceLocation, Component>()
+    val merged = LinkedHashMap<Identifier, Component>()
     components.forEach { existing ->
         val existingId = ComponentDescriptorRegistry.idFor(existing::class)
             ?: error("Component descriptor not found for ${existing::class.qualifiedName}")

@@ -4,7 +4,7 @@ import java.security.MessageDigest
 
 plugins {
     id("architectury-plugin")
-    id("dev.architectury.loom")
+    id("dev.architectury.loom-no-remap")
     id("com.gradleup.shadow")
 }
 
@@ -15,7 +15,6 @@ val modAuthor: String by rootProject.properties
 val license: String by properties
 val modGroup: String by properties
 val minecraftVersion: String by rootProject.properties
-val parchmentVersion: String by rootProject.properties
 val fabricLoaderVersion: String by rootProject.properties
 val fabricApiVersion: String by rootProject.properties
 
@@ -45,8 +44,6 @@ loom {
         accessWidenerPath.set(accessWidener)
     }
 
-    mixin.useLegacyMixinAp.set(true)
-    mixin.add(sourceSets.named("main").get(), "$modId-fabric.refmap.json")
 
     runs {
         configureEach {
@@ -64,9 +61,6 @@ configurations {
         isCanBeConsumed = false
     }
     named("compileClasspath") {
-        extendsFrom(getByName("common"))
-    }
-    named("runtimeClasspath") {
         extendsFrom(getByName("common"))
     }
     named("developmentFabric") {
@@ -100,23 +94,22 @@ repositories {
     maven("https://repo.spongepowered.org/repository/maven-public/")
     mavenLocal()
     flatDir { dirs(rootProject.file("libs")) }
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
 }
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraftVersion")
-    mappings(loom.layered {
-        officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-$minecraftVersion:$parchmentVersion")
-    })
 
-    modImplementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
+    implementation("net.fabricmc:fabric-loader:$fabricLoaderVersion")
     val fabricApi = "net.fabricmc.fabric-api:fabric-api:$fabricApiVersion"
-    modImplementation(fabricApi)
+    implementation(fabricApi)
     include(fabricApi)
-    modImplementation("lib:iris-fabric:1.8.14-beta.1+mc1.21.1-devpatch")
-    modImplementation("lib:sodium-fabric:0.8.13+mc1.21.1")
-    val mixinExtras = "io.github.llamalad7:mixinextras-fabric:0.4.1"
-    modImplementation(mixinExtras)
+    implementation("maven.modrinth:iris:1.11.4+26.2-fabric")
+    implementation("maven.modrinth:sodium:mc26.2-0.9.2-fabric")
+    val mixinExtras = "io.github.llamalad7:mixinextras-fabric:0.5.5"
+    implementation(mixinExtras)
     include(mixinExtras)
 
     implementation("org.anarres:jcpp:1.4.14")
@@ -252,23 +245,15 @@ val bootstrapDevJar = tasks.register<Jar>("bootstrapDevJar") {
     from({ project.configurations.getByName("shadowBundle").map { zipTree(it) } })
 }
 
-val bootstrapProductionJar = tasks.register<Jar>("bootstrapProductionJar") {
-    group = "build"
-    description = "Packages the production bootstrap jar with the remapped isolated runtime payload."
-
-    dependsOn("classes", embedRemapTable, ":bridge:transformProductionFabric")
+// Minecraft ships unobfuscated since 26.1, so the plain jar is the production jar: Loom only nests the
+// included jars into it.
+tasks.named<Jar>("jar") {
+    dependsOn(embedRemapTable, ":bridge:transformProductionFabric")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    archiveBaseName.set(base.archivesName.get())
-    archiveVersion.set(project.version.toString())
-    archiveClassifier.set("production-dev")
+    archiveClassifier.set("")
 
-    from(sourceSets.named("main").map { it.output })
     from(embeddedRemapTableDir)
     from({ project.configurations.getByName("shadowBundle").map { zipTree(it) } })
-}
-
-tasks.named<net.fabricmc.loom.task.RemapJarTask>("remapJar") {
-    inputFile.set(bootstrapProductionJar.flatMap { it.archiveFile })
 }
 
 tasks.named<JavaCompile>("compileJava") {

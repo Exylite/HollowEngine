@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.slots
 
 import androidx.compose.runtime.mutableStateOf
-import net.minecraft.Util
+import net.minecraft.util.Util
 import net.minecraft.client.Minecraft
 import net.minecraft.world.item.ItemStack
 import ru.hollowhorizon.hollowengine.client.ui.layout.UiRect

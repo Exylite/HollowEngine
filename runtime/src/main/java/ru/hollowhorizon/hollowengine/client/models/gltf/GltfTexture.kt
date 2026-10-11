@@ -1,13 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.models.gltf
 
 import com.mojang.blaze3d.platform.NativeImage
-import com.mojang.blaze3d.systems.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.DynamicTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.utils.stream
 import ru.hollowhorizon.hollowengine.common.utils.math.Vec2f
 import ru.hollowhorizon.hollowengine.common.utils.rl
@@ -30,11 +30,9 @@ data class GltfTexture(
     var samplerRef: GltfSampler? = null
 
     @Transient
-    private lateinit var createdTex: DynamicTexture
-    @Transient
     private var isRegistered = false
 
-    fun makeTexture(location: ResourceLocation): ResourceLocation {
+    fun makeTexture(location: Identifier): Identifier {
         val uri = imageRef.uri
         val name = if (uri != null && !uri.startsWith("data:", true)) {
             uri
@@ -43,8 +41,11 @@ data class GltfTexture(
             "${location.namespace}:$folderPath/unnamed_texture_$source"
         }
 
-        if (!this::createdTex.isInitialized) {
-            if (uri != null && imageRef.bufferViewRef == null) {
+        val textureId = name.lowercase().rl
+        if (!isRegistered) {
+            isRegistered = true
+            // models load on worker threads: the picture is decoded here, the GPU texture is made on the render thread
+            val image = if (uri != null && imageRef.bufferViewRef == null) {
                 fun retrieveFile(path: String): InputStream {
                     if (path.startsWith("data:application/octet-stream;base64,")) {
                         return Base64.getDecoder().wrap(path.substring(37).byteInputStream())
@@ -56,28 +57,14 @@ data class GltfTexture(
                     return path.rl.stream
                 }
 
-                createdTex = DynamicTexture(NativeImage.read(retrieveFile(uri)))
+                NativeImage.read(retrieveFile(uri))
             } else {
-                createdTex = DynamicTexture(
-                    NativeImage.read(
-                        ByteArrayInputStream(
-                            imageRef.bufferViewRef!!.getData().toArray()
-                        )
-                    )
-                )
+                NativeImage.read(ByteArrayInputStream(imageRef.bufferViewRef!!.getData().toArray()))
             }
-        }
-
-        val textureId = name.lowercase().rl
-        if (!isRegistered) {
-            isRegistered = true
-            if (RenderSystem.isOnRenderThreadOrInit()) {
-                Minecraft.getInstance().textureManager.register(textureId, createdTex)
-            } else {
-                RenderSystem.recordRenderCall {
-                    Minecraft.getInstance().textureManager.register(textureId, createdTex)
-                }
+            val register = {
+                Minecraft.getInstance().textureManager.register(textureId, DynamicTexture({ "hollowengine:gltf" }, image))
             }
+            if (RenderSystem.isOnRenderThreadOrInit()) register() else RenderSystem.recordRenderCall { register() }
         }
 
         return textureId
@@ -96,7 +83,7 @@ data class GltfTexture(
 
         val transform: TextureTransform? get() = extensions?.textureTransform?.takeUnless { it.isIdentity }
 
-        fun getTexture(gltfFile: GltfFile, location: ResourceLocation): ResourceLocation {
+        fun getTexture(gltfFile: GltfFile, location: Identifier): Identifier {
             return gltfFile.textures[index].makeTexture(location)
         }
     }

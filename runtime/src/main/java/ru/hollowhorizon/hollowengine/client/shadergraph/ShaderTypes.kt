@@ -24,17 +24,23 @@ enum class ShaderType(val glsl: String, val width: Int) {
 
 /**
  * The type a pin is declared with: a fixed one; [DYNAMIC], where every dynamic pin of the node takes
- * the widest vector any of them is given; or [ANY], which keeps whatever vector it is given as it is.
+ * the widest vector any of them is given; [ANY], which keeps whatever vector it is given as it is; or
+ * [PASS], which keeps whatever it is given, a texture too, for a node that only carries a link along.
  */
 enum class ShaderPinType(val fixed: ShaderType?) {
     FLOAT(ShaderType.FLOAT), VEC2(ShaderType.VEC2), VEC3(ShaderType.VEC3), VEC4(ShaderType.VEC4), TEXTURE(ShaderType.TEXTURE), DYNAMIC(
         null
     ),
-    ANY(null);
+    ANY(null),
+    PASS(null);
+
+    /** Whether the pin takes the type of what is linked into it, rather than the node's or its own. */
+    val keepsLinkedType: Boolean get() = this == ANY || this == PASS
 
     /** Whether a value of [type] can be linked into a pin of this type. */
-    fun accepts(type: ShaderType): Boolean = when (fixed) {
-        null -> type.isVector
+    fun accepts(type: ShaderType): Boolean = when {
+        this == PASS -> true
+        fixed == null -> type.isVector
         else -> coerce("", type, fixed) != null
     }
 
@@ -87,7 +93,7 @@ enum class ShaderInput(
     val fragmentOnly: Boolean = false,
     val expressionName: String? = null,
 ) {
-    /** 0 to 1 across the surface, whatever part of the texture it shows. */
+    /** 0 to 1 across the surface, whatever part of the texture it shows, or across the screen for a post effect. */
     UV("sg_uv", ShaderType.VEC2, expressionName = "uv"),
 
     /** The part of the material texture the surface shows, flipbook frame included. */
@@ -124,7 +130,7 @@ enum class ShaderInput(
     /** Where on the screen the fragment is, 0 to 1. */
     SCREEN_UV("sg_screen_uv", ShaderType.VEC2, fragmentOnly = true),
 
-    /** The texture the material names. */
+    /** The texture the material names; for a post effect, the frame it draws over. */
     MAIN_TEXTURE("Sampler0", ShaderType.TEXTURE),
 
     /** Blocks from the eye to whatever the frame had drawn behind this fragment. */
@@ -134,7 +140,19 @@ enum class ShaderInput(
     FRAGMENT_DEPTH("sg_fragment_depth()", ShaderType.FLOAT, fragmentOnly = true),
 
     /** A function of a screen UV: the frame as it was before the effect drew. */
-    SCENE_COLOR("sg_scene_color", ShaderType.VEC3, fragmentOnly = true);
+    SCENE_COLOR("sg_scene_color", ShaderType.VEC3, fragmentOnly = true),
+
+    /**
+     * Where the node of the post effect is relative to the eye, in blocks, in the space of [POSITION]:
+     * what anchors an effect drawn over the frame to a place in the world.
+     */
+    NODE_POSITION("sg_node_position", ShaderType.VEC3, expressionName = "node"),
+
+    /**
+     * A function of a point in the space of [POSITION]: where it lands on the screen, 0 to 1, and how
+     * far ahead of the eye it is, negative behind it.
+     */
+    SCREEN_PROJECTION("sg_project", ShaderType.VEC3);
 
     companion object {
         fun forExpression(name: String): ShaderInput? = entries.firstOrNull { it.expressionName == name }

@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.client.particles
 
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.blaze3d.vertex.VertexConsumer
-import net.minecraft.client.renderer.LightTexture
+import net.minecraft.util.LightCoordsUtil
 import net.minecraft.util.Mth
 import ru.hollowhorizon.hollowengine.client.particles.file.ParticleComponents
 import ru.hollowhorizon.hollowengine.client.utils.color
@@ -404,7 +404,7 @@ class BedrockParticle(
         val light = if (components.particleAppearanceLighting != null) {
             emitter.system.lightProvider.query(position)
         } else {
-            LightTexture.FULL_BRIGHT
+            LightCoordsUtil.FULL_BRIGHT
         }
 
         var minUV: Vec2f

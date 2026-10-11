@@ -16,7 +16,7 @@ order: 3
 ```kotlin
 val RUBY_BLOCK by block("ruby_block") {
     Block(
-        BlockBehaviour.Properties.of()
+        it
             .strength(5f, 6f) // Прочность и взрывоустойчивость
             .requiresCorrectToolForDrops() // Без подходящего инструмента ничего не выпадет
             .sound(SoundType.METAL)
@@ -24,7 +24,9 @@ val RUBY_BLOCK by block("ruby_block") {
 }
 ```
 
-По умолчанию блок получает модель куба, одинакового со всех сторон, а предмет выглядит как сам блок. Свойства предмета можно передать отдельно: `block("ruby_block", itemProperties = Item.Properties().fireResistant()) { ... }`.
+Лямбда получает `BlockBehaviour.Properties`, в которых уже указан идентификатор блока (игра не принимает блок без него), поэтому стройте свойства от `it`, а не от `BlockBehaviour.Properties.of()`.
+
+По умолчанию блок получает модель куба, одинакового со всех сторон, а предмет выглядит как сам блок. Свойства предмета можно передать отдельно: `block("ruby_block", configureItem = { it.fireResistant() }) { ... }`.
 
 ## Текстура и название
 
@@ -111,7 +113,7 @@ hollowengine/
 
 ```kotlin
 val RUBY_LAMP by block("ruby_lamp", model = null) {
-    Block(BlockBehaviour.Properties.of().lightLevel { 15 })
+    Block(it.lightLevel { 15 })
 }
 ```
 

@@ -1,7 +1,8 @@
 package ru.hollowhorizon.hollowengine.common.ui.net
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.allKeys
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import ru.hollowhorizon.hollowengine.common.data.DataKey
 import ru.hollowhorizon.hollowengine.common.data.encode
@@ -33,7 +34,7 @@ enum class UiSurfaceKind {
 class UiSession internal constructor(
     val id: Int,
     val player: ServerPlayer,
-    val surface: ResourceLocation,
+    val surface: Identifier,
     val kind: UiSurfaceKind,
 ) {
     private val state = CompoundTag()

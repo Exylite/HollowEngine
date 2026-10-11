@@ -1,7 +1,13 @@
 package ru.hollowhorizon.hollowengine.client.utils.math
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.*
+import ru.hollowhorizon.hollowengine.common.registry.ModShaders
+
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import com.mojang.blaze3d.vertex.PoseStack
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.DefaultVertexFormat
+import ru.hollowhorizon.hollowengine.client.render.legacy.Tesselator
+import ru.hollowhorizon.hollowengine.client.render.legacy.BufferUploader
 import net.minecraft.client.renderer.GameRenderer
 import org.joml.Vector3d
 import org.joml.Vector3f
@@ -224,7 +230,7 @@ class Spline3D(points: List<Vector3d>, rotations: List<Vector3f>) {
     }
 
     fun draw(stack: PoseStack) {
-        RenderSystem.setShader { GameRenderer.getPositionTexShader() }
+        RenderSystem.setShader(ModShaders.POSITION_COLOR)
         val tessellator = Tesselator.getInstance()
 
         val bufferbuilder = tessellator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR)

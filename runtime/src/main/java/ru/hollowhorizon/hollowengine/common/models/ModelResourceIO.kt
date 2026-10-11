@@ -1,23 +1,23 @@
 package ru.hollowhorizon.hollowengine.common.models
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.files.DirectoryManager
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.nio.file.Files
 
 object ModelResourceIO {
-    fun exists(location: ResourceLocation): Boolean =
+    fun exists(location: Identifier): Boolean =
         folderPath(location)?.let(Files::isRegularFile) == true || classpathExists(location)
 
-    fun open(location: ResourceLocation): InputStream =
+    fun open(location: Identifier): InputStream =
         folderPath(location)
             ?.takeIf(Files::isRegularFile)
             ?.let(Files::newInputStream)
             ?: classpathResource(location)
             ?: throw FileNotFoundException("Resource $location not found")
 
-    private fun folderPath(location: ResourceLocation) =
+    private fun folderPath(location: Identifier) =
         DirectoryManager.HOLLOW_ENGINE.resolve("assets")
             .resolve(location.namespace)
             .resolve(location.path)
@@ -27,13 +27,13 @@ object ModelResourceIO {
                 path.startsWith(assetsRoot)
             }
 
-    private fun classpathResource(location: ResourceLocation): InputStream? {
+    private fun classpathResource(location: Identifier): InputStream? {
         val path = "assets/${location.namespace}/${location.path}"
         return Thread.currentThread().contextClassLoader.getResourceAsStream(path)
             ?: ModelResourceIO::class.java.classLoader.getResourceAsStream(path)
     }
 
-    private fun classpathExists(location: ResourceLocation): Boolean {
+    private fun classpathExists(location: Identifier): Boolean {
         val path = "assets/${location.namespace}/${location.path}"
         return Thread.currentThread().contextClassLoader.getResource(path) != null ||
             ModelResourceIO::class.java.classLoader.getResource(path) != null

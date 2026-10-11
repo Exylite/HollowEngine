@@ -3,7 +3,7 @@ package ru.hollowhorizon.hollowengine.common.scripting.story.functions.effects
 import kotlinx.serialization.Serializable
 import net.minecraft.core.Holder
 import net.minecraft.network.protocol.game.ClientboundSoundPacket
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
@@ -132,12 +132,12 @@ private fun SoundBuilder.play(level: Level) {
     level.playSound(location, volume, pitch, position, velocity, relative)
 }
 
-val SOUNDS = HashMap<ResourceLocation, Wave>()
+val SOUNDS = HashMap<Identifier, Wave>()
 
 @HollowPacketHandler(HollowPacketHandler.Direction.TO_CLIENT)
 @Serializable
 class SoundEffectPacket(
-    private val location: @Serializable(ForResourceLocation::class) ResourceLocation,
+    private val location: @Serializable(ForResourceLocation::class) Identifier,
     private val volume: Float,
     private val pitch: Float,
     private val position: @Serializable(ForVec3::class) Vec3?,
@@ -163,7 +163,7 @@ class SoundEffectPacket(
  * The decoded audio behind [location], read once and kept. Raw audio files are addressed the way
  * [playSound] addresses them, by resource path rather than by a registered sound event.
  */
-internal fun loadWave(location: ResourceLocation): Wave = SOUNDS.getOrPut(location) {
+internal fun loadWave(location: Identifier): Wave = SOUNDS.getOrPut(location) {
     val stream = location.stream
     when (val extension = location.path.substringAfterLast(".")) {
         "mp3" -> Mp3Format.read(stream)

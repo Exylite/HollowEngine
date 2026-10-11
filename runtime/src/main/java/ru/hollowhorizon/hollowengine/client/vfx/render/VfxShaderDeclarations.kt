@@ -3,8 +3,9 @@ package ru.hollowhorizon.hollowengine.client.vfx.render
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
+import ru.hollowhorizon.hollowengine.client.shadergraph.ShaderTarget
 import ru.hollowhorizon.hollowengine.common.vfx.VfxColorValue
 import ru.hollowhorizon.hollowengine.common.vfx.VfxRgba
 import ru.hollowhorizon.hollowengine.common.vfx.VfxUniformSpec
@@ -42,6 +43,8 @@ class VfxShaderDeclaration(
     private val glslNames: Map<String, String> = emptyMap(),
     /** The texture a sampler shows until the effect names one. */
     val samplerDefaults: Map<String, String> = emptyMap(),
+    /** What a material graph shades; null for a core shader, which says nothing about it. */
+    val target: ShaderTarget? = null,
 ) {
     fun uniform(name: String): VfxShaderUniform? = uniforms.firstOrNull { it.name == name }
 
@@ -63,7 +66,7 @@ class VfxShaderDeclaration(
             "ModelViewMat", "ProjMat", "IViewRotMat", "TextureMat", "ColorModulator", "Light0_Direction",
             "Light1_Direction", "FogStart", "FogEnd", "FogColor", "FogShape", "LineWidth", "GameTime",
             "ScreenSize", "GlintAlpha", "ChunkOffset", "Shaded", "BlendMode", "SkyCenter", "NodeOffset", "EffectTime",
-            "Softness", "Glow", "GlowPass",
+            "Softness", "Glow", "GlowPass", "ShaderTime",
         )
 
         /** The material texture, the light map and the scene copies. */
@@ -110,8 +113,8 @@ object VfxShaderDeclarations {
 
     private fun load(location: String): VfxShaderDeclaration? {
         if (VfxGraphMaterials.isGraph(location)) return VfxGraphMaterials.read(location)?.let(VfxGraphMaterials::declaration)
-        val id = ResourceLocation.tryParse(location) ?: return null
-        val file = ResourceLocation.fromNamespaceAndPath(id.namespace, "shaders/core/${id.path}.json")
+        val id = Identifier.tryParse(location) ?: return null
+        val file = Identifier.fromNamespaceAndPath(id.namespace, "shaders/core/${id.path}.json")
         val resource = Minecraft.getInstance().resourceManager.getResource(file).orElse(null) ?: return null
         return try {
             resource.openAsReader().use { VfxShaderDeclaration.parse(JsonParser.parseReader(it).asJsonObject) }

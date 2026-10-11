@@ -1,10 +1,12 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.LegacyGl
+import ru.hollowhorizon.hollowengine.client.render.legacy.id
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.texture.AbstractTexture
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
@@ -35,7 +37,7 @@ internal data class UiImageShadowKey(
     val spread: Float,
 )
 
-internal data class UiImageShadowMask(val texture: ResourceLocation, val bounds: UiRect)
+internal data class UiImageShadowMask(val texture: Identifier, val bounds: UiRect)
 
 internal fun imageShadowBounds(bounds: UiRect, blur: Float, spread: Float): UiRect {
     val padding = ceil(abs(spread) + blur.coerceAtLeast(0f) * 1.5f + 2f)
@@ -52,7 +54,8 @@ internal class UiImageShadowCache : AutoCloseable {
     ) {
         val pixels: Long get() = texture.framebuffer.width.toLong() * texture.framebuffer.height * if (workspace == null) 1 else 3
         fun close() {
-            Minecraft.getInstance().textureManager.release(mask.texture)
+            LegacyGl.releaseRawTexture(mask.texture)
+            texture.close()
             workspace?.close()
         }
     }
@@ -108,7 +111,7 @@ internal class UiImageShadowCache : AutoCloseable {
         val height = ceil(bounds.height * scale).toInt().coerceIn(1, heightLimit)
         val texture = previous?.texture ?: MaskTexture(UiFramebuffer(width, height, withDepth = false))
         val mask = previous?.mask ?: UiImageShadowMask(
-            ResourceLocation.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/shadow/${Ids.incrementAndGet()}"), bounds,
+            Identifier.fromNamespaceAndPath(HollowEngine.MODID, "generated/ui/shadow/${Ids.incrementAndGet()}"), bounds,
         )
         val workspace = if (needsFiltering) previous?.workspace ?: Workspace(width, height) else null
         try {
@@ -123,7 +126,7 @@ internal class UiImageShadowCache : AutoCloseable {
             if (cacheAcrossFrames) workspace?.close()
         }
         if (previous == null) {
-            Minecraft.getInstance().textureManager.register(mask.texture, texture)
+            LegacyGl.registerRawTexture(mask.texture, texture.framebuffer.texture)
             val entry = Entry(mask, texture, workspace.takeUnless { cacheAcrossFrames }, frame)
             entries[key] = entry
             pixels += entry.pixels
@@ -198,13 +201,13 @@ internal class UiImageShadowCache : AutoCloseable {
         pixels = 0
     }
 
-    private class MaskTexture(val framebuffer: UiFramebuffer) : AbstractTexture() {
-        init { id = framebuffer.texture }
-        override fun load(resourceManager: ResourceManager) = Unit
-        override fun close() {
-            if (id == NOT_ASSIGNED) return
+    private class MaskTexture(val framebuffer: UiFramebuffer) {
+        private var closed = false
+
+        fun close() {
+            if (closed) return
+            closed = true
             framebuffer.close()
-            id = NOT_ASSIGNED
         }
     }
 

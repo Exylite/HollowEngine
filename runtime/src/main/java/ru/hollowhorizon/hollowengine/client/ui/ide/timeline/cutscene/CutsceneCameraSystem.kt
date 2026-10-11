@@ -81,7 +81,7 @@ object CutsceneCameraSystem {
             return
         }
 
-        active.update(minecraft.timer.realtimeDeltaTicks / 20f)
+        active.update(minecraft.deltaTracker.realtimeDeltaTicks / 20f)
         environmentOverride.apply(level, active.currentEnvironment)
         if (!isPreview && !active.isPlaying && active.currentTime >= active.duration) {
             releaseController()

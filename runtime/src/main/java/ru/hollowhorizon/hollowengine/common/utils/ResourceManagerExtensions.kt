@@ -1,12 +1,12 @@
 package ru.hollowhorizon.hollowengine.common.utils
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.PackResources
 import net.minecraft.server.packs.PackType
 import net.minecraft.server.packs.VanillaPackResources
 import net.minecraft.server.packs.resources.ResourceManager
 
-fun ResourceManager.walk(path: String, suffix: String = ""): Set<ResourceLocation> =
+fun ResourceManager.walk(path: String, suffix: String = ""): Set<Identifier> =
     this.listResources(path) { location ->
         // Если суффикс пуст, принимаем все.
         // Иначе проверяем, оканчивается ли путь ресурса на суффикс.
@@ -14,7 +14,7 @@ fun ResourceManager.walk(path: String, suffix: String = ""): Set<ResourceLocatio
     }.keys
 
 data class PackResourceEntry(
-    val location: ResourceLocation,
+    val location: Identifier,
     val sourcePackId: String,
 )
 
@@ -23,7 +23,7 @@ data class PackResourceEntry(
  * Later packs replace earlier entries, matching ResourceManager's normal priority order.
  */
 fun ResourceManager.listPackResources(type: PackType, namespace: String? = null): List<PackResourceEntry> {
-    val resources = linkedMapOf<ResourceLocation, PackResourceEntry>()
+    val resources = linkedMapOf<Identifier, PackResourceEntry>()
     listPacks().use { packs ->
         packs.forEach { pack ->
             val availableNamespaces = pack.getNamespaces(type)
@@ -37,8 +37,8 @@ fun ResourceManager.listPackResources(type: PackType, namespace: String? = null)
     return resources.values.toList()
 }
 
-internal fun PackResources.listResourceLocations(type: PackType, namespace: String): Set<ResourceLocation> {
-    val locations = linkedSetOf<ResourceLocation>()
+internal fun PackResources.listResourceLocations(type: PackType, namespace: String): Set<Identifier> {
+    val locations = linkedSetOf<Identifier>()
     if (supportsEmptyResourcePath()) collectResourceLocations(type, namespace, "", locations)
     if (locations.isEmpty()) {
         resourceRoots(type).forEach { root -> collectResourceLocations(type, namespace, root, locations) }
@@ -50,7 +50,7 @@ private fun PackResources.collectResourceLocations(
     type: PackType,
     namespace: String,
     path: String,
-    output: MutableSet<ResourceLocation>,
+    output: MutableSet<Identifier>,
 ) {
     runCatching {
         listResources(type, namespace, path) { location, _ -> output += location }

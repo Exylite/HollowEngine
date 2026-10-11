@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.gltf
 
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.client.models.internal.Material
 import ru.hollowhorizon.hollowengine.common.utils.Color
@@ -50,7 +50,7 @@ data class GltfMaterial(
         return baked
     }
 
-    fun toMaterial(file: GltfFile, location: ResourceLocation, index: Int): Material {
+    fun toMaterial(file: GltfFile, location: Identifier, index: Int): Material {
         val material = Material(name = name?.takeIf(String::isNotBlank) ?: "material_$index")
         val colorList = pbrMetallicRoughness.baseColorFactor
         material.color = Color(colorList[0], colorList[1], colorList[2], colorList[3])

@@ -17,20 +17,22 @@ Mixin-скрипты подходят, когда игрового событи�
 
 ```kotlin
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 
-mixin<Player> {
+mixin<LivingEntity> {
     method("jumpFromGround") {
         after {
-            if (!self.level().isClientSide) {
-                self.displayClientMessage(Component.literal("Игрок прыгнул"), true)
+            val player = self as? Player
+            if (player != null && !player.level().isClientSide) {
+                player.sendOverlayMessage(Component.literal("Игрок прыгнул"))
             }
         }
     }
 }
 ```
 
-`mixin<Player>` выбирает класс, `method("jumpFromGround")` - объявленный в нём метод, а `after` запускает тело перед каждым выходом из метода. Внутри тела `self` имеет тип `Player`.
+`mixin<LivingEntity>` выбирает класс, `method("jumpFromGround")` - объявленный в нём метод, а `after` запускает тело перед каждым выходом из метода. Внутри тела `self` имеет тип `LivingEntity`, поэтому тело сначала проверяет, что это игрок (сам `Player` метод `jumpFromGround` не объявляет).
 
 Для компиляции нового или изменённого mixin-скрипта нужен актуальный аддон-компилятор Kotlin. Экспортированный аддон может содержать уже скомпилированные скрипты, поэтому конечным игрокам компилятор не обязателен.
 
@@ -90,9 +92,9 @@ mixin<Player> {
 
 ```kotlin
 mixin<Player> {
-    method("jumpFromGround") {
+    method("attack") {
         replaceCall<Player>("causeFoodExhaustion") { _, _ ->
-            // proceed() не вызывается, поэтому прыжок не тратит сытость.
+            // proceed() не вызывается, поэтому атака не тратит сытость.
             null
         }
     }
@@ -161,7 +163,7 @@ modifyReturnValue<Float>("getJumpPower()F") {
 Простые точки - `HEAD`, `RETURN` и `TAIL`. Вызов и чтение поля задаются функциями `call` и `field`:
 
 ```kotlin
-inject("jumpFromGround") {
+inject("causeFallDamage") {
     at(call<Player>("awardStat", shift = Shift.AFTER))
     code {
         // Выполняется сразу после awardStat.
@@ -197,28 +199,33 @@ import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import ru.hollowhorizon.hollowengine.HollowEngine
 
-mixin<Player> {
+mixin<LivingEntity> {
     method("jumpFromGround") {
         after {
-            if (!self.level().isClientSide) {
-                val count = countJump(self)
-                self.displayClientMessage(Component.literal("Прыжок №$count"), true)
+            val player = self as? Player
+            if (player != null && !player.level().isClientSide) {
+                val count = countJump(player)
+                player.sendOverlayMessage(Component.literal("Прыжок №$count"))
             }
         }
+    }
 
-        beforeCall<Player>("awardStat") {
-            if (!self.level().isClientSide) {
-                HollowEngine.LOGGER.info("{} is about to get the jump stat", self.name.string)
-            }
-        }
-
-        replaceCall<Player>("causeFoodExhaustion") { _, _ -> null }
+    modifyReturnValue<Float>("getJumpPower()F") {
+        code { original -> if (self is Player) original * jumpBoost else original }
     }
 }
 
-mixin<LivingEntity> {
-    modifyReturnValue<Float>("getJumpPower()F") {
-        code { original -> if (self is Player) original * jumpBoost else original }
+mixin<Player> {
+    method("causeFallDamage") {
+        beforeCall<Player>("awardStat") {
+            if (!self.level().isClientSide) {
+                HollowEngine.LOGGER.info("{} is about to get the fall stat", self.name.string)
+            }
+        }
+    }
+
+    method("attack") {
+        replaceCall<Player>("causeFoodExhaustion") { _, _ -> null }
     }
 }
 ```

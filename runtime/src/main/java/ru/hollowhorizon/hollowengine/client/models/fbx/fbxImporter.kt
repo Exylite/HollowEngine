@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.models.fbx
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.models.internal.Model
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.ModelLoader
 import ru.hollowhorizon.hollowengine.client.models.internal.manager.ModelSide
@@ -13,11 +13,11 @@ import java.nio.ByteOrder
 object FbxModelLoader: ModelLoader {
     override val supportedFormats = setOf("fbx")
 
-    override suspend fun load(location: ResourceLocation, side: ModelSide): Model {
+    override suspend fun load(location: Identifier, side: ModelSide): Model {
         return import(location, side).convert(location)
     }
 
-    fun import(location: ResourceLocation, side: ModelSide = ModelSide.CLIENT): Document {
+    fun import(location: Identifier, side: ModelSide = ModelSide.CLIENT): Document {
         val bytes = ByteBuffer.wrap(location.readModelBytes(side)).order(ByteOrder.nativeOrder())
 
         val tokens = ArrayList<Token>()
@@ -34,7 +34,7 @@ object FbxModelLoader: ModelLoader {
         return Document(parser)
     }
 
-    private fun ResourceLocation.readModelBytes(side: ModelSide): ByteArray =
+    private fun Identifier.readModelBytes(side: ModelSide): ByteArray =
         when (side) {
             ModelSide.CLIENT -> stream.readBytes()
             ModelSide.SERVER -> ModelResourceIO.open(this).use { it.readBytes() }

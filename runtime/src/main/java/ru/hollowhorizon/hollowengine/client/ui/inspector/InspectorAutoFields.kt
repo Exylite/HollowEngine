@@ -6,11 +6,13 @@ import androidx.compose.runtime.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.descriptors.*
 import kotlinx.serialization.json.*
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.widgets.UiTextFieldMode
 import ru.hollowhorizon.hollowengine.client.ui.widgets.tooltipOnHover
 import ru.hollowhorizon.hollowengine.client.ui.widgets.UiTextInputFilter
+import ru.hollowhorizon.hollowengine.common.utils.math.Vec3f
+import ru.hollowhorizon.hollowengine.common.utils.math.VectorDescriptors
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -19,7 +21,7 @@ import java.math.RoundingMode
  */
 @Composable
 internal fun AutoFields(
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonObject,
     path: String,
@@ -47,6 +49,7 @@ internal fun AutoFields(
                     multiline = ComponentLabels.isMultiline(descriptor, index),
                     asset = ComponentLabels.asset(descriptor, index),
                     bone = ComponentLabels.isBone(descriptor, index),
+                    widget = ComponentLabels.widget(descriptor, index),
                 ),
                 value = current,
                 path = "$path/$name",
@@ -77,7 +80,7 @@ internal fun FieldHelp(description: String?) {
     )
 }
 
-private const val HelpIcon = "hollowengine:textures/gui/icons/docs.svg"
+private const val HelpIcon = "hollowengine:textures/gui/icons/info.svg"
 
 internal data class FieldRange(val min: Double, val max: Double, val slider: Boolean)
 
@@ -86,6 +89,8 @@ internal data class FieldHints(
     val multiline: Boolean = false,
     val asset: List<String> = emptyList(),
     val bone: Boolean = false,
+    /** The registered editor the field asks for; see [InspectorWidgets]. */
+    val widget: String? = null,
 )
 
 private fun matchesQuery(query: String, vararg candidates: String): Boolean {
@@ -97,7 +102,7 @@ private fun matchesQuery(query: String, vararg candidates: String): Boolean {
 internal fun ValueEditor(
     label: String?,
     description: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -106,6 +111,10 @@ internal fun ValueEditor(
 ) {
     if (descriptor.isNullable) {
         NullableEditor(label, description, owner, descriptor, hints, value, path, onChange)
+        return
+    }
+    hints.widget?.let(InspectorWidgets::find)?.let { widget ->
+        widget.Content(InspectorWidgetField(label, description, descriptor, value, path, onChange))
         return
     }
 
@@ -120,7 +129,11 @@ internal fun ValueEditor(
 
         SerialKind.ENUM -> EnumField(label, description, descriptor, value, onChange)
 
-        StructureKind.LIST -> ListField(label, owner, descriptor, hints, value, path, onChange)
+        StructureKind.LIST -> {
+            val size = VectorDescriptors.components(descriptor)
+            if (size != null) ListVectorField(label, description, descriptor, size, value, path, onChange)
+            else ListField(label, owner, descriptor, hints, value, path, onChange)
+        }
 
         StructureKind.MAP -> MapField(label, owner, descriptor, value, path, onChange)
 
@@ -141,7 +154,7 @@ internal fun ValueEditor(
 private fun NullableEditor(
     label: String?,
     description: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -330,8 +343,8 @@ private fun EnumField(
     Column(tags = listOf("insp-field")) {
         FieldLabel(label, description)
         PillFlow {
-            descriptor.elementNames.forEach { name ->
-                Pill(ComponentLabels.prettify(name), name == current) { onChange(JsonPrimitive(name)) }
+            descriptor.elementNames.forEachIndexed { index, name ->
+                Pill(ComponentLabels.enumValueName(descriptor, index), name == current) { onChange(JsonPrimitive(name)) }
             }
         }
     }
@@ -347,19 +360,64 @@ private fun VectorField(
     onChange: (JsonElement) -> Unit,
 ) {
     val body = value as? JsonObject ?: JsonObject(emptyMap())
+    val components = (0 until descriptor.elementsCount).mapNotNull { index ->
+        val name = descriptor.getElementName(index)
+        val kind = descriptor.getElementDescriptor(index).kind as? PrimitiveKind ?: return@mapNotNull null
+        VectorComponent(name, kind, (body[name] as? JsonPrimitive)?.doubleOrNull ?: 0.0) { next ->
+            onChange(body.withField(name, numberJson(kind, next)))
+        }
+    }
+    VectorRow(label, description, path, components)
+}
+
+/** A vector written as a list of numbers, such as `Vec3f`: its components side by side, never added or removed. */
+@Composable
+private fun ListVectorField(
+    label: String?,
+    description: String?,
+    descriptor: SerialDescriptor,
+    size: Int,
+    value: JsonElement,
+    path: String,
+    onChange: (JsonElement) -> Unit,
+) {
+    val kind = descriptor.getElementDescriptor(0).kind as? PrimitiveKind ?: return UnsupportedField(label, descriptor)
+    val items = value as? JsonArray ?: JsonArray(emptyList())
+    val numbers = List(size) { index -> (items.getOrNull(index) as? JsonPrimitive)?.doubleOrNull ?: 0.0 }
+    val components = numbers.mapIndexed { index, number ->
+        VectorComponent(VectorAxes[index], kind, number) { next ->
+            onChange(JsonArray(numbers.mapIndexed { other, old -> numberJson(kind, if (other == index) next else old) }))
+        }
+    }
+    VectorRow(label, description, path, components)
+}
+
+/** Three numbers on one row, the way a vector field of a component is shown. */
+@Composable
+internal fun Vec3Row(label: String, value: Vec3f, path: String, description: String? = null, onChange: (Vec3f) -> Unit) {
+    val numbers = floatArrayOf(value.x, value.y, value.z)
+    VectorRow(label, description, path, numbers.indices.map { index ->
+        VectorComponent(VectorAxes[index], PrimitiveKind.FLOAT, numbers[index].toDouble()) { next ->
+            val changed = numbers.copyOf().also { it[index] = next.toFloat() }
+            onChange(Vec3f(changed[0], changed[1], changed[2]))
+        }
+    })
+}
+
+private class VectorComponent(val name: String, val kind: PrimitiveKind, val value: Double, val onChange: (Double) -> Unit)
+
+private val VectorAxes = listOf("x", "y", "z", "w")
+
+@Composable
+private fun VectorRow(label: String?, description: String?, path: String, components: List<VectorComponent>) {
     Column(tags = listOf("insp-field")) {
         FieldLabel(label, description)
         Row(tags = listOf("insp-vector")) {
-            for (index in 0 until descriptor.elementsCount) {
-                val name = descriptor.getElementName(index)
-                val kind = descriptor.getElementDescriptor(index).kind as? PrimitiveKind ?: continue
-                val whole = kind == PrimitiveKind.INT || kind == PrimitiveKind.LONG
-                val number = (body[name] as? JsonPrimitive)?.doubleOrNull ?: 0.0
-                Column(tags = listOf("insp-vector-cell")) {
-                    Text(name, tags = listOf("insp-vector-label"))
-                    NumberInput("$path/$name", number, whole) { next ->
-                        onChange(body.withField(name, numberJson(kind, next)))
-                    }
+            components.forEach { component ->
+                val whole = component.kind == PrimitiveKind.INT || component.kind == PrimitiveKind.LONG
+                Row(tags = listOf("insp-vector-cell")) {
+                    Text(component.name, tags = listOf("insp-vector-label"))
+                    NumberInput("$path/${component.name}", component.value, whole, onChange = component.onChange)
                 }
             }
         }
@@ -369,7 +427,7 @@ private fun VectorField(
 @Composable
 private fun NestedField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,
@@ -397,7 +455,7 @@ private fun NestedField(
 @Composable
 private fun ListField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     hints: FieldHints,
     value: JsonElement,
@@ -444,7 +502,7 @@ private fun ListField(
 @Composable
 private fun MapField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,
@@ -499,7 +557,7 @@ private fun MapField(
 @Composable
 private fun PolymorphicField(
     label: String?,
-    owner: ResourceLocation?,
+    owner: Identifier?,
     descriptor: SerialDescriptor,
     value: JsonElement,
     path: String,

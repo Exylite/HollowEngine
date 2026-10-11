@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.ui.render
 
-import com.mojang.blaze3d.systems.RenderSystem
-import com.mojang.blaze3d.vertex.VertexSorting
+import ru.hollowhorizon.hollowengine.client.render.legacy.RenderSystem
+import ru.hollowhorizon.hollowengine.client.render.legacy.VertexSorting
 import org.joml.Matrix4f
 import org.lwjgl.opengl.GL11
 import ru.hollowhorizon.hollowengine.client.ui.UiMatrix4

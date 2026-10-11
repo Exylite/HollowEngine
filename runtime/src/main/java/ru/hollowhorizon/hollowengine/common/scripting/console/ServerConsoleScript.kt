@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.scripting.console
 
+import net.minecraft.server.players.NameAndId
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -29,7 +30,7 @@ abstract class ServerConsoleScript(scope: CoroutineScope, val server: MinecraftS
      * that does not name a single player.
      */
     val player: ServerPlayer?
-        get() = players.firstOrNull { server.isSingleplayerOwner(it.gameProfile) } ?: players.singleOrNull()
+        get() = players.firstOrNull { server.isSingleplayerOwner(NameAndId(it.gameProfile)) } ?: players.singleOrNull()
 
     /** Prints to the console, not to the game's standard output. */
     fun println(value: Any?) {

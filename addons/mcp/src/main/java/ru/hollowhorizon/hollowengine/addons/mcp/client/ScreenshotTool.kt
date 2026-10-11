@@ -1,5 +1,6 @@
 package ru.hollowhorizon.hollowengine.addons.mcp.client
 
+import ru.hollowhorizon.hollowengine.common.utils.compat.asByteArray
 import com.mojang.blaze3d.platform.NativeImage
 import io.modelcontextprotocol.kotlin.sdk.types.ImageContent
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent

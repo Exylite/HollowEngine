@@ -4,6 +4,10 @@ import net.minecraft.core.BlockPos
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.EntitySpawnReason
+import net.minecraft.world.entity.EntitySpawnRequest
+import net.minecraft.world.level.storage.TagValueInput
+import net.minecraft.util.ProblemReporter
 
 object SchematicPlacer {
     fun place(level: ServerLevel, origin: BlockPos, schematic: Schematic) {
@@ -23,7 +27,7 @@ object SchematicPlacer {
         }
 
         blocks.blockEntities.forEach { beTag ->
-            val posArray = beTag.getIntArray("Pos")
+            val posArray = beTag.getIntArray("Pos").orElse(IntArray(0))
             if (posArray.size == 3) {
                 val localPos = BlockPos(posArray[0], posArray[1], posArray[2])
                 val targetPos = origin.offset(schematic.offset).offset(localPos)
@@ -34,7 +38,8 @@ object SchematicPlacer {
                     finalTag.putInt("x", targetPos.x)
                     finalTag.putInt("y", targetPos.y)
                     finalTag.putInt("z", targetPos.z)
-                    blockEntity.loadWithComponents(finalTag, level.registryAccess())
+                    TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), finalTag)
+                        .let(blockEntity::loadWithComponents)
 
                     blockEntity.setChanged()
                 }
@@ -49,8 +54,10 @@ object SchematicPlacer {
                 .add(origin.x.toDouble(), origin.y.toDouble(), origin.z.toDouble())
                 .add(schematic.offset.x.toDouble(), schematic.offset.y.toDouble(), schematic.offset.z.toDouble())
 
-            val entity = EntityType.loadEntityRecursive(entityTag, level) { ent ->
-                ent.moveTo(spawnPos.x, spawnPos.y, spawnPos.z, ent.yRot, ent.xRot)
+            val entity = EntityType.loadEntityRecursive(
+                entityTag, level, EntitySpawnRequest(EntitySpawnReason.LOAD, false),
+            ) { ent ->
+                ent.snapTo(spawnPos.x, spawnPos.y, spawnPos.z, ent.yRot, ent.xRot)
                 ent
             }
 

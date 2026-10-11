@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.addons.video.playback
 
 import kotlinx.coroutines.CoroutineScope
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.addons.video.events.VideoPlaybackEvent
 import ru.hollowhorizon.hollowengine.api.VideoPlaybackOptions
@@ -35,7 +35,7 @@ class VideoPlayerSession(
 
     private var monotonicFloorSeconds = options.startSeconds
 
-    override val texture: ResourceLocation? get() = if (surface.ready) surface.location else null
+    override val texture: Identifier? get() = if (surface.ready) surface.location else null
     override val videoWidth: Int get() = controller.state.info?.width ?: 0
     override val videoHeight: Int get() = controller.state.info?.height ?: 0
     override val durationSeconds: Double get() = controller.state.info?.durationSeconds ?: 0.0

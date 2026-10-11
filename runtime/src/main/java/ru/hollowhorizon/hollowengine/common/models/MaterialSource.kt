@@ -2,7 +2,7 @@ package ru.hollowhorizon.hollowengine.common.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.common.utils.nbt.ForResourceLocation
 
 /**
@@ -14,9 +14,9 @@ sealed interface MaterialSource {
     @Serializable
     @SerialName("hollowengine:material/texture")
     data class Texture(
-        val texture: @Serializable(ForResourceLocation::class) ResourceLocation,
-        val normal: @Serializable(ForResourceLocation::class) ResourceLocation? = null,
-        val specular: @Serializable(ForResourceLocation::class) ResourceLocation? = null,
+        val texture: @Serializable(ForResourceLocation::class) Identifier,
+        val normal: @Serializable(ForResourceLocation::class) Identifier? = null,
+        val specular: @Serializable(ForResourceLocation::class) Identifier? = null,
         /** `#rrggbb` or `#aarrggbb`; null keeps the color the model was authored with. */
         val color: String? = null,
     ) : MaterialSource

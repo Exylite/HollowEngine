@@ -2,20 +2,19 @@ package ru.hollowhorizon.hollowengine.common.events.client.render
 
 import com.google.common.collect.ImmutableMap
 import com.mojang.blaze3d.vertex.PoseStack
-import net.minecraft.client.model.EntityModel
-import net.minecraft.client.model.SkullModelBase
+import net.minecraft.client.model.`object`.skull.SkullModelBase
 import net.minecraft.client.model.geom.EntityModelSet
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.player.AbstractClientPlayer
-import net.minecraft.client.renderer.MultiBufferSource
+import ru.hollowhorizon.hollowengine.client.render.legacy.MultiBufferSource
 import net.minecraft.client.renderer.entity.EntityRenderer
 import net.minecraft.client.renderer.entity.EntityRendererProvider
 import net.minecraft.client.renderer.entity.LivingEntityRenderer
+import net.minecraft.client.renderer.entity.player.AvatarRenderer
+import net.minecraft.world.entity.player.PlayerModelType
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
-import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.block.SkullBlock
 import ru.hollowhorizon.hollowengine.common.events.Cancellable
 import ru.hollowhorizon.hollowengine.common.events.ClientEvent
@@ -32,18 +31,18 @@ class RegisterEntityLayersDefinitions(private val layerDefinitions: Map<ModelLay
 }
 
 class AddEntityRendererLayers(
-    val renderers: MutableMap<EntityType<*>, EntityRenderer<*>>,
-    val skinMap: MutableMap<String, EntityRenderer<out Player>>,
+    val renderers: Map<EntityType<*>, EntityRenderer<*, *>>,
+    val skinMap: Map<PlayerModelType, AvatarRenderer<AbstractClientPlayer>>,
     val context: EntityRendererProvider.Context,
 ) : ClientEvent {
     companion object : EventHandler<AddEntityRendererLayers>()
 
     val skins = this.skinMap.keys
 
-    fun <R : LivingEntityRenderer<out Player, out EntityModel<out Player>>> getSkin(skin: String): R =
-        JavaHacks.forceCast(this.skinMap[skin])
+    /** The player renderer for one arm model: wide or slim. */
+    fun getSkin(skin: PlayerModelType): AvatarRenderer<AbstractClientPlayer> = this.skinMap.getValue(skin)
 
-    fun <T : LivingEntity, R : LivingEntityRenderer<T, out EntityModel<T>>> getRenderer(type: EntityType<out T>): R =
+    fun <R : LivingEntityRenderer<*, *, *>> getRenderer(type: EntityType<*>): R =
         JavaHacks.forceCast(this.renderers[type])
 
     val entityModels get() = this.context.modelSet

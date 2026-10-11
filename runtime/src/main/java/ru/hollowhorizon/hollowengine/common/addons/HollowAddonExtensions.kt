@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.addons
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.api.extensions.ExtensionPoint
 import java.util.concurrent.atomic.AtomicBoolean
@@ -70,7 +70,7 @@ internal class OwnedHollowAddonExtensions(
         priority: Int,
     ): HollowAddonRegistration {
         check(!closed.get()) { "Addon extension scope '$addonId' is already closed" }
-        val key = ResourceLocation.parse(qualifyExtensionId(addonId, id))
+        val key = Identifier.parse(qualifyExtensionId(addonId, id))
         return own(point.register(key, addonId, id, classLoader, priority, extension))
     }
 
@@ -127,7 +127,7 @@ private fun qualifyExtensionId(ownerId: String, localId: String): String {
     require(qualified.substringBefore(':') == ownerId) {
         "Extension '$localId' must belong to addon '$ownerId'"
     }
-    requireNotNull(ResourceLocation.tryParse(qualified)) { "Invalid extension ID '$qualified'" }
+    requireNotNull(Identifier.tryParse(qualified)) { "Invalid extension ID '$qualified'" }
     return qualified
 }
 

@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import ru.hollowhorizon.hollowengine.client.ui.*
 import ru.hollowhorizon.hollowengine.client.ui.widgets.UiCompletionContributor
 import ru.hollowhorizon.hollowengine.client.ui.widgets.UiTextCompletion
@@ -89,7 +89,7 @@ private const val MaxAssetFixes = 5
 
 /** Whether the resource pack stack has a file at [path], a `namespace:path` location. */
 fun resourceExists(path: String): Boolean {
-    val location = ResourceLocation.tryParse(path) ?: return false
+    val location = Identifier.tryParse(path) ?: return false
     val manager = Minecraft.getInstance().resourceManager ?: return true
     return manager.getResource(location).isPresent
 }

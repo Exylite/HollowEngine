@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.common.dialogue
 
 import kotlinx.coroutines.delay
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.level.ServerPlayer
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.any
 import ru.hollowhorizon.hollowengine.common.dialogue.lang.list
@@ -39,7 +39,7 @@ internal object StoryEffectFunctions {
         var cutscene = false
 
         /** What the player had hidden before the dialogue touched the HUD. */
-        val hudBefore = HashMap<ServerPlayer, Set<ResourceLocation>>()
+        val hudBefore = HashMap<ServerPlayer, Set<Identifier>>()
     }
 
     fun install(registry: StoryFunctionRegistry) {
@@ -103,7 +103,7 @@ internal object StoryEffectFunctions {
     }
 
     /** Accepts `[chat, hotbar]` and `"chat, hotbar"` alike; null when the story left it out. */
-    private fun StoryArguments.layers(name: String): Set<ResourceLocation>? {
+    private fun StoryArguments.layers(name: String): Set<Identifier>? {
         val value = this[name] ?: return null
         val names = when (value) {
             is StoryList -> value.values.map { it.display() }

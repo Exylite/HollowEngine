@@ -33,8 +33,8 @@ val universalJar = tasks.register<JavaExec>("universalJar") {
     group = "build"
     description = "Merges NeoForge and Fabric jars into a single jar for both loaders."
 
-    val neoforgeJar = project(":bootstrap:neoforge").tasks.named<AbstractArchiveTask>("remapJar").flatMap { it.archiveFile }
-    val fabricJar = project(":bootstrap:fabric").tasks.named<AbstractArchiveTask>("remapJar").flatMap { it.archiveFile }
+    val neoforgeJar = project(":bootstrap:neoforge").tasks.named<AbstractArchiveTask>("jar").flatMap { it.archiveFile }
+    val fabricJar = project(":bootstrap:fabric").tasks.named<AbstractArchiveTask>("jar").flatMap { it.archiveFile }
     val runtimeSources = project(":runtime").extensions.getByType<SourceSetContainer>().named("main")
 
     mainClass.set("ru.hollowhorizon.hollowengine.runtime.remap.UniversalJarTool")

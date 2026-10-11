@@ -1,7 +1,7 @@
 package ru.hollowhorizon.hollowengine.client.models.internal.manager
 
 import net.minecraft.nbt.Tag
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.resources.ResourceManager
 import ru.hollowhorizon.hollowengine.HollowEngine
 import ru.hollowhorizon.hollowengine.common.models.ModelRig
@@ -16,21 +16,21 @@ import ru.hollowhorizon.hollowengine.common.utils.serialization.deserialize
  */
 object RigAssets {
     @Volatile
-    private var rigs: Map<ResourceLocation, ModelRig> = emptyMap()
+    private var rigs: Map<Identifier, ModelRig> = emptyMap()
 
     /** The rig of [model], or an empty one when it has none. */
-    fun of(model: ResourceLocation?): ModelRig = model?.let { rigs[it] } ?: ModelRig.EMPTY
+    fun of(model: Identifier?): ModelRig = model?.let { rigs[it] } ?: ModelRig.EMPTY
 
     @Synchronized
-    fun register(model: ResourceLocation, rig: ModelRig) {
+    fun register(model: Identifier, rig: ModelRig) {
         rigs = rigs + (model to rig)
     }
 
-    fun locationOf(model: ResourceLocation): ResourceLocation = model.withSuffix(SUFFIX)
+    fun locationOf(model: Identifier): Identifier = model.withSuffix(SUFFIX)
 
     @Synchronized
-    fun reload(manager: ResourceManager, models: Collection<ResourceLocation>) {
-        val next = HashMap<ResourceLocation, ModelRig>()
+    fun reload(manager: ResourceManager, models: Collection<Identifier>) {
+        val next = HashMap<Identifier, ModelRig>()
         models.forEach { model ->
             val resource = manager.getResource(locationOf(model)).orElse(null) ?: return@forEach
             try {

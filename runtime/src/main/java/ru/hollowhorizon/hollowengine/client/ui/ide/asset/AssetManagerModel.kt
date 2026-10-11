@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.ide.asset
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import net.minecraft.server.packs.PackType
 import net.minecraft.server.packs.resources.ResourceManager
 import ru.hollowhorizon.hollowengine.common.data.HollowEnginePack
@@ -25,7 +25,7 @@ internal enum class AssetResourceState {
 }
 
 internal data class AssetFile(
-    val location: ResourceLocation,
+    val location: Identifier,
     val sourcePackId: String,
     val state: AssetResourceState = AssetResourceState.UNTOUCHED,
 ) {

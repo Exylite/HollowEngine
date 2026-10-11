@@ -21,8 +21,10 @@ import ru.hollowhorizon.hollowengine.client.ui.graph.GraphEdge
 import ru.hollowhorizon.hollowengine.client.ui.graph.GraphLinkPreview
 import ru.hollowhorizon.hollowengine.client.ui.graph.GraphMiniMapItem
 import ru.hollowhorizon.hollowengine.client.ui.graph.GraphNode
+import ru.hollowhorizon.hollowengine.client.ui.graph.GraphPreferences
 import ru.hollowhorizon.hollowengine.client.ui.graph.GraphRect
 import ru.hollowhorizon.hollowengine.client.ui.graph.GraphViewState
+import ru.hollowhorizon.hollowengine.client.ui.graph.graphViewItems
 import ru.hollowhorizon.hollowengine.client.ui.grow
 import ru.hollowhorizon.hollowengine.client.ui.ide.files.HollowIdeAnimatorDocument
 import ru.hollowhorizon.hollowengine.client.ui.input
@@ -41,6 +43,7 @@ import ru.hollowhorizon.hollowengine.common.models.AnimationControllerTransition
 import ru.hollowhorizon.hollowengine.common.models.AnimationPlayMode
 import ru.hollowhorizon.hollowengine.common.models.Animator
 import ru.hollowhorizon.hollowengine.common.models.AnimatorStateTypes
+import ru.hollowhorizon.hollowengine.common.models.BlendStateSpec
 import ru.hollowhorizon.hollowengine.common.models.ClipStateSpec
 import ru.hollowhorizon.hollowengine.common.models.GraphPoint
 import ru.hollowhorizon.hollowengine.common.models.nodeAt
@@ -202,11 +205,14 @@ internal fun AnimatorGraphCanvas(
                     if (link != null) {
                         link = link?.copy(canvasX = gesture.canvasX, canvasY = gesture.canvasY)
                     } else {
-                        document.edit {
+                        document.edit(mergeKey = "move:$layerId/$stateId") {
                             it.withNodeAt(
                                 layerId,
                                 stateId,
-                                GraphPoint(dragOrigin[0] + gesture.graphDeltaX, dragOrigin[1] + gesture.graphDeltaY),
+                                GraphPoint(
+                                    GraphPreferences.place(dragOrigin[0] + gesture.graphDeltaX),
+                                    GraphPreferences.place(dragOrigin[1] + gesture.graphDeltaY),
+                                ),
                             )
                         }
                     }
@@ -220,7 +226,11 @@ internal fun AnimatorGraphCanvas(
                 StateNodeContent(
                     stateId = stateId,
                     subtitle = state.subtitle(),
-                    playMode = (state as? ClipStateSpec)?.playMode,
+                    playMode = when (state) {
+                        is ClipStateSpec -> state.playMode
+                        is BlendStateSpec -> state.playMode
+                        else -> null
+                    },
                     isEntry = controller.entryState == stateId,
                 )
             }
@@ -337,7 +347,7 @@ private fun CanvasContextMenu(
             })
 
             CanvasMenuTarget.Empty -> addStateItems(document, layerId, controller, menu.at, onSelect) +
-                    UiDropdownItem(animatorText("reset_view")) { view.reset() }
+                    UiDropdownItem(animatorText("reset_view")) { view.reset() } + graphViewItems()
         },
         onExpandedChange = { if (!it) onDismiss() },
     )
@@ -414,6 +424,7 @@ private fun AnimationControllerLayerSpec.state(stateId: String): AnimationContro
 private fun AnimationControllerStateSpec?.subtitle(): String? = when (this) {
     null -> null
     is ClipStateSpec -> animation
+    is BlendStateSpec -> motions.joinToString(" · ") { it.animation }.ifEmpty { kindName() }
     else -> kindName()
 }
 

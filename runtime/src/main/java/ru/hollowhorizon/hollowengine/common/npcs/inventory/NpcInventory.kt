@@ -59,7 +59,7 @@ class NpcInventory(size: Int = DEFAULT_SIZE) {
     }
 
     fun load(tag: CompoundTag, registries: HolderLookup.Provider) {
-        val savedSize = tag.getInt(SIZE_KEY).takeIf { it > 0 } ?: DEFAULT_SIZE
+        val savedSize = tag.getIntOr(SIZE_KEY, 0).takeIf { it > 0 } ?: DEFAULT_SIZE
         slots.loadItems(tag, registries, requireValidSize(savedSize))
     }
 

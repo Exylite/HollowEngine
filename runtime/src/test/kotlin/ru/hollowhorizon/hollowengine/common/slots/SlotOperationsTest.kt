@@ -1,7 +1,6 @@
 package ru.hollowhorizon.hollowengine.common.slots
 
-import net.minecraft.SharedConstants
-import net.minecraft.server.Bootstrap
+import ru.hollowhorizon.hollowengine.testing.MinecraftTestBootstrap
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
 import ru.hollowhorizon.hollowengine.common.npcs.items.ItemMatchMode
@@ -21,8 +20,7 @@ import kotlin.test.assertTrue
 class SlotOperationsTest {
     @BeforeTest
     fun bootstrapRegistries() {
-        SharedConstants.tryDetectVersion()
-        Bootstrap.bootStrap()
+        MinecraftTestBootstrap.init()
     }
 
     /** A source that caps every slot at one item, the way an equipment slot does. */

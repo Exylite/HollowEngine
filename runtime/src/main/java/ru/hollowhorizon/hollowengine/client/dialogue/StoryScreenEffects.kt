@@ -1,7 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.dialogue
 
 import net.minecraft.client.Minecraft
-import net.minecraft.client.renderer.RenderType
 import ru.hollowhorizon.hollowengine.client.ui.ide.timeline.cutscene.CameraPose
 import ru.hollowhorizon.hollowengine.common.events.ClientOnly
 import ru.hollowhorizon.hollowengine.common.events.SubscribeEvent
@@ -52,9 +51,7 @@ object StoryFadeOverlay {
 
         val argb = ((alpha * 255f).toInt().coerceIn(0, 255) shl 24) or (color and 0xFFFFFF)
         val graphics = event.guiGraphics
-        graphics.flush()
-        graphics.fill(RenderType.guiOverlay(), 0, 0, event.window.guiScaledWidth, event.window.guiScaledHeight, argb)
-        graphics.flush()
+        graphics.fill(0, 0, event.window.guiScaledWidth, event.window.guiScaledHeight, argb)
     }
 }
 

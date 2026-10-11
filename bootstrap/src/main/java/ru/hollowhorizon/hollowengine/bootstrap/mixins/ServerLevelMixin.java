@@ -5,6 +5,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.redstone.Orientation;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,7 +23,7 @@ public class ServerLevelMixin {
     }
 
     @Inject(method = "updateNeighborsAtExceptFromFacing", at = @At("HEAD"), cancellable = true)
-    private void hollowengine$onUpdateNeighbors(BlockPos pos, Block blockType, Direction skipSide, CallbackInfo ci) {
+    private void hollowengine$onUpdateNeighbors(BlockPos pos, Block blockType, Direction skipSide, @Nullable Orientation orientation, CallbackInfo ci) {
         EnumSet<Direction> sides = EnumSet.allOf(Direction.class);
         sides.remove(skipSide);
         if (BootstrapRuntimeManager.bridge().onServerLevelNeighborNotify((ServerLevel) (Object) this, pos, sides)) {

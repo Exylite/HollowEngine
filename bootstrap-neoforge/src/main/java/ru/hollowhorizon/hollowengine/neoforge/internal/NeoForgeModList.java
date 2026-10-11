@@ -1,6 +1,5 @@
 package ru.hollowhorizon.hollowengine.neoforge.internal;
 
-import cpw.mods.niofs.union.UnionFileSystem;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforgespi.language.IModFileInfo;
@@ -25,7 +24,7 @@ public class NeoForgeModList implements ModList {
 
     @Override
     public boolean isLoaded(String modId) {
-        return FMLLoader.getLoadingModList().getModFileById(modId) != null;
+        return FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
     }
 
     @Override
@@ -35,13 +34,13 @@ public class NeoForgeModList implements ModList {
 
     @Override
     public List<ModInfo> getMods() {
-        return FMLLoader.getLoadingModList().getMods().stream()
+        return FMLLoader.getCurrent().getLoadingModList().getMods().stream()
                 .map(mod -> new ModInfo(mod.getModId(), mod.getDisplayName(), mod.getVersion().toString()))
                 .toList();
     }
 
     private File getModFile(String modId) {
-        IModFileInfo modFileInfo = FMLLoader.getLoadingModList().getModFileById(modId);
+        IModFileInfo modFileInfo = FMLLoader.getCurrent().getLoadingModList().getModFileById(modId);
         if (modFileInfo == null) {
             throw new IllegalArgumentException("Mod is not loaded or has no mod file: " + modId);
         }
@@ -53,32 +52,19 @@ public class NeoForgeModList implements ModList {
     private static File toCompilerFile(String modId, Path path) {
         Objects.requireNonNull(path, "mod path");
 
-        Path realPath = unwrapUnionFileSystem(path);
+        Path realPath = path;
 
         File direct = tryToFile(realPath);
         if (direct != null && direct.exists()) {
             return direct;
         }
 
-        // Union File System позволяет обращаться к jarInJar, только вот Kotlin Compiler работает только с реальными файлами
+        // Вложенные jar (jarInJar) читаются через файловую систему FML, только вот Kotlin Compiler работает только с реальными файлами
         try {
             return materializeToCache(modId, realPath);
         } catch (IOException e) {
             throw new RuntimeException("Failed to materialize mod file for compiler classpath: " + modId + " -> " + realPath, e);
         }
-    }
-
-    private static Path unwrapUnionFileSystem(Path path) {
-        FileSystem fs = path.getFileSystem();
-
-        if (fs instanceof UnionFileSystem unionFs) {
-            Path primary = unionFs.getPrimaryPath();
-            if (primary != null && Files.exists(primary)) {
-                return primary;
-            }
-        }
-
-        return path;
     }
 
     private static File tryToFile(Path path) {

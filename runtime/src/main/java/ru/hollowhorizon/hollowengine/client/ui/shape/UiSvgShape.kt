@@ -1,6 +1,6 @@
 package ru.hollowhorizon.hollowengine.client.ui.shape
 
-import net.minecraft.resources.ResourceLocation
+import net.minecraft.resources.Identifier
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
@@ -23,7 +23,7 @@ data class UiSvgPathDocument(
 )
 
 data class SvgResourceShape(
-    val location: ResourceLocation,
+    val location: Identifier,
 ) : Shape {
     override fun createPath(size: UiShapeSize): UiPath {
         val document = UiSvgResourceLoader.load(location)
@@ -32,9 +32,9 @@ data class SvgResourceShape(
 }
 
 object UiSvgResourceLoader {
-    private val cache = mutableMapOf<ResourceLocation, CachedSvgDocument>()
+    private val cache = mutableMapOf<Identifier, CachedSvgDocument>()
 
-    fun load(location: ResourceLocation): UiSvgPathDocument {
+    fun load(location: Identifier): UiSvgPathDocument {
         val version = HollowUiResourceAccess.version(location)
         val cached = cache[location]
         if (cached != null && cached.version == version) return cached.document
@@ -53,21 +53,21 @@ object UiSvgResourceLoader {
 object SvgFileParser {
     fun parse(source: String): UiSvgPathDocument = parse(source, baseLocation = null)
 
-    internal fun parse(source: String, baseLocation: ResourceLocation?): UiSvgPathDocument {
+    internal fun parse(source: String, baseLocation: Identifier?): UiSvgPathDocument {
         return SvgParseSession(source, baseLocation, emptySet()).parse()
     }
 }
 
-fun svgResource(location: ResourceLocation): Shape = SvgResourceShape(location)
+fun svgResource(location: Identifier): Shape = SvgResourceShape(location)
 fun svgResource(location: String): Shape = SvgResourceShape(parseSvgResourceLocation(location))
 
-fun svgResourceDocument(location: ResourceLocation): UiSvgPathDocument = UiSvgResourceLoader.load(location)
+fun svgResourceDocument(location: Identifier): UiSvgPathDocument = UiSvgResourceLoader.load(location)
 fun svgResourceDocument(location: String): UiSvgPathDocument = svgResourceDocument(parseSvgResourceLocation(location))
 
 private class SvgParseSession(
     source: String,
-    private val baseLocation: ResourceLocation?,
-    private val externalStack: Set<ResourceLocation>,
+    private val baseLocation: Identifier?,
+    private val externalStack: Set<Identifier>,
 ) {
     private val root = parseRoot(source)
     private val cssRules = parseSvgCssRules(root)
@@ -390,14 +390,14 @@ private class SvgParseSession(
         return UiSvgTransform.scale(scaleX, scaleY) * UiSvgTransform.translation(-viewBox.x, -viewBox.y)
     }
 
-    private fun resolveExternalLocation(locationPart: String): ResourceLocation {
+    private fun resolveExternalLocation(locationPart: String): Identifier {
         val clean = locationPart.trim()
-        if (clean.contains(":")) return ResourceLocation.parse(clean)
+        if (clean.contains(":")) return Identifier.parse(clean)
         val base = baseLocation
             ?: throw IllegalArgumentException("External SVG reference '$clean' requires resource location context")
         val baseDirectory = base.path.substringBeforeLast('/', "")
         val path = if (baseDirectory.isEmpty()) clean else "$baseDirectory/$clean"
-        return ResourceLocation.fromNamespaceAndPath(base.namespace, path)
+        return Identifier.fromNamespaceAndPath(base.namespace, path)
     }
 }
 
@@ -478,7 +478,7 @@ private fun Element.href(): String {
     return getAttribute("href").ifBlank { getAttribute("xlink:href") }.trim()
 }
 
-private fun ResourceLocation?.orEmptyKey(): String {
+private fun Identifier?.orEmptyKey(): String {
     return this?.toString().orEmpty()
 }
 
@@ -486,9 +486,9 @@ private fun UiSvgStyle.withoutGeometryEffects(): UiSvgStyle {
     return copy(clipPath = null, mask = null, filter = null)
 }
 
-private fun parseSvgResourceLocation(location: String): ResourceLocation {
+private fun parseSvgResourceLocation(location: String): Identifier {
     val trimmed = location.trim()
-    return ResourceLocation.parse(if (trimmed.contains(":")) trimmed else "hollowengine:$trimmed")
+    return Identifier.parse(if (trimmed.contains(":")) trimmed else "hollowengine:$trimmed")
 }
 
 internal fun resolveSvgTextFont(fontFamily: String, fontSize: Float): Font {
